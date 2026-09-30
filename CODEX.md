@@ -1,0 +1,39 @@
+# Agent instructions and standard operating procedures
+
+## Product intent
+
+Build a maintainable, performant, original god simulation with procedural graphics, evolving terrain/ecology and adaptive organisms including humans. Headless Linux owns simulation; browsers are windows into it. Aim for emergent combinations of simple interactions and quantify novelty rather than claiming unlimited intelligence.
+
+## Working agreement
+
+- Work directly on main; never force-push or discard other contributors' changes.
+- Inspect git status, this file, ROADMAP.md and mistakes.md before editing.
+- Keep changes cohesive. Avoid unrelated refactors and dependencies without a demonstrated need.
+- Never commit credentials, tokens, personal data, generated saves or cache files.
+- Keep all simulation state/RNG authoritative on the server. Client render timing must not affect outcomes.
+- No proprietary game assets, copied UI artwork or extracted game code.
+- No hidden external LLM calls. Learning is local and inspectable.
+
+## Implementation SOP
+
+1. Identify acceptance criteria and the smallest complete change.
+2. Preserve deterministic iteration, seeded random sources and save compatibility. Bump save version and provide migrations for incompatible schema changes.
+3. Use spatial indexes for agent interactions, batched inference and bounded workloads. Profile before increasing process counts; tiny batches can run locally.
+4. Validate external commands before mutation. Keep remote authentication, origin checks and payload limits intact.
+5. Add tests for meaningful invariants, regressions, state continuation and cross-backend agreement. Do not add tests that merely restate trivial implementation.
+6. Run `python3 -m unittest discover -s tests -v`. Exercise affected browser flows and run benchmarks for hot-path changes.
+7. Update CHANGELOG.md and ROADMAP.md. Record actual mistakes with cause, fix, prevention and verification in mistakes.md.
+8. Review the diff for secrets, accidental files and misleading claims; commit on main and push when access is authorized and available.
+9. Report changes, evidence and limitations. Do not claim untested GPU behavior, remote deployment or sustained emergence.
+
+## Architecture boundaries
+
+- world.py: rules, state, RNG, persistence. No HTTP or DOM.
+- brain.py: inference and training. Workers must not mutate authoritative state.
+- server.py: transport, validation, tick ownership, persistence orchestration.
+- web/: rendering and commands only; no duplicate simulation.
+- tests/: deterministic, dependency-free baseline. Optional accelerator tests may skip with an explicit reason.
+
+## Performance and reliability
+
+Target 8 ticks/sec at 250 organisms / 96×64, measured on stated hardware; this is a target, not a benchmark claim. Population cap 2500. Profile serialization, training and snapshot costs separately. All available CPUs may participate in inference; do not create busywork to force 100% utilization. CUDA is optional and must fail clearly when explicitly selected but unavailable. Use bounded clients/rate limiting via a production proxy before public exposure. Keep saves on a persistent volume and back them up. Do not load untrusted snapshots.
