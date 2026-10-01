@@ -1,5 +1,12 @@
 # Development mistakes
 
+## 2026-10-02 — Experiment guide replacement dropped prior results
+- Mistake: an edit to document save branches initially replaced the existing paired-learning experiment guide and its published measurements.
+- Cause: treating an existing documentation path as a new file without inspecting its contents first.
+- Resolution: restored the original guide from the current commit and appended the branching section.
+- Prevention: inspect a documentation file before editing it, and review the diff for removed evidence.
+- Verification: `git diff` shows the historical result table retained alongside the new branch instructions.
+
 ## 2026-10-02 — Legacy-save tests initially used new policy shapes
 - Mistake: several migration fixtures changed only the save version number while retaining the new 28-input neural weights.
 - Cause: the fixtures had represented older tile schemas but did not also reconstruct the older policy layout.

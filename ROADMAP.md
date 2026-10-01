@@ -48,11 +48,13 @@ Acceptance: settlements survive and fail for inspectable reasons; reproducible h
 - [ ] Deterministic phased tile work, spatial partitioning and regional simulation.
 - [ ] Delta streams, interest management and client backpressure.
 - [x] Administrator/spectator roles, bounded connections, per-peer rate limits, metrics and loopback load tests.
-- [ ] Save migrations, replay/branching, experiment registry and deployment CI.
+- [x] Save migrations, reproducible local branches, intervention manifests and test CI.
+- [ ] Automated deployment and off-host save backups.
 Acceptance: documented latency/memory curves and backend parity tolerances on specified Linux hardware.
 
 ## Phase 4: open-ended evolution research
 - [ ] Adaptable network topology, developmental body plans and evolving sensory/action capabilities.
-- [ ] Novelty archives, ecosystem diversity metrics and causal intervention tools.
+- [x] Save-based causal intervention branches with source/output hashes and summary metrics.
+- [ ] Novelty archives and deeper ecosystem diversity metrics.
 - [ ] Evaluate unexpected behaviors against baselines; distinguish novelty from bugs/reward exploitation.
 No promise of unlimited novelty or general intelligence. All behavior remains constrained by the simulated physical substrate.

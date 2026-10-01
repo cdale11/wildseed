@@ -17,6 +17,7 @@ Open http://127.0.0.1:8080. The headless server advances the world independently
 ```sh
 python3 -m unittest discover -s tests -v
 python3 -m wildseed.benchmark --ticks 200 --workers 1
+python3 -m wildseed.branch data/world.json data/control.json --ticks 100
 ```
 
 ## Play
@@ -30,14 +31,16 @@ Select a power category and click the map. Thirty powers include terrain sculpti
 - Procedural map selection, biome palettes, shaded relief, coast foam, species sprites and forest textures.
 - Seeded terrain, coastlines, erosion/deposition, seasonal moisture, vegetation growth, soil depletion, fire spread and ash fertility.
 - Species-specific, three-tile directional perception of food/prey, threats/fire and human building resources, with terrain occlusion.
-- Grazers, predators and humans with energy, age, reproduction, inherited size/fertility, and independently learned neural weights.
-- A 20→8→7 neural policy per organism; online policy gradients through both layers with a moving reward baseline. This is actual training, not a scripted decision tree. No pretrained model or external AI API is needed.
-- Human harvesting/mining, material accumulation, shelters, local food stocks, rudimentary farming and culture labels. These are settlement mechanics, not yet a deep civilization model.
-- Server persistence, CPU process inference, optional CUDA batch inference, thin canvas clients and token-protected remote operation.
+- Grass and tree cohorts with inherited climate preferences, local seed dispersal and competition; local runoff, sediment transport and cooling lava.
+- Grazers, predators and humans with energy, age, optional two-parent reproduction, ancestry, inherited traits and independently learned neural weights.
+- A recurrent 28→8→7 neural policy per organism; online one-step policy-gradient training with eight hidden-state memory values. No pretrained model or external AI API is needed.
+- Households, scarcity-driven jobs, houses, traffic-made roads and route-based barter caravans. These remain early society mechanics.
+- Server persistence, CPU process inference, optional CUDA batch inference, administrator/spectator access, bounded HTTP connections and thin canvas clients.
+- Reproducible save branches with optional interventions and experiment manifests; see [experiments](docs/EXPERIMENTS.md).
 
 ## What does not exist yet
 
-Dynamic neural topology, recurrent memory, explicit plant genomes, aquatic species, sexual reproduction, diseases, language, technology invention, diplomacy, trade networks, war, full geography/hydrology, large-scale distributed simulation, and measured sustained emergence are not implemented. Current action/observation spaces are fixed. Plants are aggregate tile fields. Training is CPU-side even with CUDA inference. See [ROADMAP.md](ROADMAP.md) and [specification](docs/SPECIFICATION.md).
+Dynamic neural topology, aquatic species, diseases, language, technology invention, diplomacy, war, watershed hydrology, large-scale distributed simulation and measured sustained emergence are not implemented. Current action/observation spaces are fixed. Plants are represented as local cohorts, not individual organisms. Training is CPU-side even with CUDA inference. See [ROADMAP.md](ROADMAP.md) and [specification](docs/SPECIFICATION.md).
 
 ## Linux deployment
 

@@ -10,6 +10,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 - Inspect git status, this file, ROADMAP.md and mistakes.md before editing.
 - Keep changes cohesive. Avoid unrelated refactors and dependencies without a demonstrated need.
 - Never commit credentials, tokens, personal data, generated saves or cache files.
+- Use `python3 -m wildseed.branch` for reproducible save-based intervention comparisons; keep generated branches and experiment manifests out of Git.
 - Keep all simulation state/RNG authoritative on the server. Client render timing must not affect outcomes.
 - No proprietary game assets, copied UI artwork or extracted game code.
 - No hidden external LLM calls. Learning is local and inspectable.

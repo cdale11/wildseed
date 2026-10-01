@@ -20,3 +20,16 @@ The directional probe asks each surviving predator policy how much more likely i
 The exposure-adjusted hunt rate improved in seven of ten paired seeds. The mean improvement was 1.18 hunts per 1,000 predator-ticks (about 9%). The directional probe stayed near zero and varied in sign by seed. This does **not** demonstrate learned tracking or threat avoidance. More hunts can come from population composition, stochastic encounters or policies that favor eating after arrival. A longer controlled experiment with movement trajectories and held-out prey layouts is needed.
 
 In the first uncorrected learning rule, the same ten seeds averaged 14.41 hunts per 1,000 predator-ticks, but the directional probe averaged -0.112 pp. Adding one-step hunt credit changed the trajectories and improved the probe mean toward zero, yet did not establish directional behavior. This is a short 500-tick experiment; neither treatment proves ecological stability at 100,000 ticks.
+
+## Save-based causal branches
+
+Use a trusted local save as a fixed starting point. Each command creates a new world save and a neighboring `.experiment.json` manifest; existing outputs are never replaced.
+
+```sh
+python3 -m wildseed.branch data/world.json data/control.json --ticks 100
+python3 -m wildseed.branch data/world.json data/rain.json --ticks 100 --tool rain --x 24 --y 20 --radius 4 --strength 2
+```
+
+Both runs start from the same saved RNG and neural state. The intervention occurs before the first advanced tick. Each manifest records the parent/result SHA-256 hashes, seed, tick interval, immediate power effect and resulting summary metrics. Compare the branch saves and replicate across seeds before drawing causal conclusions; a single difference does not identify its mechanism.
+
+Exact replay also requires the same code revision, Python version and CPU backend. `World.load` accepts only trusted saves. Keep generated saves and manifests outside version control.

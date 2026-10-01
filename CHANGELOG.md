@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.0 — 2026-10-02
+
+- Added `python3 -m wildseed.branch` to replay a trusted save into a separate branch, optionally apply one god intervention and advance a chosen number of ticks.
+- Each branch records the parent and result hashes, seed, tick range, intervention effect and resulting metrics in an experiment manifest. Existing saves and manifests are protected from accidental overwrite.
+- Documented causal comparisons and brought the README's feature inventory in line with the current implementation.
+
 ## 0.9.0 — 2026-10-02
 
 - Added administrator and read-only spectator tokens, with spectator controls disabled in the browser.
