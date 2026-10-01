@@ -33,3 +33,7 @@ python3 -m wildseed.branch data/world.json data/rain.json --ticks 100 --tool rai
 Both runs start from the same saved RNG and neural state. The intervention occurs before the first advanced tick. Each manifest records the parent/result SHA-256 hashes, seed, tick interval, immediate power effect and resulting summary metrics. Compare the branch saves and replicate across seeds before drawing causal conclusions; a single difference does not identify its mechanism.
 
 Exact replay also requires the same code revision, Python version and CPU backend. `World.load` accepts only trusted saves. Keep generated saves and manifests outside version control.
+
+## Reproductive-divergence measurements
+
+The active world reports `mate_encounters` and `mate_rejections` in snapshot statistics. An encounter is a directed reproduction attempt with another same-kind, mature, sufficiently energetic adult on the same tile; a rejection means the adult's inherited recognition signal or thermal preference is outside the compatibility threshold. The browser shows rejections divided by encounters as *mating isolation*. This is an interaction-weighted metric, not the fraction of all possible pairs in the world. `mate_types` counts coarse recognition-signal bins and does not identify biological species. A claim of speciation needs persistent multi-generation clusters, low gene flow between them and replicated seed-level evidence; that evaluation remains open.

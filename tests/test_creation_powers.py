@@ -122,7 +122,7 @@ class PowersTests(unittest.TestCase):
             self.assertEqual(migrated.organisms[0].weights[224:], o.weights[224:])
             self.assertTrue(all(t['temp']==.57 for t in migrated.tiles))
             migrated.step();migrated.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'],11)
+            self.assertEqual(json.loads(path.read_text())['version'],12)
 
     def test_v3_save_seeds_existing_vegetation(self):
         import json

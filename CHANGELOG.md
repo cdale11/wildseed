@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.0 — 2026-10-02
+
+- Organisms now inherit and mutate a continuous mate-recognition signal. Two-parent reproduction requires signal and thermal compatibility; contact with incompatible adults blocks the solitary-birth fallback for that attempt.
+- The server counts candidate mate encounters and incompatibility rejections. The browser shows signal diversity bins and the rejection fraction as mating isolation, without treating those bins as proven species.
+- Save schema v12 migrates v1–v11 organisms with a neutral recognition signal and zero historical encounter counts. Mutation powers also alter the signal.
+
 ## 0.11.0 — 2026-10-02
 
 - Added bounded mineral nutrients and organic litter to each tile. Plant growth draws down nutrients; litter from plant turnover, grazing and organism death decomposes back into available nutrients. Fire releases some ash minerals, while runoff transports dissolved nutrients downhill or out to water.

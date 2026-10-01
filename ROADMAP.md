@@ -31,6 +31,7 @@
 - [x] Bounded soil nutrient/litter recycling with plant uptake, grazing/death returns, fire ash and runoff transport.
 - [ ] Watershed-scale rivers and weather systems; calibrated nutrient budgets across land, plants, animals and settlements.
 - [x] Two-parent genetic recombination, bounded ancestry records and ecotype counts.
+- [x] Inherited mate-recognition signal, compatibility barrier and measured candidate rejection fraction.
 - [ ] Speciation with reproductive isolation and validated species metrics.
 - [ ] Deferred by owner: multi-seed 100k-tick stability runs. Ten paired 500-tick learned/frozen runs are documented; random-policy comparison remains open.
 Acceptance: measurable behavioral adaptation and ecological diversity without scripted population replenishment, with published failure cases.

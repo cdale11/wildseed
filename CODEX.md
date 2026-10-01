@@ -38,6 +38,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 - New server starts must request world selection with random seeds. Do not restore implicit auto-resume. Preserve old saves before replacing worlds.
 - brain.py: inference and training. Workers must not mutate authoritative state.
 - Recurrent observations include each organism's previous hidden state; save/migrate that state and preserve old policy connections when input dimensions change.
+- Treat mate-signal bins and encounter rejection rates as proxies for reproductive divergence, not validated species. Preserve direct-mate compatibility and save migration when changing reproduction.
 - server.py: transport, validation, tick ownership, persistence orchestration.
 - Preserve admin/spectator roles, per-peer API limits and bounded connections when changing transport; no viewer command may mutate world state.
 - web/: rendering and commands only; no duplicate simulation.

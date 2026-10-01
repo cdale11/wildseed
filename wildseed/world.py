@@ -18,6 +18,13 @@ SPECIES = ('grazer', 'predator', 'human')
 DIRECTIONS = ((0, -1), (1, 0), (0, 1), (-1, 0))
 
 
+def compatible_mates(a, b):
+    """Heritable recognition and climate traits determine potential gene flow."""
+    return (a.kind == b.kind and a.id != b.id and
+            abs(a.mate_signal - b.mate_signal) < .13 and
+            abs(a.thermal_opt - b.thermal_opt) < .28)
+
+
 @dataclass
 class Organism:
     id: int
@@ -39,13 +46,14 @@ class Organism:
     parent_a: int = 0
     parent_b: int = 0
     thermal_opt: float = .55
+    mate_signal: float = .5
     household: int = 0
     occupation: str = 'forager'
     memory: list = field(default_factory=lambda: [0.0] * HIDDEN)
 
 
 class World:
-    VERSION = 11
+    VERSION = 12
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -66,6 +74,7 @@ class World:
         self.ancestry = deque(maxlen=50000)
         self.births = self.deaths = self.training_steps = self.hunts = self.hunt_move_updates = 0
         self.sexual_births = 0
+        self.mate_encounters = self.mate_rejections = 0
         self.engine = BrainEngine(workers, device)
         self.tiles = self.generate()
         for i in range(population):
@@ -93,7 +102,7 @@ class World:
         x, y = x % self.width, y % self.height
         if self.tiles[self.idx(x, y)]['e'] <= .37:
             return None
-        if mate and (not parent or mate.kind != kind or mate.id == parent.id):
+        if mate and (not parent or not compatible_mates(parent, mate)):
             raise ValueError('Invalid mate')
         weights = ([max(-4, min(4, (self.rng.choice((a, b)) if mate else a) + self.rng.gauss(0, .045)))
                     for a, b in zip(parent.weights, mate.weights if mate else parent.weights)]
@@ -101,6 +110,7 @@ class World:
         inherited_size = (parent.size + mate.size) / 2 if mate else parent.size if parent else 1
         inherited_fertility = (parent.fertility + mate.fertility) / 2 if mate else parent.fertility if parent else 1
         inherited_temp = ((parent.thermal_opt + mate.thermal_opt) / 2 if mate else parent.thermal_opt) if parent else self.tiles[self.idx(x, y)]['temp']
+        inherited_signal = ((parent.mate_signal + mate.mate_signal) / 2 if mate else parent.mate_signal) if parent else .5
         org = Organism(self.next_id, kind, x, y, 55 if parent else 85, 0,
                        parent.generation + 1 if parent else 0,
                        max(.5, min(1.6, inherited_size + self.rng.gauss(0, .04))) if parent else 1,
@@ -108,6 +118,7 @@ class World:
                        weights, culture=parent.culture if parent else (self.next_id % 5 + 1 if kind == 'human' else 0),
                        parent_a=parent.id if parent else 0, parent_b=mate.id if mate else 0,
                        thermal_opt=max(0, min(1, inherited_temp + self.rng.gauss(0, .025))),
+                       mate_signal=max(0, min(1, inherited_signal + self.rng.gauss(0, .015 if parent else .06))),
                        household=parent.household if parent else 0)
         self.next_id += 1
         self.organisms.append(org)
@@ -305,11 +316,15 @@ class World:
                     t['f'] = max(.05, t['f'] - eaten * .015)
             elif action == 5 and o.energy > 105 and o.age > 45:
                 if self.rng.random() < .3 * o.fertility:
-                    mates = [p for p in occupancy.get(self.idx(o.x, o.y), [])
-                             if p is not o and p.kind == o.kind and p.energy > 75 and p.age > 45
-                             and abs(p.thermal_opt - o.thermal_opt) < .28]
+                    eligible = [p for p in occupancy.get(self.idx(o.x, o.y), [])
+                                if p is not o and p.kind == o.kind and p.energy > 75 and p.age > 45]
+                    mates = [p for p in eligible if compatible_mates(o, p)]
+                    self.mate_encounters += len(eligible)
+                    self.mate_rejections += len(eligible) - len(mates)
                     mate = self.rng.choice(mates) if mates else None
-                    child = self.spawn(o.kind, o.x, o.y, o, mate)
+                    # Solitary asexual births remain possible, but contact with
+                    # incompatible adults cannot bypass mating isolation.
+                    child = self.spawn(o.kind, o.x, o.y, o, mate) if mates or not eligible else None
                     if child:
                         o.energy -= 58
                         if mate:
@@ -357,6 +372,7 @@ class World:
     def snapshot(self):
         counts = dict(Counter(o.kind for o in self.organisms))
         ecotypes = {(o.kind, int(o.thermal_opt * 4), int(o.size * 2)) for o in self.organisms}
+        mate_types = {(o.kind, min(9, int(o.mate_signal * 10))) for o in self.organisms}
         caravans = []
         for shipment in self.shipments:
             progress = max(0, min(1, (self.tick - shipment['start']) /
@@ -376,6 +392,8 @@ class World:
                           'deaths': self.deaths, 'training': self.training_steps, 'hunts': self.hunts,
                           'hunt_move_updates': self.hunt_move_updates, 'sexual_births': self.sexual_births,
                           'ecotypes': len(ecotypes), 'households': len(self.households),
+                          'mate_types': len(mate_types), 'mate_encounters': self.mate_encounters,
+                          'mate_rejections': self.mate_rejections,
                           'caravans': len(self.shipments),
                           'generation': max((o.generation for o in self.organisms), default=0),
                           'cultures': len(set(o.culture for o in self.organisms if o.kind == 'human'))}}
@@ -389,6 +407,7 @@ class World:
                    'births': self.births, 'deaths': self.deaths, 'training_steps': self.training_steps,
                    'hunts': self.hunts, 'hunt_move_updates': self.hunt_move_updates,
                    'learning': self.learning, 'sexual_births': self.sexual_births,
+                   'mate_encounters': self.mate_encounters, 'mate_rejections': self.mate_rejections,
                    'ancestry': list(self.ancestry), 'households': self.households,
                    'shipments': self.shipments,
                    'next_town_id': self.next_town_id, 'next_household_id': self.next_household_id}
@@ -405,7 +424,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -442,6 +461,8 @@ class World:
         data.setdefault('hunts', 0)
         data.setdefault('hunt_move_updates', 0)
         data.setdefault('sexual_births', 0)
+        data.setdefault('mate_encounters', 0)
+        data.setdefault('mate_rejections', 0)
         data.setdefault('ancestry', [])
         data.setdefault('households', [])
         data.setdefault('shipments', [])
@@ -456,6 +477,7 @@ class World:
         world.rng.setstate((rng[0], tuple(rng[1]), rng[2]))
         for organism in data['organisms']:
             organism.setdefault('thermal_opt', data['tiles'][organism['y'] * data['width'] + organism['x']]['temp'])
+            organism.setdefault('mate_signal', .5)
             organism.setdefault('memory', [0.0] * HIDDEN)
             if organism.get('last_move') and len(organism['last_move'][0]) == 20:
                 organism['last_move'][0].extend([0.0] * HIDDEN)

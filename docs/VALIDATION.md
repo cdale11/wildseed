@@ -1,5 +1,11 @@
 # Validation — 2026-10-02
 
+## Version 0.12.0 reproductive divergence — 2026-10-02
+
+All 63 automated tests pass, including forced incompatible adults sharing a tile (no birth and counted rejections), compatible two-parent inheritance, direct-mate validation, v11→v12 save migration and deterministic continuation. Browser JavaScript passes syntax checks. A seed-42, 96×64, 250-initial-organism, 200-tick, one-worker CPU benchmark reached 32.90 ticks/s (median 29.67 ms, p95 46.35 ms; 648 final organisms). The changed reproduction rules alter the population trajectory, so this is not a direct speed comparison with v0.11.
+
+In three 48×32, 80-initial-organism, 300-tick seed runs (40/41/42), the server counted 6/2/5 rejected candidate encounters out of 10/12/6, with 4/10/1 two-parent births. These small counts show the barrier operates in ordinary simulations but cannot establish persistent speciation, population stability or selection benefit. Mate-signal bins are a diversity proxy, not species assignments.
+
 ## Version 0.11.0 nutrient recycling — 2026-10-02
 
 All 60 automated tests pass with loopback socket access. Focused tests show nutrient-rich plant cohorts grow faster than otherwise identical nutrient-poor cohorts, litter decomposes into mineral nutrients, runoff transfers dissolved nutrients downhill without changing the two-tile total, and v10 saves migrate to v11 with deterministic continuation. Exact startup previews still match the created world; no-effect powers on submerged tiles still report zero. Browser JavaScript modules pass syntax checks.
