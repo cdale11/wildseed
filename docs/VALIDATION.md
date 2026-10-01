@@ -1,4 +1,17 @@
-# Validation — 2026-10-01
+# Validation — 2026-10-02
+
+## Version 0.10.0 save branches and current CPU scaling — 2026-10-02
+
+All 54 automated tests pass, including source-preserving deterministic branches, different outcomes after a measured rain cast, manifest hashes and refusal to overwrite existing outputs. A current seed-42, 96×64, 250-initial-organism, 200-tick benchmark ended with 728 organisms in every worker configuration:
+
+| CPU workers | Median tick | p95 tick | Throughput |
+|---|---:|---:|---:|
+| 1 | 35.09 ms | 52.44 ms | 29.27 ticks/s |
+| 2 | 34.96 ms | 54.57 ms | 27.60 ticks/s |
+| 4 | 35.52 ms | 53.29 ms | 28.54 ticks/s |
+| 16 (all affinity CPUs) | 35.98 ms | 55.09 ms | 27.32 ticks/s |
+
+These are sequential short runs on a shared Linux host, so small differences may be noise. They show no benefit from extra inference processes at this scale; the current automatic 16-worker option remains available, while a one-worker setting is preferable for this measured workload. A 60-tick cProfile run attributed about 1.62 s of 4.26 s world-step time to serial neural learning, 1.28 s to climate updates and 0.80 s to inference. This identifies optimization targets but does not establish high-population CPU scaling.
 
 ## Version 0.9.0 transport limits — 2026-10-02
 
