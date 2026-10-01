@@ -44,7 +44,7 @@ class Organism:
 
 
 class World:
-    VERSION = 8
+    VERSION = 9
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -60,6 +60,7 @@ class World:
         self.organisms = []
         self.settlements = []
         self.households = []
+        self.shipments = []
         self.next_town_id = self.next_household_id = 1
         self.ancestry = deque(maxlen=50000)
         self.births = self.deaths = self.training_steps = self.hunts = self.hunt_move_updates = 0
@@ -343,6 +344,14 @@ class World:
     def snapshot(self):
         counts = dict(Counter(o.kind for o in self.organisms))
         ecotypes = {(o.kind, int(o.thermal_opt * 4), int(o.size * 2)) for o in self.organisms}
+        caravans = []
+        for shipment in self.shipments:
+            progress = max(0, min(1, (self.tick - shipment['start']) /
+                                  max(1, shipment['arrival'] - shipment['start'])))
+            index = shipment['path'][int(progress * (len(shipment['path']) - 1))]
+            caravans.append({'x': index % self.width, 'y': index // self.width,
+                             'from': shipment['from'], 'to': shipment['to'],
+                             'food': round(shipment['food'], 2)})
         return {'seed': self.seed, 'tick': self.tick, 'width': self.width, 'height': self.height,
                 'geography': self.geography, 'biome': self.biome,
                 'tiles': [[round(t[k], 3) for k in ('e', 'm', 'grass', 'trees', 'ore', 'fire', 'f', 'temp')] +
@@ -350,11 +359,13 @@ class World:
                            t['grass_pop'], t['tree_pop'], round(t['road'], 3)] for t in self.tiles],
                 'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move')} for o in self.organisms],
                 'settlements': self.settlements, 'households': self.households,
+                'caravans': caravans,
                 'events': list(self.events),
                 'stats': {'population': len(self.organisms), 'counts': counts, 'births': self.births,
                           'deaths': self.deaths, 'training': self.training_steps, 'hunts': self.hunts,
                           'hunt_move_updates': self.hunt_move_updates, 'sexual_births': self.sexual_births,
                           'ecotypes': len(ecotypes), 'households': len(self.households),
+                          'caravans': len(self.shipments),
                           'generation': max((o.generation for o in self.organisms), default=0),
                           'cultures': len(set(o.culture for o in self.organisms if o.kind == 'human'))}}
 
@@ -368,6 +379,7 @@ class World:
                    'hunts': self.hunts, 'hunt_move_updates': self.hunt_move_updates,
                    'learning': self.learning, 'sexual_births': self.sexual_births,
                    'ancestry': list(self.ancestry), 'households': self.households,
+                   'shipments': self.shipments,
                    'next_town_id': self.next_town_id, 'next_household_id': self.next_household_id}
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -382,7 +394,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -412,10 +424,12 @@ class World:
         data.setdefault('sexual_births', 0)
         data.setdefault('ancestry', [])
         data.setdefault('households', [])
+        data.setdefault('shipments', [])
         data.setdefault('next_town_id', max((town['id'] for town in data['settlements']), default=0) + 1)
         data.setdefault('next_household_id', 1)
         for town in data['settlements']:
             town.setdefault('wood', 0.0)
+            town.setdefault('empty_ticks', 0)
         world = cls(data['seed'], data['width'], data['height'], workers, device, population=0,
                     geography=data['geography'], biome=data['biome'], learning=data['learning'])
         rng = data.pop('rng')

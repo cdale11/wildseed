@@ -54,4 +54,4 @@ class PerceptionTests(unittest.TestCase):
                 self.assertEqual(weights[j*20+12:j*20+20],[0]*8)
             self.assertEqual(weights[160:],old[96:])
             loaded.step(); loaded.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'],8)
+            self.assertEqual(json.loads(path.read_text())['version'],9)

@@ -64,3 +64,54 @@ class SocietyTests(unittest.TestCase):
             self.assertEqual(migrated.organisms[0].household, 0)
             self.assertEqual(migrated.organisms[0].occupation, 'forager')
             self.assertTrue(all(tile['road'] == tile['traffic'] == 0 for tile in migrated.tiles))
+
+    def test_trade_uses_land_route_and_delivers_real_goods(self):
+        source = {'id': 1, 'x': 3, 'y': 3, 'culture': 1, 'houses': 1,
+                  'stock': 40.0, 'wood': 0.0, 'ore': 0.0, 'population': 0, 'age': 0}
+        target = {'id': 2, 'x': 10, 'y': 3, 'culture': 2, 'houses': 1,
+                  'stock': 0.0, 'wood': 0.0, 'ore': 2.0, 'population': 0, 'age': 0}
+        self.world.settlements = [source, target]
+        society.dispatch_trade(self.world)
+        self.assertEqual(len(self.world.shipments), 1)
+        shipment = self.world.shipments[0]
+        self.assertEqual((source['stock'], target['ore']), (35, 1))
+        self.assertTrue(all(self.world.tiles[index]['e'] > .37 for index in shipment['path']))
+        self.assertEqual(self.world.snapshot()['stats']['caravans'], 1)
+        self.world.tick = shipment['arrival']
+        society.deliver_shipments(self.world)
+        self.assertEqual((target['stock'], source['ore']), (5, 1))
+        self.assertEqual(self.world.shipments, [])
+
+    def test_trade_does_not_cross_water_without_route(self):
+        for y in range(self.world.height):
+            for x in (5, 15):
+                self.world.tiles[self.world.idx(x, y)]['e'] = .2
+        self.world.settlements = [
+            {'id': 1, 'x': 3, 'y': 3, 'stock': 40, 'ore': 0, 'wood': 0},
+            {'id': 2, 'x': 10, 'y': 3, 'stock': 0, 'ore': 2, 'wood': 0},
+        ]
+        society.dispatch_trade(self.world)
+        self.assertEqual(self.world.shipments, [])
+
+    def test_v8_save_migrates_empty_caravans(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'old.json'
+            self.world.save(path)
+            data = json.loads(path.read_text())
+            data['version'] = 8
+            del data['shipments']
+            path.write_text(json.dumps(data))
+            loaded = World.load(path)
+            self.addCleanup(loaded.engine.close)
+            self.assertEqual(loaded.shipments, [])
+
+    def test_unoccupied_town_loses_houses_and_is_abandoned(self):
+        town = {'id': 1, 'x': 8, 'y': 8, 'culture': 1, 'houses': 1,
+                'stock': 0.0, 'wood': 0.0, 'ore': 0.0,
+                'population': 0, 'age': 0, 'empty_ticks': 0}
+        self.world.settlements = [town]
+        for _ in range(10):
+            self.world.tick += 20
+            society.update(self.world)
+        self.assertEqual(self.world.settlements, [])
+        self.assertTrue(any('abandoned' in event['text'] for event in self.world.events))

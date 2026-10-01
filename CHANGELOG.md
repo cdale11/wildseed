@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0 — 2026-10-02
+
+- Settlements with food surpluses now barter through pathfinding caravans for scarce ore or wood; goods leave stock on dispatch and arrive after route-dependent travel.
+- Caravans create traffic along passable land routes and render on the browser map. Disconnected settlements cannot trade through water.
+- Empty settlements lose food and houses, then become abandoned; this appears in the world chronicle.
+- Save schema v9 preserves in-transit shipments and migrates v1–v8 worlds.
+
 ## 0.6.0 — 2026-10-02
 
 - Added settlement households with members, ownership of stored food and rationing.

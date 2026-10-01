@@ -1,5 +1,9 @@
 # Validation — 2026-10-01
 
+## Version 0.7.0 barter and settlement decay — 2026-10-02
+
+All 47 automated tests pass. Focused tests verify food and ore are deducted when a caravan leaves, delivered to the opposite towns at arrival, and never transported through a fully blocking water barrier. An empty town loses its houses and generates an abandonment event. A 200-tick, 250-initial-organism, one-worker benchmark reached 35.31 ticks/s on a repeat run (median 27.39 ms, p95 43.53 ms; 675 final organisms). The first run was slower at 28.01 ticks/s, so this short benchmark is sensitive to system load. No sustained-town result or large-world route scalability is claimed.
+
 ## Version 0.6.0 first society layer — 2026-10-02
 
 All 43 automated tests pass. Focused tests verify founding a town from gathered wood, assigning a human to a household, household food rationing, farming work changing stock, traffic building a road, and version 7 save migration. Browser JavaScript modules pass syntax checks. The 200-tick, 250-initial-organism, one-worker benchmark reached 36.69 ticks/s (median 25.08 ms, p95 41.82 ms; 675 final organisms). This is not evidence of sustained towns or inter-settlement economies; those remain roadmap tasks.
