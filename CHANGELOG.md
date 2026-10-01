@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.0 — 2026-10-02
+
+- Added bounded mineral nutrients and organic litter to each tile. Plant growth draws down nutrients; litter from plant turnover, grazing and organism death decomposes back into available nutrients. Fire releases some ash minerals, while runoff transports dissolved nutrients downhill or out to water.
+- Fertile-soil and biome powers now alter the nutrient state. The browser exposes nutrient and litter values and a soil-nutrients map layer.
+- Save schema v11 initializes nutrient pools when loading older worlds. Preview and active-world tile data remain identical for the chosen seed.
+
 ## 0.10.0 — 2026-10-02
 
 - Added `python3 -m wildseed.branch` to replay a trusted save into a separate branch, optionally apply one god intervention and advance a chosen number of ticks.

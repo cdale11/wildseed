@@ -49,6 +49,7 @@ class SimulationTests(unittest.TestCase):
         for t in w.tiles:
             self.assertTrue(all(math.isfinite(v) for v in t.values()))
             for key in ('m', 'f', 'grass', 'trees', 'fire', 'water', 'lava',
+                        'nutrient', 'litter',
                         'grass_temp', 'grass_moist', 'tree_temp', 'tree_moist'):
                 self.assertTrue(0 <= t[key] <= 1, (key, t[key]))
             self.assertTrue(0 <= t['grass_pop'] <= 100)

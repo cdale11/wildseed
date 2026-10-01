@@ -13,7 +13,7 @@ import threading
 import time
 from urllib.parse import urlsplit
 from .world import World
-from .geography import generate, options, GEOGRAPHIES, BIOMES, SIZES, BIOME_NAMES, classify
+from .geography import generate, client_tiles, options, GEOGRAPHIES, BIOMES, SIZES
 from .powers import POWER_IDS, POWER_INFO
 
 WEB = Path(__file__).resolve().parent.parent / 'web'
@@ -99,9 +99,7 @@ class Simulation:
                     if len(self.previews)>16: self.previews.pop(next(iter(self.previews)))
                     tiles=generate(seed,width,height,config['geography'],config['biome'])
                     return {'seed':seed,'width':width,'height':height,**config,
-                            'tiles':[[round(t[k],3) for k in ('e','m','grass','trees','ore','fire','f','temp')]+
-                                     [BIOME_NAMES.index(classify(t)),round(t['water'],3),round(t['lava'],3),
-                                      t['grass_pop'],t['tree_pop'],round(t['road'],3)] for t in tiles]}
+                            'tiles':client_tiles(tiles)}
                 seed=data.get('seed')
                 if type(seed) is not int or self.previews.get(seed)!=config:
                     raise ValueError('Preview this world before creating it')

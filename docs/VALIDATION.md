@@ -1,5 +1,11 @@
 # Validation — 2026-10-02
 
+## Version 0.11.0 nutrient recycling — 2026-10-02
+
+All 60 automated tests pass with loopback socket access. Focused tests show nutrient-rich plant cohorts grow faster than otherwise identical nutrient-poor cohorts, litter decomposes into mineral nutrients, runoff transfers dissolved nutrients downhill without changing the two-tile total, and v10 saves migrate to v11 with deterministic continuation. Exact startup previews still match the created world; no-effect powers on submerged tiles still report zero. Browser JavaScript modules pass syntax checks.
+
+A 200-tick, 250-initial-organism, one-worker CPU run on Python 3.13.11 reached 31.46 ticks/s (median 30.42 ms, p95 47.51 ms; 697 final organisms). Different nutrient rules alter the population trajectory, so this is not a controlled speed comparison to v0.10. The pools are bounded and phenomenological; watershed weather and a calibrated mass-conserving nutrient budget remain open.
+
 ## Version 0.10.0 save branches and current CPU scaling — 2026-10-02
 
 All 56 automated tests pass, including source-preserving deterministic branches, different outcomes after a measured rain cast, manifest hashes, backup checksum verification and refusal to overwrite existing outputs. A current seed-42, 96×64, 250-initial-organism, 200-tick benchmark ended with 728 organisms in every worker configuration:

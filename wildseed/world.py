@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import random
 
-from .geography import generate, classify, BIOME_NAMES
+from .geography import generate, client_tiles
 from .powers import apply as apply_power
 from . import plants
 from . import society
@@ -45,7 +45,7 @@ class Organism:
 
 
 class World:
-    VERSION = 10
+    VERSION = 11
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -172,6 +172,9 @@ class World:
                 plants.advance(t, season)
                 t['f'] = min(1, t['f'] + .0003)
                 if t['fire'] > 0:
+                    burned = t['grass'] * .4 + t['trees'] * .12 + t['litter'] * .25
+                    t['nutrient'] = min(1, t['nutrient'] + burned * .08)
+                    t['litter'] *= .75
                     t['grass'] *= .6
                     t['trees'] *= .88
                     t['grass_seed'] *= .9
@@ -192,6 +195,7 @@ class World:
                 self.flow(i, x, y)
             else:
                 plants.clear(t)
+                t['nutrient'] = t['litter'] = 0
                 t['fire'] = t['water'] = t['lava'] = t['traffic'] = t['road'] = 0
                 deposit = min(t['sediment'], max(0, 1 - t['e']))
                 t['sediment'] -= deposit
@@ -216,9 +220,12 @@ class World:
                 t['sediment'] += erosion
                 carried = t['sediment'] * outflow / before
                 t['sediment'] -= carried
+                dissolved = min(t['nutrient'], outflow * .025)
+                t['nutrient'] -= dissolved
                 if neighbor['e'] > .37:
                     neighbor['water'] = min(1, neighbor['water'] + outflow)
                     neighbor['sediment'] += carried
+                    neighbor['nutrient'] = min(1, neighbor['nutrient'] + dissolved)
                     neighbor['m'] = min(1, neighbor['m'] + outflow * .025)
                 else:
                     neighbor['e'] = min(1, neighbor['e'] + carried)
@@ -293,6 +300,7 @@ class World:
                 else:
                     eaten = min(t['grass'], .15 * o.size)
                     t['grass'] -= eaten
+                    t['litter'] = min(1, t['litter'] + eaten * .12)
                     o.energy += eaten * 65
                     t['f'] = max(.05, t['f'] - eaten * .015)
             elif action == 5 and o.energy > 105 and o.age > 45:
@@ -333,6 +341,8 @@ class World:
         for o in dead:
             t = self.tiles[self.idx(o.x, o.y)]
             t['f'] = min(1, t['f'] + .04)
+            if t['e'] > .37:
+                t['litter'] = min(1, t['litter'] + .035 * o.size)
         self.deaths += len(dead)
         self.organisms = [o for o in self.organisms if o.energy > 0]
         if self.tick % 20 == 0:
@@ -357,9 +367,7 @@ class World:
                              'food': round(shipment['food'], 2)})
         return {'seed': self.seed, 'tick': self.tick, 'width': self.width, 'height': self.height,
                 'geography': self.geography, 'biome': self.biome,
-                'tiles': [[round(t[k], 3) for k in ('e', 'm', 'grass', 'trees', 'ore', 'fire', 'f', 'temp')] +
-                          [BIOME_NAMES.index(classify(t)), round(t['water'], 3), round(t['lava'], 3),
-                           t['grass_pop'], t['tree_pop'], round(t['road'], 3)] for t in self.tiles],
+                'tiles': client_tiles(self.tiles),
                 'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move', 'memory')} for o in self.organisms],
                 'settlements': self.settlements, 'households': self.households,
                 'caravans': caravans,
@@ -397,7 +405,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -425,6 +433,8 @@ class World:
             tile.setdefault('lava', 0.0)
             tile.setdefault('traffic', 0.0)
             tile.setdefault('road', 0.0)
+            tile.setdefault('nutrient', tile['f'] * .5 if tile['e'] > .37 else 0.0)
+            tile.setdefault('litter', (.08 * tile['grass'] + .12 * tile['trees']) if tile['e'] > .37 else 0.0)
             plants.migrate(tile)
         data.setdefault('geography', 'continents')
         data.setdefault('biome', 'mixed')

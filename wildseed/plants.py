@@ -35,6 +35,10 @@ def fitness(tile, kind):
 
 def advance(tile, season):
     """Cohorts germinate, compete, and produce seeds without spontaneous creation."""
+    # Soil organisms release minerals from litter; temperature and water set the rate.
+    recycled = min(tile['litter'], tile['litter'] * (.008 + .014 * tile['temp']) * (.3 + .7 * tile['m']))
+    tile['litter'] -= recycled
+    tile['nutrient'] = clamp(tile['nutrient'] + recycled)
     for kind, capacity in (('grass', 100), ('tree', 40)):
         seed = tile[kind + '_seed']
         count_key = kind + '_pop'
@@ -48,12 +52,20 @@ def advance(tile, season):
             tile[count_key] = max(target, tile[count_key] - 2)
     grass_fit = fitness(tile, 'grass')
     tree_fit = fitness(tile, 'tree')
+    available = tile['nutrient'] / (tile['nutrient'] + .15)
     grass_growth = .035 * tile['m'] * tile['f'] * (.7 + .3 * season)
-    tile['grass'] = clamp(tile['grass'] + grass_growth * grass_fit *
-                          tile['grass_pop'] / 100 * (1 - tile['trees'] * .65))
-    tile['trees'] = clamp(tile['trees'] + .0035 * tile['m'] * tile['f'] *
-                          max(0, tile['temp'] - .12) * tree_fit *
-                          tile['tree_pop'] / 40 * (1 - tile['grass'] * .25))
+    grass_gain = min(1 - tile['grass'], grass_growth * grass_fit *
+                     tile['grass_pop'] / 100 * (1 - tile['trees'] * .65) * available)
+    tree_gain = min(1 - tile['trees'], .0035 * tile['m'] * tile['f'] *
+                    max(0, tile['temp'] - .12) * tree_fit *
+                    tile['tree_pop'] / 40 * (1 - tile['grass'] * .25) * available)
+    uptake = min(tile['nutrient'], grass_gain * .20 + tree_gain * .35)
+    tile['nutrient'] -= uptake
+    grass_turnover = tile['grass'] * .0015
+    tree_turnover = tile['trees'] * .0003
+    tile['grass'] = clamp(tile['grass'] + grass_gain - grass_turnover)
+    tile['trees'] = clamp(tile['trees'] + tree_gain - tree_turnover)
+    tile['litter'] = clamp(tile['litter'] + grass_turnover * .6 + tree_turnover * .8)
     tile['grass_seed'] = clamp(tile['grass_seed'] * .999 + tile['grass'] * .003)
     tile['tree_seed'] = clamp(tile['tree_seed'] * .9995 + tile['trees'] * .001)
 

@@ -28,7 +28,8 @@
 - [x] Tile seed banks, local dispersal and grass/tree competition.
 - [x] Explicit local plant cohorts, population counts and inherited climate trait means.
 - [x] Local water flow, suspended soil transport and lava cooling.
-- [ ] Watershed-scale rivers, weather systems and nutrient cycles.
+- [x] Bounded soil nutrient/litter recycling with plant uptake, grazing/death returns, fire ash and runoff transport.
+- [ ] Watershed-scale rivers and weather systems; calibrated nutrient budgets across land, plants, animals and settlements.
 - [x] Two-parent genetic recombination, bounded ancestry records and ecotype counts.
 - [ ] Speciation with reproductive isolation and validated species metrics.
 - [ ] Deferred by owner: multi-seed 100k-tick stability runs. Ten paired 500-tick learned/frozen runs are documented; random-policy comparison remains open.

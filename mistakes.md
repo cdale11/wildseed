@@ -1,5 +1,12 @@
 # Development mistakes
 
+## 2026-10-02 — Nutrient fields initially broke preview and no-effect contracts
+- Mistake: the first nutrient implementation added two fields to active snapshots but not world previews, and cleared stale underwater nutrient state during unrelated no-effect nature casts.
+- Cause: schema and power changes were reviewed in isolation rather than against the exact-preview and truthful-effect contracts.
+- Resolution: preview and live serialization now share `geography.client_tiles`; underwater nutrient clearing occurs when land is submerged or a terrain-changing power acts.
+- Prevention: run setup-preview and no-effect power tests immediately after adding tile fields, before the full suite.
+- Verification: both focused regressions and all 60 tests pass; browser JavaScript syntax checks pass.
+
 ## 2026-10-02 — Experiment guide replacement dropped prior results
 - Mistake: an edit to document save branches initially replaced the existing paired-learning experiment guide and its published measurements.
 - Cause: treating an existing documentation path as a new file without inspecting its contents first.

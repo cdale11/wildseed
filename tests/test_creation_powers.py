@@ -17,7 +17,7 @@ class CreationTests(unittest.TestCase):
                     tiles=generate(123,32,24,geography,biome)
                     self.assertEqual(len(tiles),768)
                     self.assertTrue(any(t['e']>.37 for t in tiles))
-                    self.assertTrue(all(0<=t[k]<=1 for t in tiles for k in ('e','temp','m','f','grass','trees','grass_seed','tree_seed')))
+                    self.assertTrue(all(0<=t[k]<=1 for t in tiles for k in ('e','temp','m','f','grass','trees','grass_seed','tree_seed','nutrient','litter')))
                     self.assertTrue(all(t['grass']==t['trees']==0 for t in tiles if t['e']<=.37))
             signatures.add(tuple(round(t['e'],4) for t in tiles))
         self.assertEqual(len(signatures),len(GEOGRAPHIES))
@@ -122,7 +122,7 @@ class PowersTests(unittest.TestCase):
             self.assertEqual(migrated.organisms[0].weights[224:], o.weights[224:])
             self.assertTrue(all(t['temp']==.57 for t in migrated.tiles))
             migrated.step();migrated.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'],10)
+            self.assertEqual(json.loads(path.read_text())['version'],11)
 
     def test_v3_save_seeds_existing_vegetation(self):
         import json

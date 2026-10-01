@@ -97,6 +97,8 @@ def generate(seed, width, height, geography='continents', biome='mixed'):
             t['lava'] = 0.0
             t['traffic'] = 0.0
             t['road'] = 0.0
+            t['nutrient'] = fertility * (.35 + .3 * fine[i]) if land else 0.0
+            t['litter'] = (.08 * t['grass'] + .12 * t['trees']) if land else 0.0
             plants.initialize(t, (fine[i] - .5) * .12)
             tiles.append(t)
     return tiles
@@ -106,3 +108,11 @@ def options():
     return {'geographies':[{'id':k,'name':v[0],'description':v[1]} for k,v in GEOGRAPHIES.items()],
             'biomes':[{'id':'mixed','name':'Natural mosaic'}]+[{'id':k,'name':v[0]} for k,v in BIOMES.items()],
             'sizes':[{'id':k,'name':f'{k.title()} · {w} × {h}'} for k,(w,h) in SIZES.items()]}
+
+
+def client_tiles(tiles):
+    """Stable map payload shared by world previews and active snapshots."""
+    return [[round(t[k], 3) for k in ('e', 'm', 'grass', 'trees', 'ore', 'fire', 'f', 'temp')] +
+            [BIOME_NAMES.index(classify(t)), round(t['water'], 3), round(t['lava'], 3),
+             t['grass_pop'], t['tree_pop'], round(t['road'], 3),
+             round(t['nutrient'], 3), round(t['litter'], 3)] for t in tiles]

@@ -47,7 +47,9 @@ def apply(world, tool, x, y, radius=3, strength=1):
                 plants.establish(t,'tree');plants.establish(t,'grass')
             elif tool=='grass' and land:
                 t['grass']=min(1,t['grass']+.45*strength);t['grass_seed']=max(t['grass_seed'],t['grass']);plants.establish(t,'grass')
-            elif tool=='fertile' and land: t['f']=min(1,t['f']+.3*strength)
+            elif tool=='fertile' and land:
+                t['f']=min(1,t['f']+.3*strength)
+                t['nutrient']=min(1,t['nutrient']+.3*strength)
             elif tool=='minerals' and land: t['ore']=min(20,t['ore']+2*strength)
             elif tool=='freeze': t['temp']=max(0,t['temp']-.4*strength);t['fire']=0
             elif tool=='heat': t['temp']=min(1,t['temp']+.4*strength);t['m']=max(0,t['m']-.15*strength);t['water']*=.5
@@ -60,8 +62,12 @@ def apply(world, tool, x, y, radius=3, strength=1):
                 temp,moisture,fertility,trees=BIOMES[tool[6:]][1]
                 t.update(temp=temp,m=moisture,f=fertility,trees=trees*moisture,grass=moisture*fertility,fire=0)
                 t['tree_seed']=t['trees'];t['grass_seed']=t['grass']
+                t['nutrient']=fertility*.5;t['litter']=.08*t['grass']+.12*t['trees']
                 plants.initialize(t)
-            if t['e']<=.37: plants.clear(t);t['fire']=t['water']=t['lava']=t['road']=t['traffic']=0
+            if t['e']<=.37:
+                plants.clear(t);t['fire']=t['water']=t['lava']=t['road']=t['traffic']=0
+                if land or tool in ('ocean','lower','meteor','volcano'):
+                    t['nutrient']=t['litter']=0
             if t!=before: changed+=1
         for o in world.organisms:
             if world.idx(o.x,o.y) not in affected: continue

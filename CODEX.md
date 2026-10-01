@@ -32,6 +32,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 
 - world.py: rules, state, RNG, persistence. No HTTP or DOM.
 - plants.py and society.py: bounded cohort and human-society rules called by the authoritative world.
+- Mineral nutrient and litter pools are authoritative tile state. Keep plant uptake, recycling, water transport and god-power effects bounded; use geography.client_tiles for both previews and active snapshots.
 - geography.py: deterministic terrain/climate generation and map options.
 - powers.py: shared power catalog and measured authoritative effects. Every new power needs a state-effect test.
 - New server starts must request world selection with random seeds. Do not restore implicit auto-resume. Preserve old saves before replacing worlds.
