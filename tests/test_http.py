@@ -10,16 +10,17 @@ import time
 import unittest
 import urllib.error
 import urllib.request
-from http.server import ThreadingHTTPServer
-from wildseed.server import Simulation, handler_for
+from http.server import BaseHTTPRequestHandler
+from wildseed.server import BoundedHTTPServer, Simulation, handler_for
 from wildseed.world import World
 
 class HttpTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.world = World(width=16, height=16, population=5)
-        self.sim = Simulation(self.world, Path(self.temp.name)/'world.json', 'test-secret')
-        self.server = ThreadingHTTPServer(('127.0.0.1', 0), handler_for(self.sim))
+        self.sim = Simulation(self.world, Path(self.temp.name)/'world.json', 'test-secret',
+                              view_token='spectator-secret-long-enough')
+        self.server = BoundedHTTPServer(('127.0.0.1', 0), handler_for(self.sim))
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.url = 'http://127.0.0.1:' + str(self.server.server_port)
@@ -49,6 +50,18 @@ class HttpTests(unittest.TestCase):
         self.assertTrue(self.sim.paused)
         self.assertEqual(self.request('/api/command', {'action':'save'})[0],200)
         self.assertTrue(self.sim.save_path.exists())
+
+    def test_spectator_and_rate_limit(self):
+        self.assertEqual(self.request('/api/state', token='spectator-secret-long-enough')[0], 200)
+        self.assertEqual(self.request('/api/metrics', token='spectator-secret-long-enough')[0], 403)
+        self.assertEqual(self.request('/api/command', {'action':'pause','value':True},
+                                      token='spectator-secret-long-enough')[0], 403)
+        self.assertFalse(self.sim.paused)
+        self.assertEqual(self.request('/api/metrics')[0], 200)
+        self.sim.rate_limit = 1
+        self.sim.request_times.clear()
+        self.assertEqual(self.request('/api/state')[0], 200)
+        self.assertEqual(self.request('/api/state')[0], 429)
 
     def test_setup_and_power_response_through_http(self):
         self.sim.world=None
@@ -102,3 +115,34 @@ class ShutdownTests(unittest.TestCase):
                     process.kill()
                     process.wait(timeout=5)
                 process.stderr.close()
+
+
+class ConnectionLimitTests(unittest.TestCase):
+    def test_second_connection_gets_503_while_first_is_busy(self):
+        entered = threading.Event()
+        release = threading.Event()
+        class SlowHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                entered.set()
+                release.wait(3)
+                self.send_response(200)
+                self.end_headers()
+            def log_message(self, *_args):
+                pass
+        server = BoundedHTTPServer(('127.0.0.1', 0), SlowHandler, max_connections=1)
+        serving = threading.Thread(target=server.serve_forever, daemon=True)
+        serving.start()
+        first = threading.Thread(target=lambda: urllib.request.urlopen(
+            f'http://127.0.0.1:{server.server_port}/', timeout=3).close(), daemon=True)
+        try:
+            first.start()
+            self.assertTrue(entered.wait(2))
+            with self.assertRaises(urllib.error.HTTPError) as error:
+                urllib.request.urlopen(f'http://127.0.0.1:{server.server_port}/', timeout=2)
+            self.assertEqual(error.exception.code, 503)
+        finally:
+            release.set()
+            first.join(timeout=3)
+            server.shutdown()
+            serving.join(timeout=3)
+            server.server_close()

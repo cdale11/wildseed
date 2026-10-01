@@ -1,5 +1,6 @@
 """Authoritative single-world server. Browser clients never advance simulation."""
 import argparse
+from collections import deque
 import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -20,8 +21,9 @@ TOOLS = POWER_IDS
 
 
 class Simulation:
-    def __init__(self, world, save_path, token='', workers=0, device='cpu'):
+    def __init__(self, world, save_path, token='', workers=0, device='cpu', view_token=''):
         self.world, self.save_path, self.token = world, save_path, token
+        self.view_token = view_token
         self.workers, self.device = workers, device
         self.previews = {}
         self.epoch = secrets.token_hex(8)
@@ -31,6 +33,34 @@ class Simulation:
         self.speed = 1
         self.ms = 0
         self.error = None
+        self.rate_lock = threading.Lock()
+        self.request_times = {}
+        self.rate_limit = 120  # API requests per ten seconds per peer
+
+    def role(self, authorization):
+        if not self.token:
+            return 'admin'
+        if hmac.compare_digest(authorization, 'Bearer ' + self.token):
+            return 'admin'
+        if self.view_token and hmac.compare_digest(authorization, 'Bearer ' + self.view_token):
+            return 'viewer'
+        return None
+
+    def allow_request(self, peer):
+        now = time.monotonic()
+        with self.rate_lock:
+            if len(self.request_times) > 1024:
+                self.request_times = {key: times for key, times in self.request_times.items()
+                                      if times and now - times[-1] < 10}
+                while len(self.request_times) > 1024:
+                    self.request_times.pop(next(iter(self.request_times)))
+            times = self.request_times.setdefault(peer, deque())
+            while times and now - times[0] >= 10:
+                times.popleft()
+            if len(times) >= self.rate_limit:
+                return False
+            times.append(now)
+            return True
 
     def run(self):
         last_save = time.monotonic()
@@ -122,6 +152,41 @@ class Simulation:
                 raise ValueError('Unknown action')
 
 
+class BoundedHTTPServer(ThreadingHTTPServer):
+    request_queue_size = 64
+
+    def __init__(self, address, handler, max_connections=64):
+        self.slots = threading.Semaphore(max_connections)
+        self.active_connections = 0
+        self.connection_lock = threading.Lock()
+        super().__init__(address, handler)
+
+    def process_request(self, request, client_address):
+        if not self.slots.acquire(blocking=False):
+            try:
+                request.sendall(b'HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n')
+            finally:
+                self.shutdown_request(request)
+            return
+        with self.connection_lock:
+            self.active_connections += 1
+        try:
+            super().process_request(request, client_address)
+        except Exception:
+            with self.connection_lock:
+                self.active_connections -= 1
+            self.slots.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            with self.connection_lock:
+                self.active_connections -= 1
+            self.slots.release()
+
+
 def handler_for(sim):
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
@@ -139,24 +204,43 @@ def handler_for(sim):
             self.end_headers()
             self.wfile.write(body)
 
-        def authenticated(self):
-            return not sim.token or hmac.compare_digest(self.headers.get('Authorization', ''), 'Bearer ' + sim.token)
+        def api_role(self):
+            if not sim.allow_request(self.client_address[0]):
+                self.reply(429, {'error': 'Rate limit exceeded'})
+                return None
+            role = sim.role(self.headers.get('Authorization', ''))
+            if role is None:
+                self.reply(401, {'error': 'Enter the server access token'})
+            return role
 
         def do_GET(self):
             path = urlsplit(self.path).path
             if path == '/health':
                 self.reply(503 if sim.error else 200, {'ok': not bool(sim.error)})
             elif path == '/api/state':
-                if not self.authenticated():
-                    return self.reply(401, {'error': 'Enter the server access token'})
+                role = self.api_role()
+                if role is None:
+                    return
                 with sim.lock:
                     state = sim.world.snapshot() if sim.world else {}
                     state.update(setup_required=sim.world is None, epoch=sim.epoch, options=options(),
                                  powers=[{'id':p[0],'icon':p[1],'name':p[2],'group':p[3]} for p in POWER_INFO])
                     state['runtime'] = {'paused': sim.paused, 'speed': sim.speed, 'tick_ms': round(sim.ms, 2),
                                         'workers': sim.world.engine.workers if sim.world else sim.workers, 'device': sim.device,
-                                        'error': sim.error}
+                                        'error': sim.error, 'role': role}
                 self.reply(200, state)
+            elif path == '/api/metrics':
+                role = self.api_role()
+                if role is None:
+                    return
+                if role != 'admin':
+                    return self.reply(403, {'error': 'Administrator access required'})
+                with sim.lock:
+                    self.reply(200, {'tick': sim.world.tick if sim.world else 0,
+                                     'population': len(sim.world.organisms) if sim.world else 0,
+                                     'tick_ms': round(sim.ms, 2),
+                                     'active_connections': getattr(self.server, 'active_connections', 0),
+                                     'training_steps': sim.world.training_steps if sim.world else 0})
             elif path in ('/', '/app.js', '/renderer.js', '/style.css'):
                 file = WEB / ('index.html' if path == '/' else path[1:])
                 mime = 'text/html' if path == '/' else 'text/javascript' if path.endswith('.js') else 'text/css'
@@ -167,8 +251,11 @@ def handler_for(sim):
         def do_POST(self):
             if urlsplit(self.path).path != '/api/command':
                 return self.reply(404, {'error': 'Not found'})
-            if not self.authenticated():
-                return self.reply(401, {'error': 'Unauthorized'})
+            role = self.api_role()
+            if role is None:
+                return
+            if role != 'admin':
+                return self.reply(403, {'error': 'Administrator access required'})
             # Reject cross-origin browser commands, including localhost CSRF.
             origin = self.headers.get('Origin')
             if origin and urlsplit(origin).netloc != self.headers.get('Host'):
@@ -204,11 +291,14 @@ def main():
     if args.workers < 0:
         parser.error('workers must be nonnegative')
     token = os.environ.get('WILDSEED_TOKEN', '')
+    view_token = os.environ.get('WILDSEED_VIEW_TOKEN', '')
     if args.host not in ('127.0.0.1', 'localhost', '::1') and len(token) < 24:
         parser.error('Remote binding requires WILDSEED_TOKEN of at least 24 characters')
+    if view_token and (len(view_token) < 24 or view_token == token):
+        parser.error('WILDSEED_VIEW_TOKEN must be distinct and at least 24 characters')
     world = World.load(args.load, args.workers, args.device) if args.load else None
-    sim = Simulation(world, args.save, token, args.workers, args.device)
-    server = ThreadingHTTPServer((args.host, args.port), handler_for(sim))
+    sim = Simulation(world, args.save, token, args.workers, args.device, view_token)
+    server = BoundedHTTPServer((args.host, args.port), handler_for(sim))
     worker = threading.Thread(target=sim.run, daemon=True)
     worker.start()
     def terminate(_signum, _frame):

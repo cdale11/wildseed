@@ -1,5 +1,9 @@
 # Validation — 2026-10-01
 
+## Version 0.9.0 transport limits — 2026-10-02
+
+All 52 automated tests pass. A real loopback HTTP test holds one connection open and confirms a second receives 503 at a one-connection cap; another checks spectator read access, denied mutations/metrics, administrator metrics and 429 rate limiting. The 200-request loopback load run at concurrency 32 with a 16-connection cap returned 120 successful responses and 80 rate-limited responses, median 158.89 ms, p95 218.38 ms, throughput 245.43 requests/s. It exercises transport and snapshot serialization for a 32×24, 80-organism world; it is not a production internet or multi-client scale result.
+
 ## Version 0.8.0 recurrent inference — 2026-10-02
 
 All 50 automated tests pass, including policy migration from version 1 and version 9, zeroed new recurrent connections, pending movement-credit migration, memory persistence, deterministic continuation and scalar/process inference agreement. A 200-tick, 250-initial-organism, one-worker run reached 29.14 ticks/s (median 33.77 ms, p95 52.33 ms; 728 final organisms). This is slower than the prior 20-input policy but remains above the 8-tick target for this short workload.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 — 2026-10-02
+
+- Added administrator and read-only spectator tokens, with spectator controls disabled in the browser.
+- Bounded the HTTP server to 64 active connections and API traffic to 120 requests per ten seconds per peer; excess work receives 503 or 429.
+- Added administrator-only `/api/metrics` and a repeatable local HTTP load test.
+
 ## 0.8.0 — 2026-10-02
 
 - Organisms now feed their previous eight hidden activations into the next neural decision, giving policies recurrent state across ticks.

@@ -47,7 +47,7 @@ Acceptance: settlements survive and fail for inspectable reasons; reproducible h
 - [ ] Structure-of-arrays state, vectorized learning and GPU-resident policy tensors.
 - [ ] Deterministic phased tile work, spatial partitioning and regional simulation.
 - [ ] Delta streams, interest management and client backpressure.
-- [ ] Metrics, bounded connections, rate limits, authenticated roles and load tests.
+- [x] Administrator/spectator roles, bounded connections, per-peer rate limits, metrics and loopback load tests.
 - [ ] Save migrations, replay/branching, experiment registry and deployment CI.
 Acceptance: documented latency/memory curves and backend parity tolerances on specified Linux hardware.
 
