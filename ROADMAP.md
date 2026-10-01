@@ -49,6 +49,7 @@ Acceptance: settlements survive and fail for inspectable reasons; reproducible h
 - [ ] Delta streams, interest management and client backpressure.
 - [x] Administrator/spectator roles, bounded connections, per-peer rate limits, metrics and loopback load tests.
 - [x] Save migrations, reproducible local branches, intervention manifests and test CI.
+- [x] Checksum-verified, no-overwrite backup command for trusted saves.
 - [ ] Automated deployment and off-host save backups.
 Acceptance: documented latency/memory curves and backend parity tolerances on specified Linux hardware.
 

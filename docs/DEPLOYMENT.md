@@ -13,6 +13,22 @@ docker compose up --build -d
 
 The host port binds to 127.0.0.1:8080. Reach it through an SSH tunnel (`ssh -L 8080:127.0.0.1:8080 your-server`) or a TLS reverse proxy. Enter the administrator token to create worlds and cast powers, or the optional spectator token to watch. The named volume stores data/world.json. Maintain independent backups. Graceful Ctrl+C and SIGTERM save the current world before exit. Abrupt termination or power loss can lose changes since the last minute's autosave.
 
+## Backups
+
+For a native installation, mount separate storage at `/mnt/wildseed-backups` and run:
+
+```sh
+python3 -m wildseed.backup data/world.json /mnt/wildseed-backups
+```
+
+For Compose, make that host directory writable by the container UID 10001, then run:
+
+```sh
+docker compose run --rm -v /mnt/wildseed-backups:/backup wildseed python -m wildseed.backup /app/data/world.json /backup
+```
+
+Schedule the appropriate command with a host cron job or systemd timer after provisioning the server. The command copies a complete atomic save, writes a SHA-256 manifest and refuses to overwrite a backup with the same name. It performs no retention or remote transfer by itself; mount a separate/off-host target and test restoration with `python3 -m wildseed.server --load /path/to/backup.json`. Keep the backup destination protected because world state and learned policies are included.
+
 ## Native Linux
 
 ```sh

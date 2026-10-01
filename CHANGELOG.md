@@ -5,6 +5,7 @@
 - Added `python3 -m wildseed.branch` to replay a trusted save into a separate branch, optionally apply one god intervention and advance a chosen number of ticks.
 - Each branch records the parent and result hashes, seed, tick range, intervention effect and resulting metrics in an experiment manifest. Existing saves and manifests are protected from accidental overwrite.
 - Documented causal comparisons and brought the README's feature inventory in line with the current implementation.
+- Added a checksum-verified backup command for atomic saved worlds, with no-overwrite publication and deployment instructions for separate storage.
 
 ## 0.9.0 — 2026-10-02
 

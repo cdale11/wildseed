@@ -2,7 +2,7 @@
 
 ## Version 0.10.0 save branches and current CPU scaling — 2026-10-02
 
-All 54 automated tests pass, including source-preserving deterministic branches, different outcomes after a measured rain cast, manifest hashes and refusal to overwrite existing outputs. A current seed-42, 96×64, 250-initial-organism, 200-tick benchmark ended with 728 organisms in every worker configuration:
+All 56 automated tests pass, including source-preserving deterministic branches, different outcomes after a measured rain cast, manifest hashes, backup checksum verification and refusal to overwrite existing outputs. A current seed-42, 96×64, 250-initial-organism, 200-tick benchmark ended with 728 organisms in every worker configuration:
 
 | CPU workers | Median tick | p95 tick | Throughput |
 |---|---:|---:|---:|

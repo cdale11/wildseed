@@ -11,6 +11,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 - Keep changes cohesive. Avoid unrelated refactors and dependencies without a demonstrated need.
 - Never commit credentials, tokens, personal data, generated saves or cache files.
 - Use `python3 -m wildseed.branch` for reproducible save-based intervention comparisons; keep generated branches and experiment manifests out of Git.
+- Use `python3 -m wildseed.backup` for verified no-overwrite copies to separate storage; never treat an in-volume copy as off-host protection.
 - Keep all simulation state/RNG authoritative on the server. Client render timing must not affect outcomes.
 - No proprietary game assets, copied UI artwork or extracted game code.
 - No hidden external LLM calls. Learning is local and inspectable.
