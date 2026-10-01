@@ -44,3 +44,19 @@ class HttpTests(unittest.TestCase):
         self.assertTrue(self.sim.paused)
         self.assertEqual(self.request('/api/command', {'action':'save'})[0],200)
         self.assertTrue(self.sim.save_path.exists())
+
+    def test_setup_and_power_response_through_http(self):
+        self.sim.world=None
+        code,body=self.request('/api/state')
+        state=json.loads(body)
+        self.assertTrue(state['setup_required'])
+        code,body=self.request('/api/command',{'action':'preview','geography':'highlands','biome':'temperate','size':'small'})
+        self.assertEqual(code,200);preview=json.loads(body)['result']
+        request={'action':'new_world','geography':'highlands','biome':'temperate','size':'small',
+                 'seed':preview['seed'],'epoch':state['epoch'],'population':0}
+        self.assertEqual(self.request('/api/command',request)[0],200)
+        self.addCleanup(self.sim.world.engine.close)
+        code,body=self.request('/api/command',{'action':'tool','tool':'ocean','x':8,'y':8,'radius':1})
+        self.assertEqual(code,200)
+        self.assertEqual(json.loads(body)['result']['tiles_changed'],5)
+        self.assertEqual(self.sim.world.tiles[self.sim.world.idx(8,8)]['e'],.18)

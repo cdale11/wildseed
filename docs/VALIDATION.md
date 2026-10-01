@@ -37,3 +37,11 @@ Seed 42, one worker, 250 starting organisms:
 | 1,000 ticks | 2,498 | 178.87 ms | 220.37 ms | 6.98 ticks/s |
 
 The short run overlapped the longer benchmark, so timings are indicative rather than an isolated apples-to-apples comparison with 0.1.0. At nearly the 2,500 population cap, this single-worker run misses the 8 Hz target. Optimization of training/perception and population-scale profiling remains necessary. Population survival alone does not demonstrate stable diversity or improved hunting; species-level and frozen-policy experiments are still outstanding. No browser assets changed in this version.
+
+## Version 0.3.0 world creation and powers
+
+23 automated tests pass. Coverage includes all 30 catalog powers producing actual state changes under suitable conditions, no-effect feedback for water/population caps, brush boundaries, rain/fire, immediate water cleanup, temperature-dependent growth, version 1/2 migration, random preview uniqueness, exact preview/create agreement, stale replacement protection, and archiving existing saves. All 72 geography/climate combinations were checked at seed 123 for valid bounded fields and land; this is not exhaustive seed testing.
+
+Browser verification: selected Archipelago/Rainforest, created preview seed 479790552, paused the live world and cast Ocean at (48,32). A before/after server comparison confirmed exactly 29 changed tiles and immediate grass/tree removal. Mountain restored elevation; Meteor then altered terrain and killed six organisms. Browser console showed no errors. Desktop and narrow setup layouts were inspected; screenshots are provided with the deliverables. A subsequent browser refresh check was interrupted when the preview process received SIGTERM; server restart was independently confirmed to return setup_required=true despite an existing save. Browser refresh/rejoin is implemented but that final UI rejoin check was not completed.
+
+CPU benchmark: seed 42, 250 starting organisms, 200 ticks, one worker; 919 final organisms; median 23.37 ms, p95 48.78 ms, 39.16 ticks/sec. Changed generation means this is a new workload, not a controlled comparison to prior versions. Full geography/climate stability, fluid rivers/lava and network topology evolution are not claimed. CI now targets Python 3.11 and 3.13; local tests ran on 3.13.11.

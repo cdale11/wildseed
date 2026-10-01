@@ -11,6 +11,13 @@
 - [ ] Benchmark and optimize full tick scaling across available CPUs.
 - [x] Publish tested source on the public main branch.
 
+## World creation and powers (0.3.0)
+- [x] Fresh random world setup, eight geographies, nine climate choices and exact previews.
+- [x] Thirty validated god powers with brush controls and measured feedback.
+- [x] Procedural biome colors, shaded relief, coasts, trees and creature sprites.
+- [x] Save v3 migration and archive-before-replacement.
+- [ ] Physical hydrology/lava, biome succession and deeper temperature adaptation experiments.
+
 ## Phase 1: ecological depth
 - [x] Species-aware directional perception of prey, threats, food and materials.
 - [ ] Demonstrate learned predator tracking/threat avoidance against frozen-policy baselines.

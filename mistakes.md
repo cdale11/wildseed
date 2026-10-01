@@ -19,3 +19,9 @@
 - Resolution: species-specific food sensing and separate directional threat/material inputs, indexed before each tick.
 - Prevention: test ecological meaning of observations, not only policy math and finite state.
 - Verification: tests cover live/dead prey, wrapped sight lines, water occlusion and species-specific channels. Learned behavior remains to be evaluated.
+
+## 2026-10-01 — God powers lacked truthful immediate feedback
+- Mistake: the initial command API returned success for no-effect casts, and lowered water tiles retained vegetation until a later climate tick.
+- Resolution: power results count actual changes, life casts target habitable cells only, and water clears incompatible vegetation/fire immediately.
+- Prevention: test every catalog power for real state changes and explicit no-effect cases; verify browser casts against server snapshots.
+- Verification: ocean brush changed exactly 29 cells through the UI, with immediate vegetation clearing; meteor removed six organisms and changed terrain. Unit coverage includes all 30 powers.

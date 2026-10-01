@@ -4,7 +4,7 @@
 
 One Linux process owns a world; it advances at a fixed logical timestep independently of wall time and connected browsers. A single simulation lock serializes commands, ticks and saves. Background process workers perform pure neural inference; the parent owns learning, mutation and action RNG. Threaded HTTP serves read snapshots and validated commands. This simple initial transport should be replaced or bounded behind a production proxy for larger deployments.
 
-The initial world is a 96×64 periodic grid with elevation, moisture, fertility, grass, trees, ore and fire fields. Scalar waves generate initial geography. Rain-dependent local sediment transfer conserves transferred elevation mass. The biome renderer derives colors and tiny tree sprites from state/coordinates. There are no downloaded assets. The periodic coordinate indexing is not yet matched by periodic initial noise or settlement distance calculations: seams are a known prototype limitation.
+The initial world is a 96×64 periodic grid with elevation, moisture, fertility, grass, trees, ore fire and temperature fields. Periodic multiscale value noise and geography-specific masks generate initial terrain. Eight geography presets and eight climate profiles plus a natural mosaic are selectable. World sizes are 64×48, 96×64 and 144×96. Rain-dependent local sediment transfer conserves transferred elevation mass. The biome renderer derives colors and tiny tree sprites from state/coordinates. There are no downloaded assets. Noise is periodic, but shaped geography masks and settlement distances are not uniformly periodic: seams remain a known prototype limitation.
 
 ## Organisms
 
@@ -18,7 +18,7 @@ Vegetation grows from moisture/soil, feeding drains biomass and fertility, death
 
 ## Persistence and API
 
-Schema version 2 JSON stores full precision state, neural weights and Python RNG state. Write-to-temporary + fsync + atomic rename protects the last completed save from partial writes. Only trusted server-owned saves are loaded. `/api/state` is a rendering snapshot and is not a save. `/api/command` accepts pause, speed, save, tool. `/health` reports simulation failure. Browser remote access uses a bearer token entered by the user; tokens remain in JS memory and are not put in URLs/storage. Commands reject cross-origin Origin headers and non-JSON bodies. Remote bind requires a 24+ character token. Terminate TLS at a reverse proxy; do not expose this development HTTP server directly to the internet.
+Schema version 3 JSON stores full precision state, neural weights and Python RNG state. Write-to-temporary + fsync + atomic rename protects the last completed save from partial writes. Only trusted server-owned saves are loaded. `/api/state` is a rendering snapshot and is not a save. `/api/command` accepts preview, new_world, pause, speed, save and tool. `/health` reports simulation failure. Browser remote access uses a bearer token entered by the user; tokens remain in JS memory and are not put in URLs/storage. Commands reject cross-origin Origin headers and non-JSON bodies. Remote bind requires a 24+ character token. Terminate TLS at a reverse proxy; do not expose this development HTTP server directly to the internet.
 
 ## Scaling
 
@@ -26,4 +26,10 @@ Schema version 2 JSON stores full precision state, neural weights and Python RNG
 
 ## Save migration
 
-Version 1 policies are migrated by retaining each hidden unit’s original 12 input connections, adding eight zero-weight sensory connections, and retaining all output connections. RNG state is preserved. Perception semantics changed, so migrated worlds do not reproduce version 1 trajectories; deterministic continuation applies within version 2. Save writes upgrade to version 2; keep a backup if version 1 rollback is needed.
+Version 1 policies are migrated by retaining each hidden unit’s original 12 input connections, adding eight zero-weight sensory connections, and retaining all output connections. RNG state is preserved. Perception semantics changed, so migrated worlds do not reproduce version 1 trajectories; deterministic continuation applies within version 2. Version 3 adds tile temperature and world geography/biome metadata; old saves get temperate temperature defaults without changing their existing terrain. Save writes upgrade to version 3; keep a backup if version 1 rollback is needed.
+
+## New worlds and powers
+
+Default startup has no active world and does not read the previous save. Authenticated clients fetch setup options from /api/state, request a preview with server-generated random seed, and create the matching landscape. The server retains at most 16 preview configurations and verifies selected seed/options and world epoch before replacement. A stale client cannot replace a newer world. Existing live or on-disk saves are archived before replacement; generation failure leaves the live world intact. New worlds are shared: page refreshes reconnect, not reset. Explicit --load opts into resume.
+
+Powers are defined in powers.py with a shared server/UI catalog. They report tile changes, spawned/altered/killed organisms and destroyed settlements. No-effect casts are explicit. Water clears trees/grass/fire immediately. Life casts choose habitable tiles in the brush and honor the population cap. Temperature affects growth and metabolic cost; biome brushes change climate/soil/vegetation rather than only color. Renderer biome classification can change as climate evolves. Rivers and volcanoes are geometric/temperature approximations, not full fluid or lava simulations. Cognitive decisions remain the existing online-trained 20→8→7 MLPs; the mutation power changes neural weights and size, but does not evolve topology.

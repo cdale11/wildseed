@@ -30,3 +30,7 @@ python3 -m wildseed.server --device cuda --workers 0
 CUDA inference is optional. Training/rules remain CPU-side. If CUDA is unavailable, explicit CUDA selection fails rather than pretending to accelerate. A cloud vGPU needs a compute-capable profile, host drivers and device exposure; a software display GPU will not work. The CPU Docker image does not include PyTorch or configure GPU passthrough. Validate numerical agreement, throughput and memory on the target host before recommending GPU mode.
 
 No remote server has been provisioned or deployed as of 2026-10-01.
+
+## Startup behavior (0.3.0+)
+
+Every normal server start waits for browser world selection with a fresh random seed. Saves are not auto-resumed. To deliberately resume, add `--load data/world.json`. Browser refreshes join the current shared world. New world creation archives prior state under data/archives before replacing it. Keep volume backups and monitor archive disk usage.

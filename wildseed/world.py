@@ -7,6 +7,9 @@ import os
 from pathlib import Path
 import random
 
+from .geography import generate, classify, BIOME_NAMES
+from .powers import apply as apply_power
+
 from .brain import BrainEngine, PARAMS, HIDDEN, learn
 
 SPECIES = ('grazer', 'predator', 'human')
@@ -33,12 +36,13 @@ class Organism:
 
 
 class World:
-    VERSION = 2
+    VERSION = 3
 
-    def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250):
+    def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed'):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
             raise ValueError('Dimensions must be between 16 and 256')
         self.seed, self.width, self.height = seed, width, height
+        self.geography, self.biome = geography, biome
         self.rng = random.Random(seed)
         self.tick = 0
         self.next_id = 1
@@ -54,22 +58,7 @@ class World:
         self.event('A new world takes its first breath.')
 
     def generate(self):
-        phases = [self.rng.random() * math.tau for _ in range(8)]
-        tiles = []
-        for y in range(self.height):
-            for x in range(self.width):
-                nx, ny = x / self.width, y / self.height
-                waves = sum(math.sin(nx * (i + 1) * 6 + phases[i]) *
-                            math.cos(ny * (i + 1) * 5 + phases[7 - i]) / (i + 1)
-                            for i in range(5))
-                elevation = 0.49 + waves * .22 - .25 * ((nx - .5)**2 + (ny - .5)**2)
-                moisture = max(.05, min(1, .5 + .3 * math.sin(nx * 11 + phases[5]) + .15 * math.cos(ny * 15)))
-                land = elevation > .37
-                tiles.append({'e': elevation, 'm': moisture, 'f': .65,
-                              'grass': self.rng.random() * moisture if land else 0,
-                              'trees': self.rng.random() * moisture if land and elevation < .72 else 0,
-                              'ore': max(0, elevation - .52) * 10, 'fire': 0.0})
-        return tiles
+        return generate(self.seed, self.width, self.height, self.geography, self.biome)
 
     def idx(self, x, y):
         return (y % self.height) * self.width + x % self.width
@@ -151,9 +140,9 @@ class World:
             x, y = i % self.width, i // self.width
             t['m'] = max(0, min(1, t['m'] + .006 * season - .001 + t['trees'] * .0015))
             if t['e'] > .37:
-                growth = .028 * t['m'] * t['f'] * (.7 + .3 * season)
+                growth = .028 * t['m'] * t['f'] * (.7 + .3 * season) * max(.08, 1 - abs(t['temp'] - .6)*1.7)
                 t['grass'] = min(1, t['grass'] + growth * (1 - t['trees'] * .4))
-                t['trees'] = min(1, t['trees'] + .0025 * t['m'] * t['f'])
+                t['trees'] = min(1, t['trees'] + .0025 * t['m'] * t['f'] * max(0, t['temp']-.15))
                 t['f'] = min(1, t['f'] + .0003)
                 if t['fire'] > 0:
                     t['grass'] *= .6
@@ -247,7 +236,7 @@ class World:
                     bonus += .8
             if t['e'] <= .37:
                 o.energy -= 3
-            o.energy -= t['fire'] * 8
+            o.energy -= t['fire'] * 8 + max(0, abs(t['temp']-.55)-.3)*.6
             o.energy = min(160, o.energy)
             if o.age > 1400 / o.size:
                 o.energy = 0
@@ -281,27 +270,14 @@ class World:
             counts = Counter(o.kind for o in self.organisms)
             self.event(f"Census: {counts['human']} humans, {counts['grazer']} grazers, {counts['predator']} predators.")
 
-    def intervene(self, tool, x, y, radius=3):
-        if tool in SPECIES:
-            for _ in range(8):
-                self.spawn(tool, x + self.rng.randint(-radius, radius), y + self.rng.randint(-radius, radius))
-        else:
-            for dy in range(-radius, radius + 1):
-                for dx in range(-radius, radius + 1):
-                    if dx * dx + dy * dy > radius * radius:
-                        continue
-                    t = self.tiles[self.idx(x + dx, y + dy)]
-                    if tool == 'raise': t['e'] = min(.95, t['e'] + .055)
-                    elif tool == 'lower': t['e'] = max(.05, t['e'] - .055)
-                    elif tool == 'rain': t['m'] = min(1, t['m'] + .3); t['fire'] = 0
-                    elif tool == 'forest' and t['e'] > .37: t['trees'] = min(1, t['trees'] + .4); t['grass'] = min(1, t['grass'] + .3)
-                    elif tool == 'fire' and t['e'] > .37: t['fire'] = 1
-        self.event(f'{tool.capitalize()} at ({x}, {y}).')
+    def intervene(self, tool, x, y, radius=3, strength=1):
+        return apply_power(self, tool, x, y, radius, strength)
 
     def snapshot(self):
         counts = dict(Counter(o.kind for o in self.organisms))
         return {'seed': self.seed, 'tick': self.tick, 'width': self.width, 'height': self.height,
-                'tiles': [[round(t[k], 3) for k in ('e', 'm', 'grass', 'trees', 'ore', 'fire', 'f')] for t in self.tiles],
+                'geography': self.geography, 'biome': self.biome,
+                'tiles': [[round(t[k], 3) for k in ('e', 'm', 'grass', 'trees', 'ore', 'fire', 'f', 'temp')] + [BIOME_NAMES.index(classify(t))] for t in self.tiles],
                 'organisms': [{k: v for k, v in asdict(o).items() if k != 'weights'} for o in self.organisms],
                 'settlements': self.settlements, 'events': list(self.events),
                 'stats': {'population': len(self.organisms), 'counts': counts, 'births': self.births,
@@ -312,6 +288,7 @@ class World:
     def save(self, path):
         payload = {'version': self.VERSION, 'seed': self.seed, 'width': self.width, 'height': self.height,
                    'tick': self.tick, 'next_id': self.next_id, 'rng': self.rng.getstate(),
+                   'geography': self.geography, 'biome': self.biome,
                    'tiles': self.tiles, 'organisms': [asdict(o) for o in self.organisms],
                    'settlements': self.settlements, 'events': list(self.events),
                    'births': self.births, 'deaths': self.deaths, 'training_steps': self.training_steps}
@@ -328,7 +305,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, cls.VERSION):
+        if version not in (1, 2, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -340,7 +317,12 @@ class World:
                     for value in old[j * 12:(j + 1) * 12] + [0.0] * 8] + old[96:]
         if any(len(o['weights']) != PARAMS for o in data['organisms']):
             raise ValueError('Invalid policy length')
-        world = cls(data['seed'], data['width'], data['height'], workers, device, population=0)
+        for tile in data['tiles']:
+            tile.setdefault('temp', .57)
+        data.setdefault('geography', 'continents')
+        data.setdefault('biome', 'mixed')
+        world = cls(data['seed'], data['width'], data['height'], workers, device, population=0,
+                    geography=data['geography'], biome=data['biome'])
         rng = data.pop('rng')
         world.rng.setstate((rng[0], tuple(rng[1]), rng[2]))
         data['organisms'] = [Organism(**o) for o in data['organisms']]

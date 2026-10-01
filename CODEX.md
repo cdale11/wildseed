@@ -29,6 +29,9 @@ Build a maintainable, performant, original god simulation with procedural graphi
 ## Architecture boundaries
 
 - world.py: rules, state, RNG, persistence. No HTTP or DOM.
+- geography.py: deterministic terrain/climate generation and map options.
+- powers.py: shared power catalog and measured authoritative effects. Every new power needs a state-effect test.
+- New server starts must request world selection with random seeds. Do not restore implicit auto-resume. Preserve old saves before replacing worlds.
 - brain.py: inference and training. Workers must not mutate authoritative state.
 - server.py: transport, validation, tick ownership, persistence orchestration.
 - web/: rendering and commands only; no duplicate simulation.
