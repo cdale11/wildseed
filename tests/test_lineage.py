@@ -50,6 +50,9 @@ class LineageTests(unittest.TestCase):
             for item in data['organisms']:
                 for key in ('parent_a', 'parent_b', 'thermal_opt'):
                     del item[key]
+                current = item['weights']
+                item['weights'] = [value for j in range(8) for value in current[j*28:j*28+20]] + current[224:]
+                del item['memory']
             path.write_text(json.dumps(data))
             migrated = World.load(path)
             self.addCleanup(migrated.engine.close)

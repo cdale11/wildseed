@@ -1,6 +1,6 @@
 """Seeded ecology with mutable terrain, individual policies and settlements."""
 from collections import Counter, deque
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 import json
 import math
 import os
@@ -41,10 +41,11 @@ class Organism:
     thermal_opt: float = .55
     household: int = 0
     occupation: str = 'forager'
+    memory: list = field(default_factory=lambda: [0.0] * HIDDEN)
 
 
 class World:
-    VERSION = 9
+    VERSION = 10
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -155,7 +156,8 @@ class World:
             materials.append(material_signal)
         local_food = min(1, prey[index]) if o.kind == 'predator' else t['grass']
         return [1, o.energy / 150, min(1, o.age / 1000), local_food, t['trees'],
-                t['m'], t['fire'], math.sin(self.tick / 180), *food, *danger, *materials]
+                t['m'], t['fire'], math.sin(self.tick / 180), *food, *danger, *materials,
+                *o.memory]
 
     def climate(self):
         season = math.sin(self.tick / 180)
@@ -257,6 +259,7 @@ class World:
         for o, obs, (hidden, probs) in zip(cohort, observations, predictions):
             if o.energy <= 0:
                 continue
+            o.memory = hidden.copy()
             before = o.energy
             o.age += 1
             o.energy -= .22 * o.size + (.08 if o.kind == 'predator' else 0)
@@ -357,7 +360,7 @@ class World:
                 'tiles': [[round(t[k], 3) for k in ('e', 'm', 'grass', 'trees', 'ore', 'fire', 'f', 'temp')] +
                           [BIOME_NAMES.index(classify(t)), round(t['water'], 3), round(t['lava'], 3),
                            t['grass_pop'], t['tree_pop'], round(t['road'], 3)] for t in self.tiles],
-                'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move')} for o in self.organisms],
+                'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move', 'memory')} for o in self.organisms],
                 'settlements': self.settlements, 'households': self.households,
                 'caravans': caravans,
                 'events': list(self.events),
@@ -394,7 +397,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -403,7 +406,14 @@ class World:
                 if len(old) != 152:
                     raise ValueError('Invalid version 1 policy length')
                 organism['weights'] = [value for j in range(HIDDEN)
-                    for value in old[j * 12:(j + 1) * 12] + [0.0] * 8] + old[96:]
+                    for value in old[j * 12:(j + 1) * 12] + [0.0] * 16] + old[96:]
+        elif version < 10:
+            for organism in data['organisms']:
+                old = organism['weights']
+                if len(old) != 216:
+                    raise ValueError('Invalid legacy policy length')
+                organism['weights'] = [value for j in range(HIDDEN)
+                    for value in old[j * 20:(j + 1) * 20] + [0.0] * 8] + old[160:]
         if any(len(o['weights']) != PARAMS for o in data['organisms']):
             raise ValueError('Invalid policy length')
         for tile in data['tiles']:
@@ -436,6 +446,9 @@ class World:
         world.rng.setstate((rng[0], tuple(rng[1]), rng[2]))
         for organism in data['organisms']:
             organism.setdefault('thermal_opt', data['tiles'][organism['y'] * data['width'] + organism['x']]['temp'])
+            organism.setdefault('memory', [0.0] * HIDDEN)
+            if organism.get('last_move') and len(organism['last_move'][0]) == 20:
+                organism['last_move'][0].extend([0.0] * HIDDEN)
         data['organisms'] = [Organism(**o) for o in data['organisms']]
         data['events'] = deque(data['events'], maxlen=60)
         data['ancestry'] = deque(data['ancestry'], maxlen=50000)

@@ -1,5 +1,12 @@
 # Development mistakes
 
+## 2026-10-02 — Legacy-save tests initially used new policy shapes
+- Mistake: several migration fixtures changed only the save version number while retaining the new 28-input neural weights.
+- Cause: the fixtures had represented older tile schemas but did not also reconstruct the older policy layout.
+- Resolution: fixtures now remove the eight recurrent input weights per hidden unit and the new memory field before loading.
+- Prevention: migration tests must build the complete source-version schema, including network dimensions and pending training traces.
+- Verification: all 50 tests pass, including version 1, 2, 6, 7 and 9 migration paths.
+
 ## 2026-10-02 — Rare seeds initially failed to establish plant cohorts
 - Mistake: dispersal placed a small positive seed bank in bare land, but integer rounding made its target population zero on the next update.
 - Cause: the cohort target used `int(capacity * seed * fitness)` without a minimum for viable seeds.

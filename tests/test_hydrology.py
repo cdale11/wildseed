@@ -57,4 +57,4 @@ class HydrologyTests(unittest.TestCase):
             self.assertTrue(all(t['grass_pop'] == int(t['grass'] * 100) for t in loaded.tiles))
             loaded.step()
             loaded.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'], 9)
+            self.assertEqual(json.loads(path.read_text())['version'], 10)

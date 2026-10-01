@@ -57,6 +57,9 @@ class SocietyTests(unittest.TestCase):
             for organism in data['organisms']:
                 del organism['household']
                 del organism['occupation']
+                current = organism['weights']
+                organism['weights'] = [value for j in range(8) for value in current[j*28:j*28+20]] + current[224:]
+                del organism['memory']
             path.write_text(json.dumps(data))
             migrated = World.load(path)
             self.addCleanup(migrated.engine.close)

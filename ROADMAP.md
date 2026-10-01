@@ -24,7 +24,7 @@
 - [x] Species-aware directional perception of prey, threats, food and materials.
 - [ ] Demonstrate learned predator tracking/threat avoidance against frozen-policy baselines.
 - [x] Reproducible paired learned/frozen runs with exposure-adjusted hunts and a directional policy probe.
-- [ ] Recurrent memory.
+- [x] Eight-value recurrent hidden-state memory persisted per organism; long-horizon gradient training remains open.
 - [x] Tile seed banks, local dispersal and grass/tree competition.
 - [x] Explicit local plant cohorts, population counts and inherited climate trait means.
 - [x] Local water flow, suspended soil transport and lava cooling.

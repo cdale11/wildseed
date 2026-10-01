@@ -50,8 +50,8 @@ class PerceptionTests(unittest.TestCase):
             weights = loaded.organisms[0].weights
             self.assertEqual(len(weights), PARAMS)
             for j in range(8):
-                self.assertEqual(weights[j*20:j*20+12],old[j*12:j*12+12])
-                self.assertEqual(weights[j*20+12:j*20+20],[0]*8)
-            self.assertEqual(weights[160:],old[96:])
+                self.assertEqual(weights[j*28:j*28+12],old[j*12:j*12+12])
+                self.assertEqual(weights[j*28+12:j*28+28],[0]*16)
+            self.assertEqual(weights[224:],old[96:])
             loaded.step(); loaded.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'],9)
+            self.assertEqual(json.loads(path.read_text())['version'],10)

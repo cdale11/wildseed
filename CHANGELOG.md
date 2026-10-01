@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0 — 2026-10-02
+
+- Organisms now feed their previous eight hidden activations into the next neural decision, giving policies recurrent state across ticks.
+- Recurrent state persists in saves; v1–v9 policies migrate with zero-weight memory connections, preserving their existing input/output weights.
+- Save schema v10 migrates pending predator move traces as well as policies. Training remains one-step and does not backpropagate through time.
+
 ## 0.7.0 — 2026-10-02
 
 - Settlements with food surpluses now barter through pathfinding caravans for scarce ore or wood; goods leave stock on dispatch and arrive after route-dependent travel.

@@ -8,7 +8,7 @@ import multiprocessing
 import os
 from concurrent.futures import ProcessPoolExecutor
 
-INPUTS, HIDDEN, ACTIONS = 20, 8, 7
+INPUTS, HIDDEN, ACTIONS = 28, 8, 7
 PARAMS = INPUTS * HIDDEN + HIDDEN * ACTIONS
 
 

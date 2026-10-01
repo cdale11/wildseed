@@ -110,12 +110,19 @@ class PowersTests(unittest.TestCase):
             data=json.loads(path.read_text());data['version']=2
             data.pop('geography');data.pop('biome')
             for t in data['tiles']:t.pop('temp')
+            for organism in data['organisms']:
+                current=organism['weights']
+                organism['weights']=[v for j in range(8) for v in current[j*28:j*28+20]]+current[224:]
+                organism.pop('memory')
             path.write_text(json.dumps(data))
             migrated=World.load(path);self.addCleanup(migrated.engine.close)
-            self.assertEqual(migrated.organisms[0].weights,o.weights)
+            for j in range(8):
+                self.assertEqual(migrated.organisms[0].weights[j*28:j*28+20], o.weights[j*28:j*28+20])
+                self.assertEqual(migrated.organisms[0].weights[j*28+20:(j+1)*28], [0]*8)
+            self.assertEqual(migrated.organisms[0].weights[224:], o.weights[224:])
             self.assertTrue(all(t['temp']==.57 for t in migrated.tiles))
             migrated.step();migrated.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'],9)
+            self.assertEqual(json.loads(path.read_text())['version'],10)
 
     def test_v3_save_seeds_existing_vegetation(self):
         import json

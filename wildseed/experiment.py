@@ -41,7 +41,7 @@ def directional_probe(world):
         for direction in range(4):
             food = [0.0] * 4
             food[direction] = .8
-            observation = [1, .6, .2, 0, 0, .6, 0, 0, *food, *([0.0] * 8)]
+            observation = [1, .6, .2, 0, 0, .6, 0, 0, *food, *([0.0] * 16)]
             _, probabilities = forward((organism.weights, observation))
             scores.append(probabilities[direction] -
                           (sum(probabilities[:4]) - probabilities[direction]) / 3)

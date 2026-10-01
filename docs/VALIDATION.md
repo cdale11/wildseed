@@ -1,5 +1,11 @@
 # Validation — 2026-10-01
 
+## Version 0.8.0 recurrent inference — 2026-10-02
+
+All 50 automated tests pass, including policy migration from version 1 and version 9, zeroed new recurrent connections, pending movement-credit migration, memory persistence, deterministic continuation and scalar/process inference agreement. A 200-tick, 250-initial-organism, one-worker run reached 29.14 ticks/s (median 33.77 ms, p95 52.33 ms; 728 final organisms). This is slower than the prior 20-input policy but remains above the 8-tick target for this short workload.
+
+A three-seed, 300-tick paired probe averaged 14.96 hunts per 1,000 predator-ticks with learning versus 13.02 frozen. Directional prey-cue scores averaged 0.119 and 0.140 percentage points respectively. This small study does not demonstrate improved directional tracking from memory, and cannot be compared directly with the previous 20-input 500-tick experiment. Long-horizon recurrent credit remains open.
+
 ## Version 0.7.0 barter and settlement decay — 2026-10-02
 
 All 47 automated tests pass. Focused tests verify food and ore are deducted when a caravan leaves, delivered to the opposite towns at arrival, and never transported through a fully blocking water barrier. An empty town loses its houses and generates an abandonment event. A 200-tick, 250-initial-organism, one-worker benchmark reached 35.31 ticks/s on a repeat run (median 27.39 ms, p95 43.53 ms; 675 final organisms). The first run was slower at 28.01 ticks/s, so this short benchmark is sensitive to system load. No sustained-town result or large-world route scalability is claimed.
