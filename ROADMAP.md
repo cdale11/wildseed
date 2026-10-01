@@ -9,7 +9,7 @@
 - [x] CPU process inference and optional CUDA implementation.
 - [ ] Validate CUDA on real or compute-enabled virtual GPU.
 - [ ] Benchmark and optimize full tick scaling across available CPUs.
-- [ ] Publish tested source on the public main branch.
+- [x] Publish tested source on the public main branch.
 
 ## Phase 1: ecological depth
 - [ ] Species-aware perception, predator tracking, threat avoidance and recurrent memory.

@@ -11,4 +11,4 @@ Initial runnable prototype:
 - CPU multiprocessing and optional CUDA inference implementation (hardware validation pending).
 - Tests, benchmark command, container configuration and agent development SOP.
 
-Repository creation succeeded through a fresh task after the original task retained a stale GitHub browser denial. Source publication tracked separately from repository creation.
+Repository creation succeeded through a fresh task after the original task retained a stale GitHub browser denial. All 25 baseline files were published to main. GitHub SSH authentication was subsequently configured and local/published histories reconciled without source differences or a force-push.
