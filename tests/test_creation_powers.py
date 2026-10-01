@@ -17,7 +17,7 @@ class CreationTests(unittest.TestCase):
                     tiles=generate(123,32,24,geography,biome)
                     self.assertEqual(len(tiles),768)
                     self.assertTrue(any(t['e']>.37 for t in tiles))
-                    self.assertTrue(all(0<=t[k]<=1 for t in tiles for k in ('e','temp','m','f','grass','trees')))
+                    self.assertTrue(all(0<=t[k]<=1 for t in tiles for k in ('e','temp','m','f','grass','trees','grass_seed','tree_seed')))
                     self.assertTrue(all(t['grass']==t['trees']==0 for t in tiles if t['e']<=.37))
             signatures.add(tuple(round(t['e'],4) for t in tiles))
         self.assertEqual(len(signatures),len(GEOGRAPHIES))
@@ -67,7 +67,7 @@ class PowersTests(unittest.TestCase):
                 if power in ('human','grazer','predator'):self.assertEqual(result['spawned'],8)
 
     def test_water_and_population_cap_report_noop(self):
-        for t in self.w.tiles:t.update(e=.2,trees=0,grass=0)
+        for t in self.w.tiles:t.update(e=.2,trees=0,grass=0,tree_seed=0,grass_seed=0)
         for power in ('human','grazer','predator','forest','grass'):
             self.assertEqual(self.w.intervene(power,8,8)['affected'],0)
         self.w.tiles[self.w.idx(8,8)]['e']=.5;self.w.max_population=0
@@ -115,4 +115,28 @@ class PowersTests(unittest.TestCase):
             self.assertEqual(migrated.organisms[0].weights,o.weights)
             self.assertTrue(all(t['temp']==.57 for t in migrated.tiles))
             migrated.step();migrated.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'],3)
+            self.assertEqual(json.loads(path.read_text())['version'],4)
+
+    def test_v3_save_seeds_existing_vegetation(self):
+        import json
+        with tempfile.TemporaryDirectory() as d:
+            path=Path(d)/'old.json';self.w.save(path)
+            data=json.loads(path.read_text());data['version']=3
+            for tile in data['tiles']:
+                tile.pop('grass_seed');tile.pop('tree_seed')
+            path.write_text(json.dumps(data))
+            migrated=World.load(path);self.addCleanup(migrated.engine.close)
+            self.assertTrue(all(t['grass_seed']==t['grass'] and t['tree_seed']==t['trees'] for t in migrated.tiles))
+
+    def test_seed_dispersal_colonizes_bare_ground_but_not_water(self):
+        for t in self.w.tiles:
+            t.update(e=.55,m=.8,f=.8,grass=0,trees=0,grass_seed=0,tree_seed=0,fire=0)
+        source=self.w.tiles[self.w.idx(8,8)]
+        source.update(grass=.8,trees=.7,grass_seed=.8,tree_seed=.7)
+        water=self.w.tiles[self.w.idx(8,9)];water['e']=.2
+        for _ in range(40):
+            self.w.tick+=1;self.w.climate()
+        neighbors=[self.w.tiles[self.w.idx(8+dx,8+dy)] for dx,dy in ((1,0),(-1,0),(0,-1))]
+        self.assertTrue(any(t['grass_seed']>0 and t['tree_seed']>0 for t in neighbors))
+        self.assertEqual((water['grass_seed'],water['tree_seed']), (0,0))
+        self.assertTrue(any(t['grass']>0 and t['trees']>0 for t in neighbors))

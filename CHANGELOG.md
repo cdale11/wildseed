@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 — 2026-10-01
+
+- Added grass and tree seed banks, local dispersal, vegetation competition and fire/flood seed loss so bare ground recolonizes from neighboring life.
+- Nature and biome powers now establish matching seed banks; saves migrate to version 4 from versions 1–3.
+- Stopped all local preview game instances at the owner's request; this release leaves no server running.
+
 ## 0.3.0 — 2026-10-01
 
 - Fresh-world startup with random rerollable previews; eight geographies, nine climate choices, three sizes and initial-life options.

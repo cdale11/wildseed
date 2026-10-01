@@ -1,5 +1,9 @@
 # Validation — 2026-10-01
 
+## Version 0.3.1 seed ecology
+
+All 25 automated tests pass on Python 3.13.11, including version 3 save migration and seed dispersal into bare land while keeping water sterile. Seed banks are included in deterministic save continuation and power state checks. With seed 42, 250 initial organisms, 200 ticks and one worker, the run ended with 730 organisms; median tick 23.92 ms, p95 40.18 ms, throughput 41.2 ticks/s. This short run does not establish ecological stability or plant species evolution. No game server remains running after verification.
+
 Environment: Linux, Python 3.13.11, process affinity exposing 16 CPUs; no /dev/dri GPU device or PyTorch installed.
 
 ## Full-tick benchmarks

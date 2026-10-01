@@ -36,7 +36,7 @@ class Organism:
 
 
 class World:
-    VERSION = 3
+    VERSION = 4
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed'):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -140,13 +140,19 @@ class World:
             x, y = i % self.width, i // self.width
             t['m'] = max(0, min(1, t['m'] + .006 * season - .001 + t['trees'] * .0015))
             if t['e'] > .37:
-                growth = .028 * t['m'] * t['f'] * (.7 + .3 * season) * max(.08, 1 - abs(t['temp'] - .6)*1.7)
-                t['grass'] = min(1, t['grass'] + growth * (1 - t['trees'] * .4))
-                t['trees'] = min(1, t['trees'] + .0025 * t['m'] * t['f'] * max(0, t['temp']-.15))
+                warmth = max(.08, 1 - abs(t['temp'] - .6)*1.7)
+                growth = .028 * t['m'] * t['f'] * (.7 + .3 * season) * warmth
+                t['grass'] = min(1, t['grass'] + growth * t['grass_seed'] * (1 - t['trees'] * .65))
+                t['trees'] = min(1, t['trees'] + .0025 * t['m'] * t['f'] *
+                                 max(0, t['temp']-.15) * t['tree_seed'] * (1 - t['grass'] * .25))
+                t['grass_seed'] = min(1, t['grass_seed'] * .999 + t['grass'] * .003)
+                t['tree_seed'] = min(1, t['tree_seed'] * .9995 + t['trees'] * .001)
                 t['f'] = min(1, t['f'] + .0003)
                 if t['fire'] > 0:
                     t['grass'] *= .6
                     t['trees'] *= .88
+                    t['grass_seed'] *= .9
+                    t['tree_seed'] *= .75
                     t['f'] = min(1, t['f'] + .008)
                     t['fire'] = max(0, t['fire'] - .12 - t['m'] * .1)
                     if self.rng.random() < .28:
@@ -157,11 +163,14 @@ class World:
                 # Rain erodes slopes, deposits material downhill; coastlines change.
                 dx, dy = self.rng.choice(DIRECTIONS)
                 neighbor = self.tiles[self.idx(x + dx, y + dy)]
+                if neighbor['e'] > .37:
+                    neighbor['grass_seed'] = min(1, neighbor['grass_seed'] + t['grass_seed'] * .004)
+                    neighbor['tree_seed'] = min(1, neighbor['tree_seed'] + t['tree_seed'] * .002)
                 sediment = max(0, t['e'] - neighbor['e'] - .025) * .001 * t['m']
                 t['e'] -= sediment
                 neighbor['e'] += sediment
             else:
-                t['grass'] = t['trees'] = t['fire'] = 0
+                t['grass'] = t['trees'] = t['fire'] = t['grass_seed'] = t['tree_seed'] = 0
 
     def step(self):
         self.tick += 1
@@ -305,7 +314,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, cls.VERSION):
+        if version not in (1, 2, 3, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -319,6 +328,8 @@ class World:
             raise ValueError('Invalid policy length')
         for tile in data['tiles']:
             tile.setdefault('temp', .57)
+            tile.setdefault('grass_seed', tile['grass'])
+            tile.setdefault('tree_seed', tile['trees'])
         data.setdefault('geography', 'continents')
         data.setdefault('biome', 'mixed')
         world = cls(data['seed'], data['width'], data['height'], workers, device, population=0,

@@ -14,11 +14,11 @@ Training: immediate energy delta and reproduction/construction bonuses feed a bo
 
 ## Ecology and humans
 
-Vegetation grows from moisture/soil, feeding drains biomass and fertility, death returns nutrients, fire consumes vegetation and enriches soil, and erosion changes land availability. Humans harvest timber and minerals, build settlements after sufficient wood, and gain food near occupied settlements. Culture labels transmit through inheritance and local influence. There is no sophisticated language, politics or civilization intelligence yet.
+Vegetation grows from grass and tree seed banks according to moisture and soil, and competes for space. Seeds disperse to adjacent land; flooding clears them, and fire reduces them. Feeding drains biomass and fertility, death returns nutrients, fire consumes vegetation and enriches soil, and erosion changes land availability. Humans harvest timber and minerals, build settlements after sufficient wood, and gain food near occupied settlements. Culture labels transmit through inheritance and local influence. There is no sophisticated language, politics or civilization intelligence yet.
 
 ## Persistence and API
 
-Schema version 3 JSON stores full precision state, neural weights and Python RNG state. Write-to-temporary + fsync + atomic rename protects the last completed save from partial writes. Only trusted server-owned saves are loaded. `/api/state` is a rendering snapshot and is not a save. `/api/command` accepts preview, new_world, pause, speed, save and tool. `/health` reports simulation failure. Browser remote access uses a bearer token entered by the user; tokens remain in JS memory and are not put in URLs/storage. Commands reject cross-origin Origin headers and non-JSON bodies. Remote bind requires a 24+ character token. Terminate TLS at a reverse proxy; do not expose this development HTTP server directly to the internet.
+Schema version 4 JSON stores full precision state, neural weights and Python RNG state. Write-to-temporary + fsync + atomic rename protects the last completed save from partial writes. Only trusted server-owned saves are loaded. `/api/state` is a rendering snapshot and is not a save. `/api/command` accepts preview, new_world, pause, speed, save and tool. `/health` reports simulation failure. Browser remote access uses a bearer token entered by the user; tokens remain in JS memory and are not put in URLs/storage. Commands reject cross-origin Origin headers and non-JSON bodies. Remote bind requires a 24+ character token. Terminate TLS at a reverse proxy; do not expose this development HTTP server directly to the internet.
 
 ## Scaling
 
@@ -26,7 +26,7 @@ Schema version 3 JSON stores full precision state, neural weights and Python RNG
 
 ## Save migration
 
-Version 1 policies are migrated by retaining each hidden unit’s original 12 input connections, adding eight zero-weight sensory connections, and retaining all output connections. RNG state is preserved. Perception semantics changed, so migrated worlds do not reproduce version 1 trajectories; deterministic continuation applies within version 2. Version 3 adds tile temperature and world geography/biome metadata; old saves get temperate temperature defaults without changing their existing terrain. Save writes upgrade to version 3; keep a backup if version 1 rollback is needed.
+Version 1 policies are migrated by retaining each hidden unit’s original 12 input connections, adding eight zero-weight sensory connections, and retaining all output connections. RNG state is preserved. Perception semantics changed, so migrated worlds do not reproduce version 1 trajectories; deterministic continuation applies within version 2. Version 3 adds tile temperature and world geography/biome metadata; old saves get temperate temperature defaults without changing their existing terrain. Version 4 adds grass and tree seed banks initialized from existing vegetation in older saves. Save writes upgrade to version 4; keep a backup if rollback is needed.
 
 ## New worlds and powers
 

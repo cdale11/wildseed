@@ -88,6 +88,9 @@ def generate(seed, width, height, geography='continents', biome='mixed'):
                  'grass':moisture*fertility*(.5+fine[i]*.5) if land else 0,
                  'trees':trees*moisture*(.3+detail[i]*.7) if land and e<.75 and temp>.17 else 0,
                  'ore':max(0,e-.53)*8 + (fine[i]*.3 if land else 0), 'fire':0.0}
+            # Seed banks let vegetation colonize disturbed ground without creating plants from nothing.
+            t['grass_seed'] = t['grass']
+            t['tree_seed'] = t['trees']
             tiles.append(t)
     return tiles
 

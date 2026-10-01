@@ -40,21 +40,25 @@ def apply(world, tool, x, y, radius=3, strength=1):
             elif tool=='mountain': t['e']=max(t['e'],.76+.1*(1-math_distance(dx,dy)/max(1,radius)))
             elif tool=='rain': t['m']=min(1,t['m']+.3*strength);t['fire']=0
             elif tool=='drought': t['m']=max(0,t['m']-.3*strength);t['grass']*=.6
-            elif tool=='forest' and land: t['trees']=min(1,t['trees']+.4*strength);t['grass']=min(1,t['grass']+.3)
-            elif tool=='grass' and land: t['grass']=min(1,t['grass']+.45*strength)
+            elif tool=='forest' and land:
+                t['trees']=min(1,t['trees']+.4*strength);t['grass']=min(1,t['grass']+.3)
+                t['tree_seed']=max(t['tree_seed'],t['trees']);t['grass_seed']=max(t['grass_seed'],t['grass'])
+            elif tool=='grass' and land:
+                t['grass']=min(1,t['grass']+.45*strength);t['grass_seed']=max(t['grass_seed'],t['grass'])
             elif tool=='fertile' and land: t['f']=min(1,t['f']+.3*strength)
             elif tool=='minerals' and land: t['ore']=min(20,t['ore']+2*strength)
             elif tool=='freeze': t['temp']=max(0,t['temp']-.4*strength);t['fire']=0
             elif tool=='heat': t['temp']=min(1,t['temp']+.4*strength);t['m']=max(0,t['m']-.15*strength)
             elif tool in ('fire','lightning') and land: t['fire']=1
-            elif tool=='meteor': t['e']=max(.05,t['e']-.3*strength);t['trees']=t['grass']=0;t['fire']=1;t['ore']+=strength
+            elif tool=='meteor': t['e']=max(.05,t['e']-.3*strength);t['trees']=t['grass']=t['tree_seed']=t['grass_seed']=0;t['fire']=1;t['ore']+=strength
             elif tool=='volcano':
                 t['e']=min(.95,.65+.25*(1-math_distance(dx,dy)/max(1,radius)))
-                t['temp']=1;t['m']=.05;t['trees']=t['grass']=0;t['fire']=1;t['ore']+=strength
+                t['temp']=1;t['m']=.05;t['trees']=t['grass']=t['tree_seed']=t['grass_seed']=0;t['fire']=1;t['ore']+=strength
             elif tool.startswith('biome_') and land:
                 temp,moisture,fertility,trees=BIOMES[tool[6:]][1]
                 t.update(temp=temp,m=moisture,f=fertility,trees=trees*moisture,grass=moisture*fertility,fire=0)
-            if t['e']<=.37: t['grass']=t['trees']=t['fire']=0
+                t['tree_seed']=t['trees'];t['grass_seed']=t['grass']
+            if t['e']<=.37: t['grass']=t['trees']=t['fire']=t['grass_seed']=t['tree_seed']=0
             if t!=before: changed+=1
         for o in world.organisms:
             if world.idx(o.x,o.y) not in affected: continue

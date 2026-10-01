@@ -22,7 +22,8 @@
 - [x] Species-aware directional perception of prey, threats, food and materials.
 - [ ] Demonstrate learned predator tracking/threat avoidance against frozen-policy baselines.
 - [ ] Recurrent memory.
-- [ ] Explicit plant populations, seed dispersal, plant genomes and competition.
+- [x] Tile seed banks, local dispersal and grass/tree competition.
+- [ ] Explicit plant populations and plant genomes.
 - [ ] Water flow, rivers, sediment budgets, temperature, weather and nutrient cycles.
 - [ ] Sexual reproduction, ancestry graphs, ecological niches and speciation metrics.
 - [ ] Multi-seed 100k-tick stability runs; compare learned vs frozen/random policies.
