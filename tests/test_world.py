@@ -54,6 +54,7 @@ class SimulationTests(unittest.TestCase):
                 self.assertTrue(0 <= t[key] <= 1, (key, t[key]))
             self.assertTrue(0 <= t['grass_pop'] <= 100)
             self.assertTrue(0 <= t['tree_pop'] <= 40)
+        self.assertTrue(all(math.isfinite(cloud) and 0 <= cloud <= 1 for cloud in w.clouds))
         for o in w.organisms:
             self.assertTrue(all(math.isfinite(v) and abs(v) <= 4 for v in o.weights))
         self.assertGreater(w.training_steps, 0)

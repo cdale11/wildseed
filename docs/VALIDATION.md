@@ -1,5 +1,9 @@
 # Validation — 2026-10-02
 
+## Version 0.13.0 cloud fronts — 2026-10-02
+
+All 67 automated tests pass, including periodic cloud advection, more rain on uplands than lowlands under an equal front, exact preview/weather match, v12→v13 migration and deterministic save continuation. Browser JavaScript modules pass syntax checks. The 200-tick, 250-initial-organism, one-worker CPU benchmark reached 33.07 ticks/s (median 29.28 ms, p95 44.85 ms; 669 final organisms). The changed weather rules alter the ecological trajectory, so this is not a controlled throughput comparison with v0.12. The model is an 8×8-tile cloud grid with bounded local effects; it has no pressure physics, watershed accounting or validated climatology.
+
 ## Version 0.12.0 reproductive divergence — 2026-10-02
 
 All 63 automated tests pass, including forced incompatible adults sharing a tile (no birth and counted rejections), compatible two-parent inheritance, direct-mate validation, v11→v12 save migration and deterministic continuation. Browser JavaScript passes syntax checks. A seed-42, 96×64, 250-initial-organism, 200-tick, one-worker CPU benchmark reached 32.90 ticks/s (median 29.67 ms, p95 46.35 ms; 648 final organisms). The changed reproduction rules alter the population trajectory, so this is not a direct speed comparison with v0.11.

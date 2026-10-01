@@ -32,7 +32,7 @@ Select a power category and click the map. Thirty powers include terrain sculpti
 - Procedural map selection, biome palettes, shaded relief, coast foam, species sprites and forest textures.
 - Seeded terrain, coastlines, erosion/deposition, seasonal moisture, vegetation growth, soil depletion, fire spread and ash fertility.
 - Species-specific, three-tile directional perception of food/prey, threats/fire and human building resources, with terrain occlusion.
-- Grass and tree cohorts with inherited climate preferences, local seed dispersal and competition; bounded soil nutrient/litter recycling, local runoff, sediment transport and cooling lava.
+- Grass and tree cohorts with inherited climate preferences, local seed dispersal and competition; bounded soil nutrient/litter recycling, traveling cloud fronts, local runoff, sediment transport and cooling lava.
 - Grazers, predators and humans with energy, age, optional two-parent reproduction, ancestry, inherited traits, mate-recognition signals and independently learned neural weights.
 - A recurrent 28→8→7 neural policy per organism; online one-step policy-gradient training with eight hidden-state memory values. No pretrained model or external AI API is needed.
 - Households, scarcity-driven jobs, houses, traffic-made roads and route-based barter caravans. These remain early society mechanics.

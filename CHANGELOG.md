@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.0 — 2026-10-02
+
+- Added a deterministic 8×8-tile cloud grid with periodic wind advection, ocean/land evaporation, elevation-sensitive rainfall and cloud-driven changes to soil moisture, surface water and fire.
+- Added a cloud-front map layer and local cloud inspection. Fresh-world previews now include the exact starting weather grid.
+- Save schema v13 persists cloud state; older saves initialize it from a separate seed stream without changing organism RNG. Weather remains a coarse local model, not a watershed or atmospheric solver.
+
 ## 0.12.0 — 2026-10-02
 
 - Organisms now inherit and mutate a continuous mate-recognition signal. Two-parent reproduction requires signal and thermal compatibility; contact with incompatible adults blocks the solitary-birth fallback for that attempt.

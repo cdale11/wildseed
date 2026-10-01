@@ -14,6 +14,7 @@ import time
 from urllib.parse import urlsplit
 from .world import World
 from .geography import generate, client_tiles, options, GEOGRAPHIES, BIOMES, SIZES
+from . import weather
 from .powers import POWER_IDS, POWER_INFO
 
 WEB = Path(__file__).resolve().parent.parent / 'web'
@@ -98,7 +99,10 @@ class Simulation:
                     self.previews[seed]=config
                     if len(self.previews)>16: self.previews.pop(next(iter(self.previews)))
                     tiles=generate(seed,width,height,config['geography'],config['biome'])
+                    weather_width,weather_height,clouds=weather.initialize(seed,width,height)
                     return {'seed':seed,'width':width,'height':height,**config,
+                            'weather':{'width':weather_width,'height':weather_height,
+                                       'clouds':[round(value,3) for value in clouds],'wind':1},
                             'tiles':client_tiles(tiles)}
                 seed=data.get('seed')
                 if type(seed) is not int or self.previews.get(seed)!=config:

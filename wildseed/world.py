@@ -11,6 +11,7 @@ from .geography import generate, client_tiles
 from .powers import apply as apply_power
 from . import plants
 from . import society
+from . import weather
 
 from .brain import BrainEngine, PARAMS, HIDDEN, learn
 
@@ -53,7 +54,7 @@ class Organism:
 
 
 class World:
-    VERSION = 12
+    VERSION = 13
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -77,6 +78,7 @@ class World:
         self.mate_encounters = self.mate_rejections = 0
         self.engine = BrainEngine(workers, device)
         self.tiles = self.generate()
+        self.weather_width, self.weather_height, self.clouds = weather.initialize(seed, width, height)
         for i in range(population):
             self.spawn('human' if i % 8 == 0 else 'predator' if i % 10 == 0 else 'grazer')
         self.event('A new world takes its first breath.')
@@ -172,6 +174,8 @@ class World:
 
     def climate(self):
         season = math.sin(self.tick / 180)
+        if self.tick % 8 == 0:
+            weather.advance(self)
         # Staggered tile updates distribute climate work across ticks.
         for i in range(self.tick % 4, len(self.tiles), 4):
             t = self.tiles[i]
@@ -383,6 +387,9 @@ class World:
                              'food': round(shipment['food'], 2)})
         return {'seed': self.seed, 'tick': self.tick, 'width': self.width, 'height': self.height,
                 'geography': self.geography, 'biome': self.biome,
+                'weather': {'width': self.weather_width, 'height': self.weather_height,
+                            'clouds': [round(value, 3) for value in self.clouds],
+                            'wind': weather.wind(self.tick)},
                 'tiles': client_tiles(self.tiles),
                 'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move', 'memory')} for o in self.organisms],
                 'settlements': self.settlements, 'households': self.households,
@@ -402,6 +409,7 @@ class World:
         payload = {'version': self.VERSION, 'seed': self.seed, 'width': self.width, 'height': self.height,
                    'tick': self.tick, 'next_id': self.next_id, 'rng': self.rng.getstate(),
                    'geography': self.geography, 'biome': self.biome,
+                   'clouds': self.clouds,
                    'tiles': self.tiles, 'organisms': [asdict(o) for o in self.organisms],
                    'settlements': self.settlements, 'events': list(self.events),
                    'births': self.births, 'deaths': self.deaths, 'training_steps': self.training_steps,
@@ -424,7 +432,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.

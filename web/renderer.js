@@ -6,6 +6,7 @@ export function paintMap(target,world,layer='natural'){
  const c=target.getContext('2d'),s=8;target.width=world.width*s;target.height=world.height*s;
  for(let y=0;y<world.height;y++)for(let x=0;x<world.width;x++){
   const [e,m,g,t,ore,fire,f,temp=.57,biome=0,water=0,lava=0,grassPop=0,treePop=0,road=0,nutrient=0]=world.tiles[y*world.width+x];
+  const cloud=world.weather?.clouds[Math.floor(y/8)*world.weather.width+Math.floor(x/8)]||0;
   const n=noise(x,y,world.seed),X=x*s,Y=y*s;let color;
   const east=world.tiles[y*world.width+(x+1)%world.width][0],south=world.tiles[((y+1)%world.height)*world.width+x][0];
   const shade=Math.max(-9,Math.min(9,(e-east+e-south)*55));
@@ -14,6 +15,7 @@ export function paintMap(target,world,layer='natural'){
   else if(layer==='ore')color=`hsl(32 ${Math.min(90,ore*45)}% ${16+Math.min(45,ore*20)}%)`;
   else if(layer==='fertility')color=`hsl(${25+f*90} 42% ${20+f*36}%)`;
   else if(layer==='nutrient')color=`hsl(${23+nutrient*100} ${35+nutrient*35}% ${18+nutrient*43}%)`;
+  else if(layer==='weather')color=`hsl(${213-cloud*23} ${34+cloud*30}% ${16+cloud*66}%)`;
   else if(layer==='temperature')color=`hsl(${210-temp*200} 65% 52%)`;
   else if(e<=.37){const shallow=Math.max(0,Math.min(1,(e-.18)/.19));color=temp<.12?`hsl(190 33% ${64+shallow*15}%)`:`hsl(${211-shallow*27} ${54+shallow*9}% ${20+shallow*25+n*2}%)`;}
   else if(e<.4)color=`hsl(43 49% ${70+n*5}%)`;
@@ -32,6 +34,7 @@ export function paintMap(target,world,layer='natural'){
    else if(biome===2&&n>.65){c.fillStyle='#af855644';c.fillRect(X+1,Y+4,5,1);}
   }
   if(layer==='natural'&&water>.008&&e>.37){c.fillStyle=`hsla(188,73%,57%,${Math.min(.68,water*2.7)})`;c.fillRect(X,Y+3,s,4);if(n>.55){c.fillStyle='#d8f5e8aa';c.fillRect(X+1,Y+4,3,1);}}
+  if(layer==='natural'&&cloud>.72){c.fillStyle=`hsla(192,40%,91%,${Math.min(.24,(cloud-.72)*.7)})`;c.fillRect(X,Y,s,s);}
   if(layer==='natural'&&road>.04&&e>.37){c.fillStyle=`hsla(36,37%,70%,${Math.min(.75,road)})`;c.fillRect(X,Y+3,s,2);}
   if(layer==='natural'&&lava>.01){c.fillStyle=`hsla(13,92%,42%,${Math.min(.95,.4+lava)})`;c.fillRect(X,Y,s,s);c.fillStyle='#ffc059';c.fillRect(X+2,Y+2,4,2);c.fillRect(X+5,Y+5,2,2);}
   if(fire>0){c.fillStyle='#b4413260';c.fillRect(X,Y,s,s);c.fillStyle='#ed6d36';c.fillRect(X+2,Y+2,4,5);c.fillStyle='#ffe6a1';c.fillRect(X+3,Y+3,2,3);}

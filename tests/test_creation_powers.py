@@ -37,6 +37,7 @@ class CreationTests(unittest.TestCase):
             self.assertNotEqual(a['seed'],b['seed'])
             sim.command({'action':'new_world',**request,'seed':a['seed'],'population':0,'epoch':sim.epoch})
             self.assertEqual(a['tiles'],sim.world.snapshot()['tiles'])
+            self.assertEqual(a['weather'],sim.world.snapshot()['weather'])
             self.assertEqual(next((Path(d)/'archives').glob('*.json')).read_text(),'previous saved world')
             old_epoch=sim.epoch
             c=sim.command({'action':'preview',**request})
@@ -122,7 +123,7 @@ class PowersTests(unittest.TestCase):
             self.assertEqual(migrated.organisms[0].weights[224:], o.weights[224:])
             self.assertTrue(all(t['temp']==.57 for t in migrated.tiles))
             migrated.step();migrated.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'],12)
+            self.assertEqual(json.loads(path.read_text())['version'],13)
 
     def test_v3_save_seeds_existing_vegetation(self):
         import json

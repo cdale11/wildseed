@@ -29,7 +29,8 @@
 - [x] Explicit local plant cohorts, population counts and inherited climate trait means.
 - [x] Local water flow, suspended soil transport and lava cooling.
 - [x] Bounded soil nutrient/litter recycling with plant uptake, grazing/death returns, fire ash and runoff transport.
-- [ ] Watershed-scale rivers and weather systems; calibrated nutrient budgets across land, plants, animals and settlements.
+- [x] Coarse traveling cloud fronts with elevation-sensitive rainfall and deterministic save/replay.
+- [ ] Watershed-scale rivers and calibrated weather/nutrient budgets across land, plants, animals and settlements.
 - [x] Two-parent genetic recombination, bounded ancestry records and ecotype counts.
 - [x] Inherited mate-recognition signal, compatibility barrier and measured candidate rejection fraction.
 - [ ] Speciation with reproductive isolation and validated species metrics.
