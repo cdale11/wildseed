@@ -35,7 +35,8 @@
 Acceptance: measurable behavioral adaptation and ecological diversity without scripted population replenishment, with published failure cases.
 
 ## Phase 2: human societies
-- [ ] Households, occupations, ownership, construction/decay, roads and transport.
+- [x] Households with food ownership, demand-based occupations, house construction and traffic-made roads.
+- [ ] House/road decay, inter-settlement transport and sustained society validation.
 - [ ] Trade, resource scarcity, institutions, migration and cultural transmission.
 - [ ] Technology from composable operations and experimentation rather than fixed era transitions.
 - [ ] Diplomacy/conflict grounded in resources and individual/social objectives.

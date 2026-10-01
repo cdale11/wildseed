@@ -95,6 +95,8 @@ def generate(seed, width, height, geography='continents', biome='mixed'):
             t['water'] = max(0, moisture - .72) * .03 if land else 0.0
             t['sediment'] = 0.0
             t['lava'] = 0.0
+            t['traffic'] = 0.0
+            t['road'] = 0.0
             plants.initialize(t, (fine[i] - .5) * .12)
             tiles.append(t)
     return tiles

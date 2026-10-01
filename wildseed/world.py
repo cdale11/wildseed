@@ -10,6 +10,7 @@ import random
 from .geography import generate, classify, BIOME_NAMES
 from .powers import apply as apply_power
 from . import plants
+from . import society
 
 from .brain import BrainEngine, PARAMS, HIDDEN, learn
 
@@ -38,10 +39,12 @@ class Organism:
     parent_a: int = 0
     parent_b: int = 0
     thermal_opt: float = .55
+    household: int = 0
+    occupation: str = 'forager'
 
 
 class World:
-    VERSION = 7
+    VERSION = 8
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -56,6 +59,8 @@ class World:
         self.events = deque(maxlen=60)
         self.organisms = []
         self.settlements = []
+        self.households = []
+        self.next_town_id = self.next_household_id = 1
         self.ancestry = deque(maxlen=50000)
         self.births = self.deaths = self.training_steps = self.hunts = self.hunt_move_updates = 0
         self.sexual_births = 0
@@ -100,7 +105,8 @@ class World:
                        max(.5, min(1.6, inherited_fertility + self.rng.gauss(0, .04))) if parent else 1,
                        weights, culture=parent.culture if parent else (self.next_id % 5 + 1 if kind == 'human' else 0),
                        parent_a=parent.id if parent else 0, parent_b=mate.id if mate else 0,
-                       thermal_opt=max(0, min(1, inherited_temp + self.rng.gauss(0, .025))))
+                       thermal_opt=max(0, min(1, inherited_temp + self.rng.gauss(0, .025))),
+                       household=parent.household if parent else 0)
         self.next_id += 1
         self.organisms.append(org)
         if parent:
@@ -158,6 +164,8 @@ class World:
             x, y = i % self.width, i // self.width
             t['m'] = max(0, min(1, t['m'] + .006 * season - .001 + t['trees'] * .0015))
             if t['e'] > .37:
+                t['traffic'] *= .999
+                t['road'] = max(0, t['road'] - .00002)
                 plants.advance(t, season)
                 t['f'] = min(1, t['f'] + .0003)
                 if t['fire'] > 0:
@@ -181,7 +189,7 @@ class World:
                 self.flow(i, x, y)
             else:
                 plants.clear(t)
-                t['fire'] = t['water'] = t['lava'] = 0
+                t['fire'] = t['water'] = t['lava'] = t['traffic'] = t['road'] = 0
                 deposit = min(t['sediment'], max(0, 1 - t['e']))
                 t['sediment'] -= deposit
                 t['e'] += deposit
@@ -263,7 +271,10 @@ class World:
                     occupancy[self.idx(o.x, o.y)].remove(o)
                     o.x, o.y = nx, ny
                     occupancy.setdefault(self.idx(nx, ny), []).append(o)
-                    o.energy -= .10
+                    o.energy -= .10 * (1 - dest['road'] * .6)
+                    if o.kind == 'human':
+                        dest['traffic'] = min(1, dest['traffic'] + .015)
+                        dest['road'] = max(dest['road'], max(0, dest['traffic'] - .3) * .7)
                     t = dest
                     moved = True
             elif action == 4:
@@ -293,29 +304,7 @@ class World:
                             mate.energy -= 20
                         bonus = 1.8
             elif action == 6 and o.kind == 'human':
-                harvest = min(.035, t['trees'])
-                t['trees'] -= harvest
-                o.wood += harvest * 10
-                mined = min(.03, t['ore'])
-                t['ore'] -= mined
-                o.ore += mined
-                o.energy -= .1
-                # Accumulated material becomes persistent shelters and farms.
-                if o.wood >= 2.5:
-                    town = next((s for s in self.settlements if
-                                 abs(s['x'] - o.x) + abs(s['y'] - o.y) <= 5), None)
-                    if town is None:
-                        town = {'id': len(self.settlements) + 1, 'x': o.x, 'y': o.y,
-                                'culture': o.culture, 'houses': 0, 'stock': 0, 'ore': 0,
-                                'population': 0, 'age': 0}
-                        self.settlements.append(town)
-                        self.event(f"Culture {o.culture} founded settlement {town['id']}.")
-                    town['houses'] += 1
-                    town['stock'] += 3
-                    town['ore'] += o.ore
-                    o.ore = 0
-                    o.wood -= 2.5
-                    bonus += .8
+                bonus += society.work(self, o, t)
             if t['e'] <= .37:
                 o.energy -= 3
             o.energy -= t['fire'] * 8 + max(0, abs(t['temp'] - o.thermal_opt) - .08) * .6
@@ -343,20 +332,7 @@ class World:
         self.deaths += len(dead)
         self.organisms = [o for o in self.organisms if o.energy > 0]
         if self.tick % 20 == 0:
-            humans = [o for o in self.organisms if o.kind == 'human']
-            for s in self.settlements:
-                residents = [o for o in humans if abs(o.x - s['x']) + abs(o.y - s['y']) <= 6]
-                s['population'] = len(residents)
-                s['age'] += 20
-                tile = self.tiles[self.idx(s['x'], s['y'])]
-                if tile['e'] > .37 and tile['fire'] == 0:
-                    s['stock'] = min(100, s['stock'] + len(residents) * tile['m'] * .3)
-                for o in residents:
-                    ration = min(s['stock'], .8)
-                    s['stock'] -= ration
-                    o.energy = min(160, o.energy + ration * 3)
-                    if self.rng.random() < .05:
-                        o.culture = s['culture']
+            society.update(self)
         if self.tick % 300 == 0:
             counts = Counter(o.kind for o in self.organisms)
             self.event(f"Census: {counts['human']} humans, {counts['grazer']} grazers, {counts['predator']} predators.")
@@ -371,13 +347,14 @@ class World:
                 'geography': self.geography, 'biome': self.biome,
                 'tiles': [[round(t[k], 3) for k in ('e', 'm', 'grass', 'trees', 'ore', 'fire', 'f', 'temp')] +
                           [BIOME_NAMES.index(classify(t)), round(t['water'], 3), round(t['lava'], 3),
-                           t['grass_pop'], t['tree_pop']] for t in self.tiles],
+                           t['grass_pop'], t['tree_pop'], round(t['road'], 3)] for t in self.tiles],
                 'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move')} for o in self.organisms],
-                'settlements': self.settlements, 'events': list(self.events),
+                'settlements': self.settlements, 'households': self.households,
+                'events': list(self.events),
                 'stats': {'population': len(self.organisms), 'counts': counts, 'births': self.births,
                           'deaths': self.deaths, 'training': self.training_steps, 'hunts': self.hunts,
                           'hunt_move_updates': self.hunt_move_updates, 'sexual_births': self.sexual_births,
-                          'ecotypes': len(ecotypes),
+                          'ecotypes': len(ecotypes), 'households': len(self.households),
                           'generation': max((o.generation for o in self.organisms), default=0),
                           'cultures': len(set(o.culture for o in self.organisms if o.kind == 'human'))}}
 
@@ -390,7 +367,8 @@ class World:
                    'births': self.births, 'deaths': self.deaths, 'training_steps': self.training_steps,
                    'hunts': self.hunts, 'hunt_move_updates': self.hunt_move_updates,
                    'learning': self.learning, 'sexual_births': self.sexual_births,
-                   'ancestry': list(self.ancestry)}
+                   'ancestry': list(self.ancestry), 'households': self.households,
+                   'next_town_id': self.next_town_id, 'next_household_id': self.next_household_id}
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_suffix('.tmp')
@@ -404,7 +382,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -423,6 +401,8 @@ class World:
             tile.setdefault('water', 0.0)
             tile.setdefault('sediment', 0.0)
             tile.setdefault('lava', 0.0)
+            tile.setdefault('traffic', 0.0)
+            tile.setdefault('road', 0.0)
             plants.migrate(tile)
         data.setdefault('geography', 'continents')
         data.setdefault('biome', 'mixed')
@@ -431,6 +411,11 @@ class World:
         data.setdefault('hunt_move_updates', 0)
         data.setdefault('sexual_births', 0)
         data.setdefault('ancestry', [])
+        data.setdefault('households', [])
+        data.setdefault('next_town_id', max((town['id'] for town in data['settlements']), default=0) + 1)
+        data.setdefault('next_household_id', 1)
+        for town in data['settlements']:
+            town.setdefault('wood', 0.0)
         world = cls(data['seed'], data['width'], data['height'], workers, device, population=0,
                     geography=data['geography'], biome=data['biome'], learning=data['learning'])
         rng = data.pop('rng')

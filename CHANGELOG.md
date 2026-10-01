@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0 — 2026-10-02
+
+- Added settlement households with members, ownership of stored food and rationing.
+- Human work now follows local shortages: farming, woodcutting, mining and construction draw on actual tile and town resources.
+- Repeated human travel wears paths into roads that lower movement energy cost; roads render on the terrain.
+- Save schema v8 migrates v1–v7 worlds and preserves households, occupations and roads.
+
 ## 0.5.0 — 2026-10-02
 
 - Added bounded surface runoff, downhill sediment transport, lava flow and cooling; rain, drought and volcano powers feed those fields, and water/lava render on the map.

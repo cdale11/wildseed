@@ -1,5 +1,9 @@
 # Validation — 2026-10-01
 
+## Version 0.6.0 first society layer — 2026-10-02
+
+All 43 automated tests pass. Focused tests verify founding a town from gathered wood, assigning a human to a household, household food rationing, farming work changing stock, traffic building a road, and version 7 save migration. Browser JavaScript modules pass syntax checks. The 200-tick, 250-initial-organism, one-worker benchmark reached 36.69 ticks/s (median 25.08 ms, p95 41.82 ms; 675 final organisms). This is not evidence of sustained towns or inter-settlement economies; those remain roadmap tasks.
+
 ## Version 0.5.0 evolving terrain, plants and ancestry — 2026-10-02
 
 All 40 automated tests pass on Python 3.13.11, including exact preview/new-world tiles, v1–v6 save migration, water/sediment transfer, lava spread/cooling, plant trait fitness and colonization, two-parent births, thermal adaptation and deterministic save continuation. Browser JavaScript modules pass Node syntax checks. Visual inspection of the updated renderer has not yet been completed.

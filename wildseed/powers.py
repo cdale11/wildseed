@@ -61,7 +61,7 @@ def apply(world, tool, x, y, radius=3, strength=1):
                 t.update(temp=temp,m=moisture,f=fertility,trees=trees*moisture,grass=moisture*fertility,fire=0)
                 t['tree_seed']=t['trees'];t['grass_seed']=t['grass']
                 plants.initialize(t)
-            if t['e']<=.37: plants.clear(t);t['fire']=t['water']=t['lava']=0
+            if t['e']<=.37: plants.clear(t);t['fire']=t['water']=t['lava']=t['road']=t['traffic']=0
             if t!=before: changed+=1
         for o in world.organisms:
             if world.idx(o.x,o.y) not in affected: continue
@@ -80,6 +80,9 @@ def apply(world, tool, x, y, radius=3, strength=1):
             previous=len(world.settlements)
             world.settlements=[s for s in world.settlements if world.idx(s['x'],s['y']) not in affected]
             buildings=previous-len(world.settlements)
+            if buildings:
+                remaining={s['id'] for s in world.settlements}
+                world.households=[home for home in world.households if home['town'] in remaining]
     total=changed+spawned+altered+removed+buildings
     result={'tiles_changed':changed,'spawned':spawned,'organisms_changed':altered,
             'killed':removed,'settlements_removed':buildings,'affected':total}

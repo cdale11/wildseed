@@ -71,7 +71,7 @@ class Simulation:
                     return {'seed':seed,'width':width,'height':height,**config,
                             'tiles':[[round(t[k],3) for k in ('e','m','grass','trees','ore','fire','f','temp')]+
                                      [BIOME_NAMES.index(classify(t)),round(t['water'],3),round(t['lava'],3),
-                                      t['grass_pop'],t['tree_pop']] for t in tiles]}
+                                      t['grass_pop'],t['tree_pop'],round(t['road'],3)] for t in tiles]}
                 seed=data.get('seed')
                 if type(seed) is not int or self.previews.get(seed)!=config:
                     raise ValueError('Preview this world before creating it')
