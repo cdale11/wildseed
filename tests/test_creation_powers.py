@@ -67,7 +67,7 @@ class PowersTests(unittest.TestCase):
                 if power in ('human','grazer','predator'):self.assertEqual(result['spawned'],8)
 
     def test_water_and_population_cap_report_noop(self):
-        for t in self.w.tiles:t.update(e=.2,trees=0,grass=0,tree_seed=0,grass_seed=0)
+        for t in self.w.tiles:t.update(e=.2,trees=0,grass=0,tree_seed=0,grass_seed=0,tree_pop=0,grass_pop=0)
         for power in ('human','grazer','predator','forest','grass'):
             self.assertEqual(self.w.intervene(power,8,8)['affected'],0)
         self.w.tiles[self.w.idx(8,8)]['e']=.5;self.w.max_population=0
@@ -115,7 +115,7 @@ class PowersTests(unittest.TestCase):
             self.assertEqual(migrated.organisms[0].weights,o.weights)
             self.assertTrue(all(t['temp']==.57 for t in migrated.tiles))
             migrated.step();migrated.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'],5)
+            self.assertEqual(json.loads(path.read_text())['version'],7)
 
     def test_v3_save_seeds_existing_vegetation(self):
         import json
@@ -130,7 +130,7 @@ class PowersTests(unittest.TestCase):
 
     def test_seed_dispersal_colonizes_bare_ground_but_not_water(self):
         for t in self.w.tiles:
-            t.update(e=.55,m=.8,f=.8,grass=0,trees=0,grass_seed=0,tree_seed=0,fire=0)
+            t.update(e=.55,m=.8,f=.8,grass=0,trees=0,grass_seed=0,tree_seed=0,grass_pop=0,tree_pop=0,fire=0)
         source=self.w.tiles[self.w.idx(8,8)]
         source.update(grass=.8,trees=.7,grass_seed=.8,tree_seed=.7)
         water=self.w.tiles[self.w.idx(8,9)];water['e']=.2

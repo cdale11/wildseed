@@ -1,5 +1,11 @@
 # Validation — 2026-10-01
 
+## Version 0.5.0 evolving terrain, plants and ancestry — 2026-10-02
+
+All 40 automated tests pass on Python 3.13.11, including exact preview/new-world tiles, v1–v6 save migration, water/sediment transfer, lava spread/cooling, plant trait fitness and colonization, two-parent births, thermal adaptation and deterministic save continuation. Browser JavaScript modules pass Node syntax checks. Visual inspection of the updated renderer has not yet been completed.
+
+The 200-tick, 250-initial-organism, one-worker benchmark on the same local Linux environment reached 37.15 ticks/s (median 26.50 ms, p95 40.72 ms; 683 final organisms). This workload remains above the 8-tick target at this population, but it does not establish performance near the 2,500 cap or ecological stability. The new hydrology is local tile flow with bounded transfer, not a watershed solver. Plant genomes are cohort-level trait means, and ecotypes are coarse trait bins, not independently evolved species.
+
 ## Version 0.4.0 learning controls
 
 The paired experiment command and limitations are in [EXPERIMENTS.md](EXPERIMENTS.md). Ten seeds × two modes × 500 ticks completed on CPU. Frozen runs were reproducible, with zero within-lifetime updates; learned worlds retained exact save/resume behavior, including pending one-step hunt credit. The normalized hunt-rate gain was modest and directional tracking remains unproven. Unit tests include forced successful predation to verify the preceding move receives a neural update. All 30 automated tests pass, including a subprocess SIGTERM shutdown that persists an advancing world. The 200-tick, 250-initial-organism, one-worker benchmark reached 39.14 ticks/s (median 23.94 ms, p95 43.04 ms; 725 final organisms). This is a short run and not a high-population scaling claim.

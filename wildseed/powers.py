@@ -1,5 +1,6 @@
 """God interventions with measured, immediate effects on authoritative state."""
 from .geography import BIOMES
+from . import plants
 
 POWER_INFO = [
  ('raise','↟','Raise land','Land'),('lower','↡','Lower land','Land'),
@@ -38,27 +39,29 @@ def apply(world, tool, x, y, radius=3, strength=1):
             elif tool=='lower': t['e']=max(.05,t['e']-.055*strength)
             elif tool=='ocean': t['e']=.18
             elif tool=='mountain': t['e']=max(t['e'],.76+.1*(1-math_distance(dx,dy)/max(1,radius)))
-            elif tool=='rain': t['m']=min(1,t['m']+.3*strength);t['fire']=0
-            elif tool=='drought': t['m']=max(0,t['m']-.3*strength);t['grass']*=.6
+            elif tool=='rain': t['m']=min(1,t['m']+.3*strength);t['water']=min(1,t['water']+.12*strength);t['fire']=0
+            elif tool=='drought': t['m']=max(0,t['m']-.3*strength);t['water']*=.2;t['grass']*=.6
             elif tool=='forest' and land:
                 t['trees']=min(1,t['trees']+.4*strength);t['grass']=min(1,t['grass']+.3)
                 t['tree_seed']=max(t['tree_seed'],t['trees']);t['grass_seed']=max(t['grass_seed'],t['grass'])
+                plants.establish(t,'tree');plants.establish(t,'grass')
             elif tool=='grass' and land:
-                t['grass']=min(1,t['grass']+.45*strength);t['grass_seed']=max(t['grass_seed'],t['grass'])
+                t['grass']=min(1,t['grass']+.45*strength);t['grass_seed']=max(t['grass_seed'],t['grass']);plants.establish(t,'grass')
             elif tool=='fertile' and land: t['f']=min(1,t['f']+.3*strength)
             elif tool=='minerals' and land: t['ore']=min(20,t['ore']+2*strength)
             elif tool=='freeze': t['temp']=max(0,t['temp']-.4*strength);t['fire']=0
-            elif tool=='heat': t['temp']=min(1,t['temp']+.4*strength);t['m']=max(0,t['m']-.15*strength)
+            elif tool=='heat': t['temp']=min(1,t['temp']+.4*strength);t['m']=max(0,t['m']-.15*strength);t['water']*=.5
             elif tool in ('fire','lightning') and land: t['fire']=1
-            elif tool=='meteor': t['e']=max(.05,t['e']-.3*strength);t['trees']=t['grass']=t['tree_seed']=t['grass_seed']=0;t['fire']=1;t['ore']+=strength
+            elif tool=='meteor': t['e']=max(.05,t['e']-.3*strength);plants.clear(t);t['fire']=1;t['ore']+=strength
             elif tool=='volcano':
                 t['e']=min(.95,.65+.25*(1-math_distance(dx,dy)/max(1,radius)))
-                t['temp']=1;t['m']=.05;t['trees']=t['grass']=t['tree_seed']=t['grass_seed']=0;t['fire']=1;t['ore']+=strength
+                t['temp']=1;t['m']=.05;plants.clear(t);t['fire']=1;t['ore']+=strength;t['lava']=min(1,t['lava']+.8)
             elif tool.startswith('biome_') and land:
                 temp,moisture,fertility,trees=BIOMES[tool[6:]][1]
                 t.update(temp=temp,m=moisture,f=fertility,trees=trees*moisture,grass=moisture*fertility,fire=0)
                 t['tree_seed']=t['trees'];t['grass_seed']=t['grass']
-            if t['e']<=.37: t['grass']=t['trees']=t['fire']=t['grass_seed']=t['tree_seed']=0
+                plants.initialize(t)
+            if t['e']<=.37: plants.clear(t);t['fire']=t['water']=t['lava']=0
             if t!=before: changed+=1
         for o in world.organisms:
             if world.idx(o.x,o.y) not in affected: continue
@@ -66,7 +69,9 @@ def apply(world, tool, x, y, radius=3, strength=1):
                 previous=o.energy;o.energy=min(160,o.energy+45*strength);altered+=int(o.energy!=previous)
             elif tool=='mutate':
                 o.weights=[max(-4,min(4,w+world.rng.gauss(0,.12*strength))) for w in o.weights]
-                o.size=max(.5,min(1.6,o.size+world.rng.gauss(0,.08*strength)));altered+=1
+                o.size=max(.5,min(1.6,o.size+world.rng.gauss(0,.08*strength)))
+                o.thermal_opt=max(0,min(1,o.thermal_opt+world.rng.gauss(0,.05*strength)))
+                altered+=1
             elif tool in ('extinction','meteor','lightning','volcano'):
                 o.energy=0;removed+=1
         if removed:

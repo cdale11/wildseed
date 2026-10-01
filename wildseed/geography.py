@@ -1,6 +1,7 @@
 """Seeded, periodic terrain and climate generation; no simulation side effects."""
 import math
 import random
+from . import plants
 
 GEOGRAPHIES = {
     'continents': ('Continents', 'Broad landmasses, sheltered bays and open oceans.'),
@@ -91,6 +92,10 @@ def generate(seed, width, height, geography='continents', biome='mixed'):
             # Seed banks let vegetation colonize disturbed ground without creating plants from nothing.
             t['grass_seed'] = t['grass']
             t['tree_seed'] = t['trees']
+            t['water'] = max(0, moisture - .72) * .03 if land else 0.0
+            t['sediment'] = 0.0
+            t['lava'] = 0.0
+            plants.initialize(t, (fine[i] - .5) * .12)
             tiles.append(t)
     return tiles
 

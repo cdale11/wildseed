@@ -48,8 +48,11 @@ class SimulationTests(unittest.TestCase):
         for _ in range(100): w.step()
         for t in w.tiles:
             self.assertTrue(all(math.isfinite(v) for v in t.values()))
-            for key in ('m', 'f', 'grass', 'trees', 'fire'):
+            for key in ('m', 'f', 'grass', 'trees', 'fire', 'water', 'lava',
+                        'grass_temp', 'grass_moist', 'tree_temp', 'tree_moist'):
                 self.assertTrue(0 <= t[key] <= 1, (key, t[key]))
+            self.assertTrue(0 <= t['grass_pop'] <= 100)
+            self.assertTrue(0 <= t['tree_pop'] <= 40)
         for o in w.organisms:
             self.assertTrue(all(math.isfinite(v) and abs(v) <= 4 for v in o.weights))
         self.assertGreater(w.training_steps, 0)

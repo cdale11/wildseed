@@ -9,6 +9,7 @@ import random
 
 from .geography import generate, classify, BIOME_NAMES
 from .powers import apply as apply_power
+from . import plants
 
 from .brain import BrainEngine, PARAMS, HIDDEN, learn
 
@@ -34,10 +35,13 @@ class Organism:
     wood: float = 0
     ore: float = 0
     last_move: list | None = None
+    parent_a: int = 0
+    parent_b: int = 0
+    thermal_opt: float = .55
 
 
 class World:
-    VERSION = 5
+    VERSION = 7
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -52,7 +56,9 @@ class World:
         self.events = deque(maxlen=60)
         self.organisms = []
         self.settlements = []
+        self.ancestry = deque(maxlen=50000)
         self.births = self.deaths = self.training_steps = self.hunts = self.hunt_move_updates = 0
+        self.sexual_births = 0
         self.engine = BrainEngine(workers, device)
         self.tiles = self.generate()
         for i in range(population):
@@ -68,7 +74,7 @@ class World:
     def event(self, text):
         self.events.appendleft({'tick': self.tick, 'text': text})
 
-    def spawn(self, kind, x=None, y=None, parent=None):
+    def spawn(self, kind, x=None, y=None, parent=None, mate=None):
         if kind not in SPECIES or len(self.organisms) >= self.max_population:
             return None
         if x is None:
@@ -80,17 +86,27 @@ class World:
         x, y = x % self.width, y % self.height
         if self.tiles[self.idx(x, y)]['e'] <= .37:
             return None
-        weights = ([max(-4, min(4, w + self.rng.gauss(0, .045))) for w in parent.weights]
+        if mate and (not parent or mate.kind != kind or mate.id == parent.id):
+            raise ValueError('Invalid mate')
+        weights = ([max(-4, min(4, (self.rng.choice((a, b)) if mate else a) + self.rng.gauss(0, .045)))
+                    for a, b in zip(parent.weights, mate.weights if mate else parent.weights)]
                    if parent else [self.rng.gauss(0, .25) for _ in range(PARAMS)])
+        inherited_size = (parent.size + mate.size) / 2 if mate else parent.size if parent else 1
+        inherited_fertility = (parent.fertility + mate.fertility) / 2 if mate else parent.fertility if parent else 1
+        inherited_temp = ((parent.thermal_opt + mate.thermal_opt) / 2 if mate else parent.thermal_opt) if parent else self.tiles[self.idx(x, y)]['temp']
         org = Organism(self.next_id, kind, x, y, 55 if parent else 85, 0,
                        parent.generation + 1 if parent else 0,
-                       max(.5, min(1.6, parent.size + self.rng.gauss(0, .04))) if parent else 1,
-                       max(.5, min(1.6, parent.fertility + self.rng.gauss(0, .04))) if parent else 1,
-                       weights, culture=parent.culture if parent else (self.next_id % 5 + 1 if kind == 'human' else 0))
+                       max(.5, min(1.6, inherited_size + self.rng.gauss(0, .04))) if parent else 1,
+                       max(.5, min(1.6, inherited_fertility + self.rng.gauss(0, .04))) if parent else 1,
+                       weights, culture=parent.culture if parent else (self.next_id % 5 + 1 if kind == 'human' else 0),
+                       parent_a=parent.id if parent else 0, parent_b=mate.id if mate else 0,
+                       thermal_opt=max(0, min(1, inherited_temp + self.rng.gauss(0, .025))))
         self.next_id += 1
         self.organisms.append(org)
         if parent:
             self.births += 1
+            self.sexual_births += int(mate is not None)
+            self.ancestry.append([org.id, org.parent_a, org.parent_b, self.tick, kind])
         return org
 
     def perception_index(self):
@@ -142,19 +158,14 @@ class World:
             x, y = i % self.width, i // self.width
             t['m'] = max(0, min(1, t['m'] + .006 * season - .001 + t['trees'] * .0015))
             if t['e'] > .37:
-                warmth = max(.08, 1 - abs(t['temp'] - .6)*1.7)
-                growth = .028 * t['m'] * t['f'] * (.7 + .3 * season) * warmth
-                t['grass'] = min(1, t['grass'] + growth * t['grass_seed'] * (1 - t['trees'] * .65))
-                t['trees'] = min(1, t['trees'] + .0025 * t['m'] * t['f'] *
-                                 max(0, t['temp']-.15) * t['tree_seed'] * (1 - t['grass'] * .25))
-                t['grass_seed'] = min(1, t['grass_seed'] * .999 + t['grass'] * .003)
-                t['tree_seed'] = min(1, t['tree_seed'] * .9995 + t['trees'] * .001)
+                plants.advance(t, season)
                 t['f'] = min(1, t['f'] + .0003)
                 if t['fire'] > 0:
                     t['grass'] *= .6
                     t['trees'] *= .88
                     t['grass_seed'] *= .9
                     t['tree_seed'] *= .75
+                    plants.burn(t)
                     t['f'] = min(1, t['f'] + .008)
                     t['fire'] = max(0, t['fire'] - .12 - t['m'] * .1)
                     if self.rng.random() < .28:
@@ -162,17 +173,67 @@ class World:
                         neighbor = self.tiles[self.idx(x + dx, y + dy)]
                         if neighbor['trees'] > .2 and neighbor['m'] < .6 and neighbor['e'] > .37:
                             neighbor['fire'] = .8
-                # Rain erodes slopes, deposits material downhill; coastlines change.
+                # Seeds move locally; surface water and lava follow the lowest neighbor.
                 dx, dy = self.rng.choice(DIRECTIONS)
                 neighbor = self.tiles[self.idx(x + dx, y + dy)]
                 if neighbor['e'] > .37:
-                    neighbor['grass_seed'] = min(1, neighbor['grass_seed'] + t['grass_seed'] * .004)
-                    neighbor['tree_seed'] = min(1, neighbor['tree_seed'] + t['tree_seed'] * .002)
-                sediment = max(0, t['e'] - neighbor['e'] - .025) * .001 * t['m']
-                t['e'] -= sediment
-                neighbor['e'] += sediment
+                    plants.disperse(t, neighbor, self.rng)
+                self.flow(i, x, y)
             else:
-                t['grass'] = t['trees'] = t['fire'] = t['grass_seed'] = t['tree_seed'] = 0
+                plants.clear(t)
+                t['fire'] = t['water'] = t['lava'] = 0
+                deposit = min(t['sediment'], max(0, 1 - t['e']))
+                t['sediment'] -= deposit
+                t['e'] += deposit
+
+    def flow(self, index, x, y):
+        """Move runoff, suspended soil and lava downhill in bounded local amounts."""
+        t = self.tiles[index]
+        rain = max(0, t['m'] - .48) * .003 * max(.1, .6 + .4 * math.sin(self.tick / 180))
+        evaporation = .0004 + .0006 * t['temp']
+        t['water'] = max(0, min(1, t['water'] + rain - evaporation))
+        if t['water'] > .001 and t['temp'] > .16:
+            neighbor = min((self.tiles[self.idx(x + dx, y + dy)] for dx, dy in DIRECTIONS),
+                           key=lambda n: n['e'] + n['water'])
+            slope = t['e'] + t['water'] - (neighbor['e'] + neighbor['water'])
+            if slope > .001:
+                before = t['water']
+                outflow = min(before, slope * .25, .035)
+                t['water'] -= outflow
+                erosion = min(max(0, t['e'] - .05), outflow * max(0, t['e'] - neighbor['e']) * .006)
+                t['e'] -= erosion
+                t['sediment'] += erosion
+                carried = t['sediment'] * outflow / before
+                t['sediment'] -= carried
+                if neighbor['e'] > .37:
+                    neighbor['water'] = min(1, neighbor['water'] + outflow)
+                    neighbor['sediment'] += carried
+                    neighbor['m'] = min(1, neighbor['m'] + outflow * .025)
+                else:
+                    neighbor['e'] = min(1, neighbor['e'] + carried)
+        if t['water'] < .005 and t['sediment'] > 0:
+            deposit = min(t['sediment'], .0008, max(0, 1 - t['e']))
+            t['sediment'] -= deposit
+            t['e'] += deposit
+
+        if t['lava'] > 0:
+            cooling = min(t['lava'], .022 + t['water'] * .12)
+            t['lava'] -= cooling
+            t['e'] = min(1, t['e'] + cooling * .012)
+            t['temp'] = min(1, t['temp'] + t['lava'] * .008)
+            if t['lava'] > .02:
+                t['fire'] = max(t['fire'], .8)
+                t['trees'] *= .8
+                t['grass'] *= .7
+                neighbor = min((self.tiles[self.idx(x + dx, y + dy)] for dx, dy in DIRECTIONS),
+                               key=lambda n: n['e'] + n['lava'] * .2)
+                if neighbor['e'] + neighbor['lava'] * .2 < t['e'] + t['lava'] * .2:
+                    outflow = min(t['lava'] * .3, .12)
+                    t['lava'] -= outflow
+                    if neighbor['e'] > .37:
+                        neighbor['lava'] = min(1, neighbor['lava'] + outflow)
+                    else:
+                        neighbor['e'] = min(1, neighbor['e'] + outflow * .012)
 
     def step(self):
         self.tick += 1
@@ -221,9 +282,15 @@ class World:
                     t['f'] = max(.05, t['f'] - eaten * .015)
             elif action == 5 and o.energy > 105 and o.age > 45:
                 if self.rng.random() < .3 * o.fertility:
-                    child = self.spawn(o.kind, o.x, o.y, o)
+                    mates = [p for p in occupancy.get(self.idx(o.x, o.y), [])
+                             if p is not o and p.kind == o.kind and p.energy > 75 and p.age > 45
+                             and abs(p.thermal_opt - o.thermal_opt) < .28]
+                    mate = self.rng.choice(mates) if mates else None
+                    child = self.spawn(o.kind, o.x, o.y, o, mate)
                     if child:
                         o.energy -= 58
+                        if mate:
+                            mate.energy -= 20
                         bonus = 1.8
             elif action == 6 and o.kind == 'human':
                 harvest = min(.035, t['trees'])
@@ -251,7 +318,7 @@ class World:
                     bonus += .8
             if t['e'] <= .37:
                 o.energy -= 3
-            o.energy -= t['fire'] * 8 + max(0, abs(t['temp']-.55)-.3)*.6
+            o.energy -= t['fire'] * 8 + max(0, abs(t['temp'] - o.thermal_opt) - .08) * .6
             o.energy = min(160, o.energy)
             if o.age > 1400 / o.size:
                 o.energy = 0
@@ -299,14 +366,18 @@ class World:
 
     def snapshot(self):
         counts = dict(Counter(o.kind for o in self.organisms))
+        ecotypes = {(o.kind, int(o.thermal_opt * 4), int(o.size * 2)) for o in self.organisms}
         return {'seed': self.seed, 'tick': self.tick, 'width': self.width, 'height': self.height,
                 'geography': self.geography, 'biome': self.biome,
-                'tiles': [[round(t[k], 3) for k in ('e', 'm', 'grass', 'trees', 'ore', 'fire', 'f', 'temp')] + [BIOME_NAMES.index(classify(t))] for t in self.tiles],
+                'tiles': [[round(t[k], 3) for k in ('e', 'm', 'grass', 'trees', 'ore', 'fire', 'f', 'temp')] +
+                          [BIOME_NAMES.index(classify(t)), round(t['water'], 3), round(t['lava'], 3),
+                           t['grass_pop'], t['tree_pop']] for t in self.tiles],
                 'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move')} for o in self.organisms],
                 'settlements': self.settlements, 'events': list(self.events),
                 'stats': {'population': len(self.organisms), 'counts': counts, 'births': self.births,
                           'deaths': self.deaths, 'training': self.training_steps, 'hunts': self.hunts,
-                          'hunt_move_updates': self.hunt_move_updates,
+                          'hunt_move_updates': self.hunt_move_updates, 'sexual_births': self.sexual_births,
+                          'ecotypes': len(ecotypes),
                           'generation': max((o.generation for o in self.organisms), default=0),
                           'cultures': len(set(o.culture for o in self.organisms if o.kind == 'human'))}}
 
@@ -318,7 +389,8 @@ class World:
                    'settlements': self.settlements, 'events': list(self.events),
                    'births': self.births, 'deaths': self.deaths, 'training_steps': self.training_steps,
                    'hunts': self.hunts, 'hunt_move_updates': self.hunt_move_updates,
-                   'learning': self.learning}
+                   'learning': self.learning, 'sexual_births': self.sexual_births,
+                   'ancestry': list(self.ancestry)}
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_suffix('.tmp')
@@ -332,7 +404,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -348,17 +420,26 @@ class World:
             tile.setdefault('temp', .57)
             tile.setdefault('grass_seed', tile['grass'])
             tile.setdefault('tree_seed', tile['trees'])
+            tile.setdefault('water', 0.0)
+            tile.setdefault('sediment', 0.0)
+            tile.setdefault('lava', 0.0)
+            plants.migrate(tile)
         data.setdefault('geography', 'continents')
         data.setdefault('biome', 'mixed')
         data.setdefault('learning', True)
         data.setdefault('hunts', 0)
         data.setdefault('hunt_move_updates', 0)
+        data.setdefault('sexual_births', 0)
+        data.setdefault('ancestry', [])
         world = cls(data['seed'], data['width'], data['height'], workers, device, population=0,
                     geography=data['geography'], biome=data['biome'], learning=data['learning'])
         rng = data.pop('rng')
         world.rng.setstate((rng[0], tuple(rng[1]), rng[2]))
+        for organism in data['organisms']:
+            organism.setdefault('thermal_opt', data['tiles'][organism['y'] * data['width'] + organism['x']]['temp'])
         data['organisms'] = [Organism(**o) for o in data['organisms']]
         data['events'] = deque(data['events'], maxlen=60)
+        data['ancestry'] = deque(data['ancestry'], maxlen=50000)
         for key, value in data.items():
             setattr(world, key, value)
         return world

@@ -1,5 +1,12 @@
 # Development mistakes
 
+## 2026-10-02 — Rare seeds initially failed to establish plant cohorts
+- Mistake: dispersal placed a small positive seed bank in bare land, but integer rounding made its target population zero on the next update.
+- Cause: the cohort target used `int(capacity * seed * fitness)` without a minimum for viable seeds.
+- Resolution: any positive seed can establish one founding plant; population growth still depends on climate fit and competition.
+- Prevention: test colonization starting from both empty seed banks and zero plant counts, including sparse one-step transfers.
+- Verification: focused dispersal and inherited-trait tests pass; water and destructive powers still clear cohorts.
+
 ## 2026-10-01 — Immediate reward obscured navigation learning
 - Mistake: the initial policy update rewarded a successful eat action but gave no credit to the movement that put a predator on the prey tile.
 - Cause: only the current action's immediate energy change was used as training reward.

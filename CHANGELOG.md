@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 — 2026-10-02
+
+- Added bounded surface runoff, downhill sediment transport, lava flow and cooling; rain, drought and volcano powers feed those fields, and water/lava render on the map.
+- Added explicit local grass/tree cohort counts with inherited temperature/moisture preferences and climate-dependent growth. Seed dispersal carries traits with variation during colonization.
+- Added optional two-parent reproduction, neural-weight recombination, heritable thermal preference, bounded ancestry records and ecological type counts.
+- Save schema v7 migrates v1–v6 worlds; clients inspect plant populations, parent IDs, runoff and lava.
+- GPU validation and 100,000-tick stability runs are deferred at the owner's request.
+
 ## 0.4.0 — 2026-10-01
 
 - Added reproducible paired learning/frozen ecology experiments, predator hunts and exposure-adjusted metrics, and a directional prey-cue probe.

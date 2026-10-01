@@ -8,7 +8,7 @@
 - [x] Save/reload with deterministic continuation tests.
 - [x] Graceful SIGTERM save for Linux/container shutdown.
 - [x] CPU process inference and optional CUDA implementation.
-- [ ] Validate CUDA on real or compute-enabled virtual GPU.
+- [ ] Deferred by owner: validate CUDA on a real or compute-enabled virtual GPU when hardware is available.
 - [ ] Benchmark and optimize full tick scaling across available CPUs.
 - [x] Publish tested source on the public main branch.
 
@@ -17,7 +17,8 @@
 - [x] Thirty validated god powers with brush controls and measured feedback.
 - [x] Procedural biome colors, shaded relief, coasts, trees and creature sprites.
 - [x] Save v3 migration and archive-before-replacement.
-- [ ] Physical hydrology/lava, biome succession and deeper temperature adaptation experiments.
+- [x] Bounded local runoff, sediment transport and cooling lava with visible map effects.
+- [ ] Watershed-scale rivers, biome succession and deeper temperature adaptation experiments.
 
 ## Phase 1: ecological depth
 - [x] Species-aware directional perception of prey, threats, food and materials.
@@ -25,10 +26,12 @@
 - [x] Reproducible paired learned/frozen runs with exposure-adjusted hunts and a directional policy probe.
 - [ ] Recurrent memory.
 - [x] Tile seed banks, local dispersal and grass/tree competition.
-- [ ] Explicit plant populations and plant genomes.
-- [ ] Water flow, rivers, sediment budgets, temperature, weather and nutrient cycles.
-- [ ] Sexual reproduction, ancestry graphs, ecological niches and speciation metrics.
-- [ ] Multi-seed 100k-tick stability runs and random-policy comparison; 10 paired 500-tick learned/frozen runs are documented.
+- [x] Explicit local plant cohorts, population counts and inherited climate trait means.
+- [x] Local water flow, suspended soil transport and lava cooling.
+- [ ] Watershed-scale rivers, weather systems and nutrient cycles.
+- [x] Two-parent genetic recombination, bounded ancestry records and ecotype counts.
+- [ ] Speciation with reproductive isolation and validated species metrics.
+- [ ] Deferred by owner: multi-seed 100k-tick stability runs. Ten paired 500-tick learned/frozen runs are documented; random-policy comparison remains open.
 Acceptance: measurable behavioral adaptation and ecological diversity without scripted population replenishment, with published failure cases.
 
 ## Phase 2: human societies
