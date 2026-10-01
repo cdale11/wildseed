@@ -6,6 +6,7 @@
 - [x] Individual online-trained policies and inherited mutations.
 - [x] Energy/food/reproduction/death and basic human settlements.
 - [x] Save/reload with deterministic continuation tests.
+- [x] Graceful SIGTERM save for Linux/container shutdown.
 - [x] CPU process inference and optional CUDA implementation.
 - [ ] Validate CUDA on real or compute-enabled virtual GPU.
 - [ ] Benchmark and optimize full tick scaling across available CPUs.
@@ -21,12 +22,13 @@
 ## Phase 1: ecological depth
 - [x] Species-aware directional perception of prey, threats, food and materials.
 - [ ] Demonstrate learned predator tracking/threat avoidance against frozen-policy baselines.
+- [x] Reproducible paired learned/frozen runs with exposure-adjusted hunts and a directional policy probe.
 - [ ] Recurrent memory.
 - [x] Tile seed banks, local dispersal and grass/tree competition.
 - [ ] Explicit plant populations and plant genomes.
 - [ ] Water flow, rivers, sediment budgets, temperature, weather and nutrient cycles.
 - [ ] Sexual reproduction, ancestry graphs, ecological niches and speciation metrics.
-- [ ] Multi-seed 100k-tick stability runs; compare learned vs frozen/random policies.
+- [ ] Multi-seed 100k-tick stability runs and random-policy comparison; 10 paired 500-tick learned/frozen runs are documented.
 Acceptance: measurable behavioral adaptation and ecological diversity without scripted population replenishment, with published failure cases.
 
 ## Phase 2: human societies

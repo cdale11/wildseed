@@ -1,5 +1,12 @@
 # Development mistakes
 
+## 2026-10-01 — Immediate reward obscured navigation learning
+- Mistake: the initial policy update rewarded a successful eat action but gave no credit to the movement that put a predator on the prey tile.
+- Cause: only the current action's immediate energy change was used as training reward.
+- Resolution: successful hunts also update the preceding movement policy; added a frozen-policy control and a directional prey-cue probe.
+- Prevention: measure the intended behavior against paired controls, including exposure-adjusted rates and held-out directional probes, before claiming adaptation.
+- Verification: ten paired 500-tick seeds improved mean hunts per predator exposure by about 9%, but the directional probe remained near zero. Learned tracking is still unproven.
+
 ## 2026-10-01 — Browser permission troubleshooting was overconfident
 - Mistake: repeated settings/restart suggestions did not resolve the original task's saved GitHub denial.
 - Cause: inferring a fix without evidence about the persisted permission layer.

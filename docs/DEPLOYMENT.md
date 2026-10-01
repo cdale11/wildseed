@@ -9,7 +9,7 @@ export WILDSEED_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe
 docker compose up --build -d
 ```
 
-The host port binds to 127.0.0.1:8080. Reach it through an SSH tunnel (`ssh -L 8080:127.0.0.1:8080 your-server`) or a TLS reverse proxy. Enter the token under Server access in the browser. The named volume stores data/world.json. Maintain independent backups. Graceful Ctrl+C in native mode saves immediately; container autosaves every minute, so abrupt termination can lose the last minute. SIGTERM handling is a follow-up reliability item.
+The host port binds to 127.0.0.1:8080. Reach it through an SSH tunnel (`ssh -L 8080:127.0.0.1:8080 your-server`) or a TLS reverse proxy. Enter the token under Server access in the browser. The named volume stores data/world.json. Maintain independent backups. Graceful Ctrl+C and SIGTERM save the current world before exit. Abrupt termination or power loss can lose changes since the last minute's autosave.
 
 ## Native Linux
 

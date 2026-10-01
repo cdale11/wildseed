@@ -1,5 +1,9 @@
 # Validation — 2026-10-01
 
+## Version 0.4.0 learning controls
+
+The paired experiment command and limitations are in [EXPERIMENTS.md](EXPERIMENTS.md). Ten seeds × two modes × 500 ticks completed on CPU. Frozen runs were reproducible, with zero within-lifetime updates; learned worlds retained exact save/resume behavior, including pending one-step hunt credit. The normalized hunt-rate gain was modest and directional tracking remains unproven. Unit tests include forced successful predation to verify the preceding move receives a neural update. All 30 automated tests pass, including a subprocess SIGTERM shutdown that persists an advancing world. The 200-tick, 250-initial-organism, one-worker benchmark reached 39.14 ticks/s (median 23.94 ms, p95 43.04 ms; 725 final organisms). This is a short run and not a high-population scaling claim.
+
 ## Version 0.3.1 seed ecology
 
 All 25 automated tests pass on Python 3.13.11, including version 3 save migration and seed dispersal into bare land while keeping water sterile. Seed banks are included in deterministic save continuation and power state checks. With seed 42, 250 initial organisms, 200 ticks and one worker, the run ended with 730 organisms; median tick 23.92 ms, p95 40.18 ms, throughput 41.2 ticks/s. This short run does not establish ecological stability or plant species evolution. No game server remains running after verification.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 — 2026-10-01
+
+- Added reproducible paired learning/frozen ecology experiments, predator hunts and exposure-adjusted metrics, and a directional prey-cue probe.
+- Successful predator hunts now also train the preceding move, giving delayed credit to navigation; this state is saved for exact continuation.
+- Save schema v5 persists training mode, hunt counts and navigation credit; v1–v4 saves migrate.
+- Graceful SIGTERM now flushes the active world to disk for container shutdown.
+- Ten paired 500-tick seeds increased mean exposure-adjusted hunts from 13.06 to 14.24 per 1,000 predator-ticks, but the directional probe remained near zero. Tracking is still an open research task.
+
 ## 0.3.1 — 2026-10-01
 
 - Added grass and tree seed banks, local dispersal, vegetation competition and fire/flood seed loss so bare ground recolonizes from neighboring life.

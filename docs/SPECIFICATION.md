@@ -10,7 +10,7 @@ The initial world is a 96×64 periodic grid with elevation, moisture, fertility,
 
 Each organism has ID, species, position, energy, age, generation, size, fertility, culture, materials, reward baseline and 216 neural weights. Observations: bias, energy, age, local grass/trees/moisture/fire, season and four directional food/prey indicators, four predator/fire indicators and four human material indicators. Rays extend three tiles with inverse-distance attenuation; water and high mountains occlude them. Living prey/threat counts are indexed once before each tick’s decisions. Network: 20 inputs, 8 tanh hidden units, 7 softmax actions. Actions: four cardinal movements, eat, reproduce, species-dependent work/rest. The action set and network topology are fixed in this version. Predators sense living grazers rather than grass. Actions are still sampled from learned policies; sensing does not force hunting or avoidance.
 
-Training: immediate energy delta and reproduction/construction bonuses feed a bounded advantage against an exponential moving baseline. REINFORCE updates both layers. Weights are clipped to [-4,4]. Children inherit weights plus Gaussian mutation and bounded size/fertility mutations. Inheritance currently includes learned weights (Lamarckian design choice); document future alternatives. Delayed credit, recurrent memory, topology evolution and controlled adaptation experiments remain outstanding.
+Training: immediate energy delta and reproduction/construction bonuses feed a bounded advantage against an exponential moving baseline. REINFORCE updates both layers. A successful predator hunt also credits the preceding move, if any. Weights are clipped to [-4,4]. Children inherit weights plus Gaussian mutation and bounded size/fertility mutations. Inheritance currently includes learned weights (Lamarckian design choice); document future alternatives. A frozen-policy mode supports paired experiments and is persisted in saves. Long-horizon credit, recurrent memory and topology evolution remain outstanding.
 
 ## Ecology and humans
 
@@ -18,7 +18,7 @@ Vegetation grows from grass and tree seed banks according to moisture and soil, 
 
 ## Persistence and API
 
-Schema version 4 JSON stores full precision state, neural weights and Python RNG state. Write-to-temporary + fsync + atomic rename protects the last completed save from partial writes. Only trusted server-owned saves are loaded. `/api/state` is a rendering snapshot and is not a save. `/api/command` accepts preview, new_world, pause, speed, save and tool. `/health` reports simulation failure. Browser remote access uses a bearer token entered by the user; tokens remain in JS memory and are not put in URLs/storage. Commands reject cross-origin Origin headers and non-JSON bodies. Remote bind requires a 24+ character token. Terminate TLS at a reverse proxy; do not expose this development HTTP server directly to the internet.
+Schema version 5 JSON stores full precision state, neural weights and Python RNG state. Write-to-temporary + fsync + atomic rename protects the last completed save from partial writes. Only trusted server-owned saves are loaded. `/api/state` is a rendering snapshot and is not a save. `/api/command` accepts preview, new_world, pause, speed, save and tool. `/health` reports simulation failure. Browser remote access uses a bearer token entered by the user; tokens remain in JS memory and are not put in URLs/storage. Commands reject cross-origin Origin headers and non-JSON bodies. Remote bind requires a 24+ character token. Terminate TLS at a reverse proxy; do not expose this development HTTP server directly to the internet.
 
 ## Scaling
 
@@ -26,7 +26,7 @@ Schema version 4 JSON stores full precision state, neural weights and Python RNG
 
 ## Save migration
 
-Version 1 policies are migrated by retaining each hidden unit’s original 12 input connections, adding eight zero-weight sensory connections, and retaining all output connections. RNG state is preserved. Perception semantics changed, so migrated worlds do not reproduce version 1 trajectories; deterministic continuation applies within version 2. Version 3 adds tile temperature and world geography/biome metadata; old saves get temperate temperature defaults without changing their existing terrain. Version 4 adds grass and tree seed banks initialized from existing vegetation in older saves. Save writes upgrade to version 4; keep a backup if rollback is needed.
+Version 1 policies are migrated by retaining each hidden unit’s original 12 input connections, adding eight zero-weight sensory connections, and retaining all output connections. RNG state is preserved. Perception semantics changed, so migrated worlds do not reproduce version 1 trajectories; deterministic continuation applies within version 2. Version 3 adds tile temperature and world geography/biome metadata; old saves get temperate temperature defaults without changing their existing terrain. Version 4 adds grass and tree seed banks initialized from existing vegetation in older saves. Version 5 adds learning mode, hunt metrics and one-step movement credit state; older saves default to learning enabled. Save writes upgrade to version 5; keep a backup if rollback is needed.
 
 ## New worlds and powers
 

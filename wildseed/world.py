@@ -33,16 +33,18 @@ class Organism:
     culture: int = 0
     wood: float = 0
     ore: float = 0
+    last_move: list | None = None
 
 
 class World:
-    VERSION = 4
+    VERSION = 5
 
-    def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed'):
+    def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
             raise ValueError('Dimensions must be between 16 and 256')
         self.seed, self.width, self.height = seed, width, height
         self.geography, self.biome = geography, biome
+        self.learning = learning
         self.rng = random.Random(seed)
         self.tick = 0
         self.next_id = 1
@@ -50,7 +52,7 @@ class World:
         self.events = deque(maxlen=60)
         self.organisms = []
         self.settlements = []
-        self.births = self.deaths = self.training_steps = 0
+        self.births = self.deaths = self.training_steps = self.hunts = self.hunt_move_updates = 0
         self.engine = BrainEngine(workers, device)
         self.tiles = self.generate()
         for i in range(population):
@@ -191,6 +193,7 @@ class World:
             action = self.rng.choices(range(7), weights=probs)[0]
             t = self.tiles[self.idx(o.x, o.y)]
             bonus = 0
+            moved = hunted = False
             if action < 4:
                 dx, dy = DIRECTIONS[action]
                 nx, ny = (o.x + dx) % self.width, (o.y + dy) % self.height
@@ -201,6 +204,7 @@ class World:
                     occupancy.setdefault(self.idx(nx, ny), []).append(o)
                     o.energy -= .10
                     t = dest
+                    moved = True
             elif action == 4:
                 if o.kind == 'predator':
                     prey = next((p for p in occupancy.get(self.idx(o.x, o.y), [])
@@ -208,6 +212,8 @@ class World:
                     if prey:
                         o.energy += min(65, max(0, prey.energy))
                         prey.energy = 0
+                        self.hunts += 1
+                        hunted = True
                 else:
                     eaten = min(t['grass'], .15 * o.size)
                     t['grass'] -= eaten
@@ -250,10 +256,19 @@ class World:
             if o.age > 1400 / o.size:
                 o.energy = 0
             reward = (o.energy - before) / 20 + bonus
-            learn(o.weights, obs, hidden, probs, action, reward - o.baseline)
-            o.baseline = .95 * o.baseline + .05 * reward
-            o.updates += 1
-            self.training_steps += 1
+            if self.learning:
+                # A hunt pays the move that put the predator on its prey's tile.
+                if hunted and o.last_move:
+                    old_obs, old_hidden, old_probs, old_action = o.last_move
+                    learn(o.weights, old_obs, old_hidden, old_probs, old_action, 1.5)
+                    o.updates += 1
+                    self.training_steps += 1
+                    self.hunt_move_updates += 1
+                learn(o.weights, obs, hidden, probs, action, reward - o.baseline)
+                o.baseline = .95 * o.baseline + .05 * reward
+                o.updates += 1
+                self.training_steps += 1
+                o.last_move = [obs, hidden, probs, action] if moved and o.kind == 'predator' else None
         dead = [o for o in self.organisms if o.energy <= 0]
         for o in dead:
             t = self.tiles[self.idx(o.x, o.y)]
@@ -287,10 +302,11 @@ class World:
         return {'seed': self.seed, 'tick': self.tick, 'width': self.width, 'height': self.height,
                 'geography': self.geography, 'biome': self.biome,
                 'tiles': [[round(t[k], 3) for k in ('e', 'm', 'grass', 'trees', 'ore', 'fire', 'f', 'temp')] + [BIOME_NAMES.index(classify(t))] for t in self.tiles],
-                'organisms': [{k: v for k, v in asdict(o).items() if k != 'weights'} for o in self.organisms],
+                'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move')} for o in self.organisms],
                 'settlements': self.settlements, 'events': list(self.events),
                 'stats': {'population': len(self.organisms), 'counts': counts, 'births': self.births,
-                          'deaths': self.deaths, 'training': self.training_steps,
+                          'deaths': self.deaths, 'training': self.training_steps, 'hunts': self.hunts,
+                          'hunt_move_updates': self.hunt_move_updates,
                           'generation': max((o.generation for o in self.organisms), default=0),
                           'cultures': len(set(o.culture for o in self.organisms if o.kind == 'human'))}}
 
@@ -300,7 +316,9 @@ class World:
                    'geography': self.geography, 'biome': self.biome,
                    'tiles': self.tiles, 'organisms': [asdict(o) for o in self.organisms],
                    'settlements': self.settlements, 'events': list(self.events),
-                   'births': self.births, 'deaths': self.deaths, 'training_steps': self.training_steps}
+                   'births': self.births, 'deaths': self.deaths, 'training_steps': self.training_steps,
+                   'hunts': self.hunts, 'hunt_move_updates': self.hunt_move_updates,
+                   'learning': self.learning}
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_suffix('.tmp')
@@ -314,7 +332,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, cls.VERSION):
+        if version not in (1, 2, 3, 4, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -332,8 +350,11 @@ class World:
             tile.setdefault('tree_seed', tile['trees'])
         data.setdefault('geography', 'continents')
         data.setdefault('biome', 'mixed')
+        data.setdefault('learning', True)
+        data.setdefault('hunts', 0)
+        data.setdefault('hunt_move_updates', 0)
         world = cls(data['seed'], data['width'], data['height'], workers, device, population=0,
-                    geography=data['geography'], biome=data['biome'])
+                    geography=data['geography'], biome=data['biome'], learning=data['learning'])
         rng = data.pop('rng')
         world.rng.setstate((rng[0], tuple(rng[1]), rng[2]))
         data['organisms'] = [Organism(**o) for o in data['organisms']]

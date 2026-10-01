@@ -6,6 +6,7 @@ import json
 import os
 import secrets
 import shutil
+import signal
 from pathlib import Path
 import threading
 import time
@@ -208,12 +209,17 @@ def main():
     server = ThreadingHTTPServer((args.host, args.port), handler_for(sim))
     worker = threading.Thread(target=sim.run, daemon=True)
     worker.start()
+    def terminate(_signum, _frame):
+        # serve_forever's shutdown must run outside its main serving thread.
+        threading.Thread(target=server.shutdown, daemon=True).start()
+    previous_sigterm = signal.signal(signal.SIGTERM, terminate)
     print(f"Wildseed: http://{args.host}:{args.port} | {args.workers or 'auto'} CPU workers | {args.device}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
+        signal.signal(signal.SIGTERM, previous_sigterm)
         sim.stop.set()
         worker.join()
         with sim.lock:
