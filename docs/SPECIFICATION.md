@@ -8,7 +8,7 @@ The initial world is a 96×64 periodic grid with elevation, moisture, fertility,
 
 ## Organisms
 
-Each organism has ID, species, position, energy, age, generation, size, fertility, culture, materials, reward baseline and 152 neural weights. Observations: bias, energy, age, local grass/trees/moisture/fire, season and four adjacent food/water indicators. Network: 12 inputs, 8 tanh hidden units, 7 softmax actions. Actions: four cardinal movements, eat, reproduce, species-dependent work/rest. The action set and network topology are fixed in this version. Predators need richer prey perception in Phase 1.
+Each organism has ID, species, position, energy, age, generation, size, fertility, culture, materials, reward baseline and 216 neural weights. Observations: bias, energy, age, local grass/trees/moisture/fire, season and four directional food/prey indicators, four predator/fire indicators and four human material indicators. Rays extend three tiles with inverse-distance attenuation; water and high mountains occlude them. Living prey/threat counts are indexed once before each tick’s decisions. Network: 20 inputs, 8 tanh hidden units, 7 softmax actions. Actions: four cardinal movements, eat, reproduce, species-dependent work/rest. The action set and network topology are fixed in this version. Predators sense living grazers rather than grass. Actions are still sampled from learned policies; sensing does not force hunting or avoidance.
 
 Training: immediate energy delta and reproduction/construction bonuses feed a bounded advantage against an exponential moving baseline. REINFORCE updates both layers. Weights are clipped to [-4,4]. Children inherit weights plus Gaussian mutation and bounded size/fertility mutations. Inheritance currently includes learned weights (Lamarckian design choice); document future alternatives. Delayed credit, recurrent memory, topology evolution and controlled adaptation experiments remain outstanding.
 
@@ -18,8 +18,12 @@ Vegetation grows from moisture/soil, feeding drains biomass and fertility, death
 
 ## Persistence and API
 
-Schema version 1 JSON stores full precision state, neural weights and Python RNG state. Write-to-temporary + fsync + atomic rename protects the last completed save from partial writes. Only trusted server-owned saves are loaded. `/api/state` is a rendering snapshot and is not a save. `/api/command` accepts pause, speed, save, tool. `/health` reports simulation failure. Browser remote access uses a bearer token entered by the user; tokens remain in JS memory and are not put in URLs/storage. Commands reject cross-origin Origin headers and non-JSON bodies. Remote bind requires a 24+ character token. Terminate TLS at a reverse proxy; do not expose this development HTTP server directly to the internet.
+Schema version 2 JSON stores full precision state, neural weights and Python RNG state. Write-to-temporary + fsync + atomic rename protects the last completed save from partial writes. Only trusted server-owned saves are loaded. `/api/state` is a rendering snapshot and is not a save. `/api/command` accepts pause, speed, save, tool. `/health` reports simulation failure. Browser remote access uses a bearer token entered by the user; tokens remain in JS memory and are not put in URLs/storage. Commands reject cross-origin Origin headers and non-JSON bodies. Remote bind requires a 24+ character token. Terminate TLS at a reverse proxy; do not expose this development HTTP server directly to the internet.
 
 ## Scaling
 
 0 workers selects process affinity CPUs; inference parallelizes when batches justify overhead. Tiny worlds run scalar inference. All rule application and gradient training currently remain serial, so more workers do not guarantee faster ticks. Optional PyTorch CUDA inference batches distinct policies with bmm; CPU/GPU floating-point differences can change sampled histories. A compute-enabled vGPU must expose CUDA; virtual display adapters cannot substitute. GPU training/vectorized state are roadmap items. The browser only renders and sends commands.
+
+## Save migration
+
+Version 1 policies are migrated by retaining each hidden unit’s original 12 input connections, adding eight zero-weight sensory connections, and retaining all output connections. RNG state is preserved. Perception semantics changed, so migrated worlds do not reproduce version 1 trajectories; deterministic continuation applies within version 2. Save writes upgrade to version 2; keep a backup if version 1 rollback is needed.

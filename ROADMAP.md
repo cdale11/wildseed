@@ -12,7 +12,9 @@
 - [x] Publish tested source on the public main branch.
 
 ## Phase 1: ecological depth
-- [ ] Species-aware perception, predator tracking, threat avoidance and recurrent memory.
+- [x] Species-aware directional perception of prey, threats, food and materials.
+- [ ] Demonstrate learned predator tracking/threat avoidance against frozen-policy baselines.
+- [ ] Recurrent memory.
 - [ ] Explicit plant populations, seed dispersal, plant genomes and competition.
 - [ ] Water flow, rivers, sediment budgets, temperature, weather and nutrient cycles.
 - [ ] Sexual reproduction, ancestry graphs, ecological niches and speciation metrics.

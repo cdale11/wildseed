@@ -2,7 +2,7 @@ import math
 from pathlib import Path
 import tempfile
 import unittest
-from wildseed.brain import forward, learn, PARAMS, BrainEngine
+from wildseed.brain import forward, learn, PARAMS, INPUTS, BrainEngine
 from wildseed.world import World
 from wildseed.server import Simulation
 
@@ -31,7 +31,7 @@ class SimulationTests(unittest.TestCase):
 
     def test_learning_increases_rewarded_action_probability(self):
         w = [.1] * PARAMS
-        obs = [1.] * 12
+        obs = [1.] * INPUTS
         hidden, probabilities = forward((w, obs))
         learn(w, obs, hidden, probabilities, 4, 1.)
         self.assertGreater(forward((w, obs))[1][4], probabilities[4])
@@ -69,7 +69,7 @@ class SimulationTests(unittest.TestCase):
 
     def test_multiprocess_matches_scalar(self):
         engine = BrainEngine(workers=2); self.addCleanup(engine.close)
-        items = [([.1] * PARAMS, [i / 32] * 12) for i in range(32)]
+        items = [([.1] * PARAMS, [i / 32] * INPUTS) for i in range(32)]
         self.assertEqual(engine.infer(items), [forward(item) for item in items])
 
 if __name__ == '__main__': unittest.main()

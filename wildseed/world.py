@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import random
 
-from .brain import BrainEngine, PARAMS, learn
+from .brain import BrainEngine, PARAMS, HIDDEN, learn
 
 SPECIES = ('grazer', 'predator', 'human')
 DIRECTIONS = ((0, -1), (1, 0), (0, 1), (-1, 0))
@@ -33,7 +33,7 @@ class Organism:
 
 
 class World:
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -102,14 +102,46 @@ class World:
             self.births += 1
         return org
 
-    def observe(self, o):
-        t = self.tiles[self.idx(o.x, o.y)]
-        food = []
+    def perception_index(self):
+        """Snapshot living occupancy once per tick, never scan all agents per ray."""
+        prey, threats = Counter(), Counter()
+        for organism in self.organisms:
+            if organism.energy <= 0:
+                continue
+            index = self.idx(organism.x, organism.y)
+            if organism.kind == 'grazer':
+                prey[index] += 1
+            elif organism.kind == 'predator':
+                threats[index] += 1
+        return prey, threats
+
+    def observe(self, o, perception=None):
+        prey, threats = perception if perception is not None else self.perception_index()
+        index = self.idx(o.x, o.y)
+        t = self.tiles[index]
+        food, danger, materials = [], [], []
         for dx, dy in DIRECTIONS:
-            dest = self.tiles[self.idx(o.x + dx, o.y + dy)]
-            food.append(dest['grass'] if dest['e'] > .37 else -1)
-        return [1, o.energy / 150, min(1, o.age / 1000), t['grass'], t['trees'],
-                t['m'], t['fire'], math.sin(self.tick / 180), *food]
+            food_signal = danger_signal = material_signal = 0.0
+            for distance in range(1, 4):
+                target = self.idx(o.x + dx * distance, o.y + dy * distance)
+                dest = self.tiles[target]
+                if dest['e'] <= .37 or dest['e'] >= .88:
+                    if distance == 1:
+                        food_signal = -1
+                    break
+                attenuation = 1 / distance
+                edible = min(1, prey[target]) if o.kind == 'predator' else dest['grass']
+                food_signal = max(food_signal, edible * attenuation)
+                threat = min(1, threats[target]) if o.kind == 'grazer' else 0
+                danger_signal = max(danger_signal, max(threat, dest['fire']) * attenuation)
+                resource = max(dest['trees'], min(1, dest['ore'])) if o.kind == 'human' else 0
+                material_signal = max(material_signal, resource * attenuation)
+            food.append(food_signal)
+            danger.append(danger_signal)
+            materials.append(material_signal)
+        local_food = min(1, prey[index]) if o.kind == 'predator' else t['grass']
+        return [1, o.energy / 150, min(1, o.age / 1000), local_food, t['trees'],
+                t['m'], t['fire'], math.sin(self.tick / 180), *food, *danger, *materials]
 
     def climate(self):
         season = math.sin(self.tick / 180)
@@ -146,7 +178,8 @@ class World:
         self.tick += 1
         self.climate()
         cohort = list(self.organisms)
-        observations = [self.observe(o) for o in cohort]
+        perception = self.perception_index()
+        observations = [self.observe(o, perception) for o in cohort]
         predictions = self.engine.infer([(o.weights, obs) for o, obs in zip(cohort, observations)])
         occupancy = {}
         for o in cohort:
@@ -294,8 +327,19 @@ class World:
     @classmethod
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
-        if data.pop('version') != cls.VERSION:
+        version = data.pop('version')
+        if version not in (1, cls.VERSION):
             raise ValueError('Unsupported save version')
+        if version == 1:
+            # Retain old connections, introduce new sensory connections at zero.
+            for organism in data['organisms']:
+                old = organism['weights']
+                if len(old) != 152:
+                    raise ValueError('Invalid version 1 policy length')
+                organism['weights'] = [value for j in range(HIDDEN)
+                    for value in old[j * 12:(j + 1) * 12] + [0.0] * 8] + old[96:]
+        if any(len(o['weights']) != PARAMS for o in data['organisms']):
+            raise ValueError('Invalid policy length')
         world = cls(data['seed'], data['width'], data['height'], workers, device, population=0)
         rng = data.pop('rng')
         world.rng.setstate((rng[0], tuple(rng[1]), rng[2]))

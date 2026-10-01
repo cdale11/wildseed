@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 — 2026-10-01
+
+- Added species-specific three-tile food/prey, threat/fire and material perception with terrain occlusion and periodic-boundary support.
+- Expanded policies to 20 inputs; added version 1 → 2 save migration that retains existing learned connections.
+- Added four perception/migration regression tests; all 14 tests pass.
+- This adds sensory capability; improved hunting/avoidance has not yet been demonstrated against behavioral baselines.
+
 ## 0.1.0 — 2026-10-01
 
 Initial runnable prototype:

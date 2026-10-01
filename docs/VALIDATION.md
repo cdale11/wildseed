@@ -24,3 +24,16 @@ Opened the live browser client, observed connected statistics/terrain/settlement
 ## Not validated
 
 CUDA hardware/backend parity, Docker build/startup, long-term ecological diversity, large client concurrency, production reverse proxy, remote server deployment and mobile touch on physical devices. Browser rendering is a prototype and uses fixed policy actions; sophisticated societies remain roadmap work.
+
+## Version 0.2.0 perception validation
+
+All 14 tests pass, including new prey/threat/material sensing, dead-prey exclusion, periodic seam/occlusion and v1 save migration tests. HTTP tests initially could not bind sockets under the sandbox; they passed after network permission was granted.
+
+Seed 42, one worker, 250 starting organisms:
+
+| Run | Final population | Median tick | p95 tick | Throughput |
+|---|---:|---:|---:|---:|
+| 200 ticks | 985 | 21.46 ms | 48.24 ms | 41.22 ticks/s |
+| 1,000 ticks | 2,498 | 178.87 ms | 220.37 ms | 6.98 ticks/s |
+
+The short run overlapped the longer benchmark, so timings are indicative rather than an isolated apples-to-apples comparison with 0.1.0. At nearly the 2,500 population cap, this single-worker run misses the 8 Hz target. Optimization of training/perception and population-scale profiling remains necessary. Population survival alone does not demonstrate stable diversity or improved hunting; species-level and frozen-policy experiments are still outstanding. No browser assets changed in this version.

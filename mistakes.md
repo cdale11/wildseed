@@ -12,3 +12,10 @@
 - Resolution: wrote tests/test_world.py from the repository root and reran discovery.
 - Prevention: use explicit command working directories and check the discovered test count; zero tests is not a pass.
 - Verification: eight meaningful simulation tests passed after correction.
+
+## 2026-10-01 — Predators originally observed grass instead of prey
+- Mistake: the initial shared observation vector exposed plant food to carnivores and no directional threat/material channels.
+- Consequence: policies lacked the information needed to learn directed hunting or hazard avoidance.
+- Resolution: species-specific food sensing and separate directional threat/material inputs, indexed before each tick.
+- Prevention: test ecological meaning of observations, not only policy math and finite state.
+- Verification: tests cover live/dead prey, wrapped sight lines, water occlusion and species-specific channels. Learned behavior remains to be evaluated.

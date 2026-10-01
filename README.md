@@ -26,8 +26,9 @@ Select a power and click the map: raise/lower terrain, rain, forest, wildfire, h
 ## What exists
 
 - Seeded terrain, coastlines, erosion/deposition, seasonal moisture, vegetation growth, soil depletion, fire spread and ash fertility.
+- Species-specific, three-tile directional perception of food/prey, threats/fire and human building resources, with terrain occlusion.
 - Grazers, predators and humans with energy, age, reproduction, inherited size/fertility, and independently learned neural weights.
-- A 12→8→7 neural policy per organism; online policy gradients through both layers with a moving reward baseline. This is actual training, not a scripted decision tree. No pretrained model or external AI API is needed.
+- A 20→8→7 neural policy per organism; online policy gradients through both layers with a moving reward baseline. This is actual training, not a scripted decision tree. No pretrained model or external AI API is needed.
 - Human harvesting/mining, material accumulation, shelters, local food stocks, rudimentary farming and culture labels. These are settlement mechanics, not yet a deep civilization model.
 - Server persistence, CPU process inference, optional CUDA batch inference, thin canvas clients and token-protected remote operation.
 
