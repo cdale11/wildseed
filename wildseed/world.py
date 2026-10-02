@@ -63,10 +63,11 @@ class Organism:
     reward_ema: float = 0.0
     social_updates: int = 0
     action_counts: list = field(default_factory=lambda: [0] * 7)
+    seed_cargo: list = field(default_factory=lambda: [0.0] * 6)
 
 
 class World:
-    VERSION = 21
+    VERSION = 22
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -91,6 +92,7 @@ class World:
         self.sexual_births = 0
         self.mate_encounters = self.mate_rejections = 0
         self.critic_updates = 0
+        self.seed_transferred = 0.0
         self.social_updates = 0
         self.novelty_archive = []
         self.engine = BrainEngine(workers, device)
@@ -424,6 +426,8 @@ class World:
                         dest['road'] = max(dest['road'], max(0, dest['traffic'] - .3) * .7)
                     t = dest
                     moved = True
+                    if o.kind in ('grazer', 'human'):
+                        self.seed_transferred += plants.deposit_seed_cargo(t, o.seed_cargo)
                     if guided:
                         o.migration_route.pop(0)
                         if not o.migration_route:
@@ -444,6 +448,8 @@ class World:
                     t['litter'] = min(1, t['litter'] + eaten * .12)
                     self.nutrient_budget['grazing_exchange'] += t['litter'] - before_litter
                     o.energy += eaten * 65
+                    if eaten > 0 and o.kind in ('grazer', 'human'):
+                        plants.collect_seed_cargo(t, o.seed_cargo)
                     t['f'] = max(.05, t['f'] - eaten * .015)
             elif action == 5 and o.energy > 105 and o.age > 45:
                 if self.rng.random() < .3 * o.fertility:
@@ -502,6 +508,7 @@ class World:
             t = self.tiles[self.idx(o.x, o.y)]
             t['f'] = min(1, t['f'] + .04)
             if t['e'] > .37:
+                self.seed_transferred += plants.deposit_seed_cargo(t, o.seed_cargo, 1.0)
                 before_litter = t['litter']
                 t['litter'] = min(1, t['litter'] + .035 * o.size)
                 self.nutrient_budget['death_exchange'] += t['litter'] - before_litter
@@ -555,6 +562,7 @@ class World:
                           'ecotypes': len(ecotypes), 'households': len(self.households),
                           'mate_types': len(mate_types), 'mate_encounters': self.mate_encounters,
                           'mate_rejections': self.mate_rejections,
+                          'seed_transferred': round(self.seed_transferred, 3),
                           'water_budget_residual': round(self.water_balance()['residual'], 8),
                           'nutrient_budget_residual': round(self.nutrient_balance()['residual'], 8),
                           'caravans': len(self.shipments),
@@ -584,6 +592,7 @@ class World:
                    'sexual_births': self.sexual_births,
                    'mate_encounters': self.mate_encounters, 'mate_rejections': self.mate_rejections,
                    'critic_updates': self.critic_updates,
+                   'seed_transferred': self.seed_transferred,
                    'social_updates': self.social_updates,
                    'novelty_archive': self.novelty_archive,
                    'ancestry': list(self.ancestry), 'households': self.households,
@@ -602,7 +611,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -657,6 +666,7 @@ class World:
         data.setdefault('mate_encounters', 0)
         data.setdefault('mate_rejections', 0)
         data.setdefault('critic_updates', 0)
+        data.setdefault('seed_transferred', 0.0)
         data.setdefault('social_updates', 0)
         data.setdefault('novelty_archive', [])
         data.setdefault('ancestry', [])
@@ -680,6 +690,9 @@ class World:
             organism.setdefault('reward_ema', 0.0)
             organism.setdefault('social_updates', 0)
             organism.setdefault('action_counts', [0] * 7)
+            organism.setdefault('seed_cargo', [0.0] * 6)
+            if len(organism['seed_cargo']) != 6:
+                raise ValueError('Invalid seed cargo length')
             if len(organism['action_counts']) != 7:
                 raise ValueError('Invalid action history length')
             if len(organism['value_weights']) != VALUE_PARAMS:

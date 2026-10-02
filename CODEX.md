@@ -33,6 +33,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 - world.py: rules, state, RNG, persistence. No HTTP or DOM.
 - plants.py and society.py: bounded cohort and human-society rules called by the authoritative world.
 - Mineral nutrient and litter pools are authoritative tile state. Keep plant uptake, recycling, water transport and god-power effects bounded; use geography.client_tiles for both previews and active snapshots.
+- Forager seed cargo transfers actual seed-bank quantities and trait means. Keep cargo bounded, deposit only on habitable tiles, persist it per organism, and test both transfer conservation and germination.
 - Water and soil-pool ledgers record all changes to their represented tile stores. New rules changing moisture, surface/lake water, mineral nutrients or litter must record their flux and keep residuals near zero in deterministic tests. A closed ledger is not evidence of physical calibration or conservation across unrepresented biomass, bodies and town inventories.
 - geography.py: deterministic terrain/climate generation and map options.
 - Biome succession derives map labels from authoritative climate, vegetation and bounded scar state. Initialize scar in previews, migrate it in old saves, and keep god-power restoration and submerged tiles consistent.

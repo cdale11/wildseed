@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.0 — 2026-10-03
+
+- Grazers and foraging humans now pick up a bounded, conserved share of local grass and tree seeds while eating and deposit carried seeds with their climate-trait means as they move or die on land. This gives animal travel a direct plant-colonization effect; a controlled transfer test confirms that deposited seeds can establish a cohort.
+- Save schema v22 persists six seed-cargo values per organism and the cumulative seed-spread counter, migrates older organisms to empty cargo, and replays deterministic movement/deposition. The browser shows total deposited seed-bank units.
+
 ## 0.21.1 — 2026-10-03
 
 - Added living trait dispersion and effective primary-parent lineage counts by organism kind to snapshots and the offline speciation report. Metrics use the bounded ancestry window and report untracked roots, so they describe variation without calling temporary mating components new species. A controlled six-generation contact test verifies that widely separated mate-recognition lineages remain incompatible under ordinary trait mutation; it does not establish spontaneous speciation in an open world.

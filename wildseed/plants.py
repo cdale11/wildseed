@@ -87,6 +87,43 @@ def disperse(source, destination, rng):
             destination[key] = clamp(destination[key] * (1 - fraction) + inherited * fraction)
 
 
+def collect_seed_cargo(tile, cargo):
+    """Move a bounded share of local seeds into a forager's carried bank."""
+    for kind, offset in (('grass', 0), ('tree', 3)):
+        seed_key = kind + '_seed'
+        existing = cargo[offset]
+        collected = min(tile[seed_key] * .025, max(0.0, .04 - existing))
+        if collected <= 0:
+            continue
+        tile[seed_key] -= collected
+        total = existing + collected
+        for index, trait in ((1, 'temp'), (2, 'moist')):
+            cargo[offset + index] = ((cargo[offset + index] * existing +
+                                      tile[kind + '_' + trait] * collected) / total)
+        cargo[offset] = total
+
+
+def deposit_seed_cargo(tile, cargo, fraction=.25):
+    """Transfer carried seeds and their trait means into a habitable tile."""
+    if tile['e'] <= .37 or tile['lake'] >= .05:
+        return 0.0
+    deposited = 0.0
+    for kind, offset in (('grass', 0), ('tree', 3)):
+        seed_key = kind + '_seed'
+        old = tile[seed_key]
+        released = min(cargo[offset] * fraction, max(0.0, 1.0 - old))
+        if released <= 0:
+            continue
+        tile[seed_key] = old + released
+        cargo[offset] -= released
+        deposited += released
+        for index, trait in ((1, 'temp'), (2, 'moist')):
+            key = kind + '_' + trait
+            tile[key] = clamp((tile[key] * old + cargo[offset + index] * released) /
+                              tile[seed_key])
+    return deposited
+
+
 def burn(tile):
     tile['grass_pop'] = int(tile['grass_pop'] * .6)
     tile['tree_pop'] = int(tile['tree_pop'] * .75)

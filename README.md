@@ -34,6 +34,7 @@ Select a power category and click the map. Thirty-four powers include terrain sc
 - Seeded terrain, coastlines, erosion/deposition, seasonal moisture, vegetation growth, soil depletion, fire spread, ash fertility and recovering burn scars.
 - Species-specific, three-tile directional perception of food/prey, threats/fire and human building resources, with terrain occlusion.
 - Grass and tree cohorts with inherited climate preferences, local seed dispersal and competition; bounded soil nutrient/litter recycling, traveling cloud fronts, catchment-fed river channels, sediment transport and cooling lava.
+- Grazers and foraging humans carry seeds from meals to later locations, linking movement to climate-trait-aware plant colonization.
 - Saved accounting ledgers for represented tile water and mineral-plus-litter stores. They expose external exchanges and conservation residuals; they do not constitute physically calibrated hydrology or a full nutrient cycle through bodies and settlements.
 - Grazers, predators and humans with energy, age, optional two-parent reproduction, ancestry, inherited traits, mate-recognition signals and independently learned neural weights.
 - Living trait and effective primary-parent lineage diversity in state snapshots and the offline speciation report; these are descriptive, not species classifications.
