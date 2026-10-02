@@ -1,5 +1,6 @@
 """Periodic lowest-spill drainage and bounded catchment-fed river channels."""
 import heapq
+from . import geology
 
 
 def drainage(tiles, width, height, with_spill=False):
@@ -79,4 +80,5 @@ def advance(world):
             # of surface water. Rain and local runoff supply the actual pool.
             erosion = min(max(0.0, tile['e'] - .38), strength * .0005)
             tile['e'] -= erosion
+            world.ore_exposed += geology.expose(tile, erosion * 12)
             tile['sediment'] += erosion

@@ -12,6 +12,7 @@ from .powers import apply as apply_power
 from . import plants
 from . import novelty
 from . import diversity
+from . import geology
 from . import society
 from . import weather
 from . import watershed
@@ -67,7 +68,7 @@ class Organism:
 
 
 class World:
-    VERSION = 22
+    VERSION = 23
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -93,6 +94,7 @@ class World:
         self.mate_encounters = self.mate_rejections = 0
         self.critic_updates = 0
         self.seed_transferred = 0.0
+        self.ore_exposed = 0.0
         self.social_updates = 0
         self.novelty_archive = []
         self.engine = BrainEngine(workers, device)
@@ -246,6 +248,7 @@ class World:
             t['m'] = max(0, min(1, t['m'] + .006 * season - .001 + t['trees'] * .0015))
             self.water_budget['climate_exchange'] += t['m'] - previous_moisture
             if t['e'] > .37:
+                self.ore_exposed += geology.weather(t)
                 t['scar'] = max(0, t['scar'] - .015 - .02 * t['m'])
                 t['traffic'] *= .999
                 t['road'] = max(0, t['road'] - .00002)
@@ -320,6 +323,7 @@ class World:
                 t['water'] -= outflow
                 erosion = min(max(0, t['e'] - .05), outflow * max(0, t['e'] - neighbor['e']) * .006)
                 t['e'] -= erosion
+                self.ore_exposed += geology.expose(t, erosion * 12)
                 t['sediment'] += erosion
                 carried = t['sediment'] * outflow / before
                 t['sediment'] -= carried
@@ -563,6 +567,7 @@ class World:
                           'mate_types': len(mate_types), 'mate_encounters': self.mate_encounters,
                           'mate_rejections': self.mate_rejections,
                           'seed_transferred': round(self.seed_transferred, 3),
+                          'ore_exposed': round(self.ore_exposed, 3),
                           'water_budget_residual': round(self.water_balance()['residual'], 8),
                           'nutrient_budget_residual': round(self.nutrient_balance()['residual'], 8),
                           'caravans': len(self.shipments),
@@ -593,6 +598,7 @@ class World:
                    'mate_encounters': self.mate_encounters, 'mate_rejections': self.mate_rejections,
                    'critic_updates': self.critic_updates,
                    'seed_transferred': self.seed_transferred,
+                   'ore_exposed': self.ore_exposed,
                    'social_updates': self.social_updates,
                    'novelty_archive': self.novelty_archive,
                    'ancestry': list(self.ancestry), 'households': self.households,
@@ -611,7 +617,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -642,6 +648,7 @@ class World:
             tile.setdefault('river', 0.0)
             tile.setdefault('lake', 0.0)
             tile.setdefault('lake_cap', 0.0)
+            tile.setdefault('ore_vein', 0.0)
             tile.setdefault('scar', 0.0)
             tile.setdefault('nutrient', tile['f'] * .5 if tile['e'] > .37 else 0.0)
             tile.setdefault('litter', (.08 * tile['grass'] + .12 * tile['trees']) if tile['e'] > .37 else 0.0)
@@ -667,6 +674,7 @@ class World:
         data.setdefault('mate_rejections', 0)
         data.setdefault('critic_updates', 0)
         data.setdefault('seed_transferred', 0.0)
+        data.setdefault('ore_exposed', 0.0)
         data.setdefault('social_updates', 0)
         data.setdefault('novelty_archive', [])
         data.setdefault('ancestry', [])

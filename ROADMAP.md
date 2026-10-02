@@ -20,6 +20,7 @@
 - [x] Procedural biome colors, shaded relief, coasts, trees and creature sprites.
 - [x] Save v3 migration and archive-before-replacement.
 - [x] Bounded local runoff, sediment transport and cooling lava with visible map effects.
+- [x] Finite subsurface ore veins and weathering/erosion exposure make mineable resource availability change without a god power.
 - [x] World-scale catchment routing and cumulative river channels that erode over time.
 - [x] Disturbance-driven grassland, woodland and burn-scar succession with an ecological growth effect.
 - [x] Explicit basin-stored lakes, Lake Country preset and persistent lake brush with movement/plant effects.
@@ -35,6 +36,7 @@
 - [x] Per-organism online value heads and one-step temporal-difference credit for earlier neural actions, with frozen controls and save migration.
 - [ ] Demonstrate a reliable behavioral gain from value learning against an immediate-reward ablation across replicated seeds and held-out tasks.
 - [x] Run a ten-seed matched immediate-reward ablation and retain the negative result; provide a repeatable `--value-ablation` experiment mode.
+- [x] Repeat the value ablation for ten matched 500-tick worlds; hunting gain remained unproven (mean −0.798 per 1,000 predator-ticks, three positive seeds).
 - [x] Test opt-in predator proximity credit against a matched no-credit ablation; retain the mixed/negative result and keep ordinary worlds on the established policy.
 - [x] Reject a four-move hunt-credit trace after a ten-seed ablation reduced hunting; retain the existing one-move credit.
 - [x] Tile seed banks, local dispersal and grass/tree competition.

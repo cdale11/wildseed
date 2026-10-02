@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.23.0 — 2026-10-03
+
+- New worlds have finite subsurface ore reserves. Weathering and water erosion slowly transfer ore from a hidden vein into mineable surface stock; mining depletes the exposed stock. The tile inspector shows both pools, and the browser reports cumulative natural exposure. Save schema v23 migrates older worlds with no hidden reserve and preserves exact continuation.
+- A separate ten-seed, 500-tick value-head ablation again failed to show a hunting gain over immediate-reward learning: mean paired difference −0.798 hunts per 1,000 predator-ticks (SE 0.440), with three positive seeds. This is a limited ecological measure, not proof that the value head harms every outcome; its roadmap acceptance item remains open.
+
 ## 0.22.0 — 2026-10-03
 
 - Grazers and foraging humans now pick up a bounded, conserved share of local grass and tree seeds while eating and deposit carried seeds with their climate-trait means as they move or die on land. This gives animal travel a direct plant-colonization effect; a controlled transfer test confirms that deposited seeds can establish a cohort.

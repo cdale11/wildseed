@@ -102,6 +102,7 @@ def generate(seed, width, height, geography='continents', biome='mixed'):
                  'grass':moisture*fertility*(.5+fine[i]*.5) if land else 0,
                  'trees':trees*moisture*(.3+detail[i]*.7) if land and e<.75 and temp>.17 else 0,
                  'ore':max(0,e-.53)*8 + (fine[i]*.3 if land else 0), 'fire':0.0}
+            t['ore_vein'] = max(0, e - .45) * 6 * (.5 + fine[i]) if land else 0.0
             # Seed banks let vegetation colonize disturbed ground without creating plants from nothing.
             t['grass_seed'] = t['grass']
             t['tree_seed'] = t['trees']
@@ -132,4 +133,4 @@ def client_tiles(tiles):
             [BIOME_NAMES.index(classify(t)), round(t['water'], 3), round(t['lava'], 3),
              t['grass_pop'], t['tree_pop'], round(t['road'], 3),
              round(t['nutrient'], 3), round(t['litter'], 3), round(t['river'], 3),
-             round(t['scar'], 3), round(t['lake'], 3)] for t in tiles]
+             round(t['scar'], 3), round(t['lake'], 3), round(t['ore_vein'], 3)] for t in tiles]

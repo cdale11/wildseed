@@ -32,6 +32,7 @@ Select a power category and click the map. Thirty-four powers include terrain sc
 
 - Procedural map selection, biome palettes, shaded relief, coast foam, species sprites and forest textures.
 - Seeded terrain, coastlines, erosion/deposition, seasonal moisture, vegetation growth, soil depletion, fire spread, ash fertility and recovering burn scars.
+- Finite subsurface ore veins that weathering and erosion gradually expose for human mining.
 - Species-specific, three-tile directional perception of food/prey, threats/fire and human building resources, with terrain occlusion.
 - Grass and tree cohorts with inherited climate preferences, local seed dispersal and competition; bounded soil nutrient/litter recycling, traveling cloud fronts, catchment-fed river channels, sediment transport and cooling lava.
 - Grazers and foraging humans carry seeds from meals to later locations, linking movement to climate-trait-aware plant colonization.
