@@ -81,6 +81,34 @@ def assign_jobs(world, town, residents):
         counts[organism.occupation] += 1
 
 
+def share_learned_behavior(world, residents):
+    """Let humans weakly imitate a successful local peer of their culture."""
+    if not world.learning:
+        return
+    cultures = {}
+    for organism in residents:
+        cultures.setdefault(organism.culture, []).append(organism)
+    for group in cultures.values():
+        if len(group) < 2:
+            continue
+        mentor = max(group, key=lambda o: (o.reward_ema, -o.id))
+        if mentor.updates < 10:
+            continue
+        policy = mentor.weights.copy()
+        value = mentor.value_weights.copy()
+        for learner in group:
+            if learner is mentor or mentor.reward_ema - learner.reward_ema < .05:
+                continue
+            learner.weights = [max(-4, min(4, .98 * old + .02 * model))
+                               for old, model in zip(learner.weights, policy)]
+            learner.value_weights = [max(-4, min(4, .98 * old + .02 * model))
+                                     for old, model in zip(learner.value_weights, value)]
+            learner.pending_credit = None
+            learner.last_move = None
+            learner.social_updates += 1
+            world.social_updates += 1
+
+
 def update(world):
     deliver_shipments(world)
     humans = [organism for organism in world.organisms if organism.kind == 'human']
@@ -103,6 +131,7 @@ def update(world):
                 world.event(f"Settlement {town['id']} was abandoned and decayed.")
                 continue
         assign_jobs(world, town, residents)
+        share_learned_behavior(world, residents)
         households = [home for home in world.households if home['town'] == town['id']]
         members = {home['id']: [] for home in households}
         for organism in residents:

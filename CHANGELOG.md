@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.18.0 — 2026-10-02
+
+- Humans in the same settlement and culture can now weakly imitate a peer whose recent action reward is higher. Every society update selects one sufficiently trained mentor per local culture and blends 2% of that mentor's policy and value head into lower-scoring residents. Frozen worlds never share weights, and stale action-credit traces are cleared after imitation.
+- Recent-reward estimates and social-learning counts persist in save schema v18; v17 saves initialize them to zero. The browser exposes peer lessons for individual humans and the whole world. This is a local adaptation mechanism, not evidence of beneficial cultural transmission or smarter societies.
+
 ## 0.17.0 — 2026-10-02
 
 - Each organism now inherits a nine-parameter value head over its recurrent policy features and trains it online with bounded one-step temporal-difference error. A small future-value correction can train the preceding neural action; immediate reward-baseline training and predator hunt credit remain. Tiny corrections are filtered to limit CPU work.

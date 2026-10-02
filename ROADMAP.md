@@ -49,6 +49,8 @@ Acceptance: measurable behavioral adaptation and ecological diversity without sc
 - [x] Resource-scarcity-driven occupations and barter between settlements.
 - [x] Food-shortage-driven, route-based migration between reachable settlements with spare food and housing.
 - [ ] Sustained society validation, institutions, broader migration paths and deeper cultural transmission.
+- [x] Bounded reward-gated imitation of local, same-culture human policy and value weights, with frozen controls and save replay.
+- [ ] Test whether peer learning improves held-out settlement outcomes versus a no-imitation ablation without collapsing policy diversity.
 - [ ] Technology from composable operations and experimentation rather than fixed era transitions.
 - [ ] Diplomacy/conflict grounded in resources and individual/social objectives.
 Acceptance: settlements survive and fail for inspectable reasons; reproducible histories show several distinct development paths across seeds.

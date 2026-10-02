@@ -1,5 +1,9 @@
 # Validation — 2026-10-02
 
+## Version 0.18.0 local human peer learning — 2026-10-02
+
+All 92 automated tests pass, including settlement-triggered peer learning, same-culture and reward-gap gates, frozen worlds, save continuation and v17 migration. Browser JavaScript passes syntax check; the new lesson counters were not visually inspected in a browser. In a seed-42, 96×64, 250-starting-organism, 200-tick one-worker CPU run, 17 peer lessons occurred among 95 surviving humans and 47 settlements. The run reached 26.94 ticks/s with 669 final organisms, above the 8-tick/s target; this is a short sanity check, not a social-benefit or stability study. No controlled no-imitation comparison has established better settlement outcomes or retained policy diversity.
+
 ## Version 0.17.0 online value learning — 2026-10-02
 
 All 88 automated tests pass, including bounded positive/negative value learning, policy response to a learned successor value, terminal credit, neutral v16→v17 migration, exact save continuation with pending credit, frozen controls and mutation of both neural components. Browser JavaScript passes syntax check. In a temporary local browser world, the Value updates counter rose to 7,976 by age 33, while Learning steps reached 8,970; the browser tab and server were closed afterward. A seed-42, 96×64, 250-initial-organism, 200-tick one-worker CPU run measured 27.50 ticks/s (690 final organisms), versus 34.97 ticks/s (670 final organisms) before the value head; changing learning also changes the population trajectory, so this is a throughput sanity check rather than an isolated speed comparison. Three short paired learned/frozen ecology runs were mixed; see [EXPERIMENTS.md](EXPERIMENTS.md). No GPU or long stability validation was performed.

@@ -58,10 +58,12 @@ class Organism:
     value_weights: list = field(default_factory=lambda: [0.0] * VALUE_PARAMS)
     pending_credit: list | None = None
     value_updates: int = 0
+    reward_ema: float = 0.0
+    social_updates: int = 0
 
 
 class World:
-    VERSION = 17
+    VERSION = 18
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -84,6 +86,7 @@ class World:
         self.sexual_births = 0
         self.mate_encounters = self.mate_rejections = 0
         self.critic_updates = 0
+        self.social_updates = 0
         self.engine = BrainEngine(workers, device)
         self.tiles = self.generate()
         self.weather_width, self.weather_height, self.clouds = weather.initialize(seed, width, height)
@@ -403,6 +406,7 @@ class World:
                 o.migration_town = 0
                 self.event(f"Human {o.id} reached settlement {arrived_town} after migrating.")
             reward = (o.energy - before) / 20 + bonus
+            o.reward_ema = .95 * o.reward_ema + .05 * max(-2, min(2, reward))
             if self.learning and not guided:
                 # A hunt pays the move that put the predator on its prey's tile.
                 if hunted and o.last_move:
@@ -466,6 +470,7 @@ class World:
                           'caravans': len(self.shipments),
                           'migrants': sum(bool(o.migration_route) for o in self.organisms),
                           'critic_updates': self.critic_updates,
+                          'social_updates': self.social_updates,
                           'generation': max((o.generation for o in self.organisms), default=0),
                           'cultures': len(set(o.culture for o in self.organisms if o.kind == 'human'))}}
 
@@ -481,6 +486,7 @@ class World:
                    'learning': self.learning, 'sexual_births': self.sexual_births,
                    'mate_encounters': self.mate_encounters, 'mate_rejections': self.mate_rejections,
                    'critic_updates': self.critic_updates,
+                   'social_updates': self.social_updates,
                    'ancestry': list(self.ancestry), 'households': self.households,
                    'shipments': self.shipments,
                    'next_town_id': self.next_town_id, 'next_household_id': self.next_household_id}
@@ -497,7 +503,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -539,6 +545,7 @@ class World:
         data.setdefault('mate_encounters', 0)
         data.setdefault('mate_rejections', 0)
         data.setdefault('critic_updates', 0)
+        data.setdefault('social_updates', 0)
         data.setdefault('ancestry', [])
         data.setdefault('households', [])
         data.setdefault('shipments', [])
@@ -555,6 +562,8 @@ class World:
             organism.setdefault('value_weights', [0.0] * VALUE_PARAMS)
             organism.setdefault('pending_credit', None)
             organism.setdefault('value_updates', 0)
+            organism.setdefault('reward_ema', 0.0)
+            organism.setdefault('social_updates', 0)
             if len(organism['value_weights']) != VALUE_PARAMS:
                 raise ValueError('Invalid value head length')
             organism.setdefault('thermal_opt', data['tiles'][organism['y'] * data['width'] + organism['x']]['temp'])
