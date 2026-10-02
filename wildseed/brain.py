@@ -14,8 +14,9 @@ PARAMS = INPUTS * HIDDEN + HIDDEN * ACTIONS
 
 def forward(item):
     weights, obs = item
-    hidden = [math.tanh(sum(weights[j * INPUTS + i] * obs[i]
-                                 for i in range(INPUTS))) for j in range(HIDDEN)]
+    active = [(i, value) for i, value in enumerate(obs) if value]
+    hidden = [math.tanh(sum(weights[j * INPUTS + i] * value
+                            for i, value in active)) for j in range(HIDDEN)]
     base = INPUTS * HIDDEN
     logits = [sum(weights[base + k * HIDDEN + j] * hidden[j]
                   for j in range(HIDDEN)) for k in range(ACTIONS)]
@@ -34,14 +35,17 @@ def learn(weights, obs, hidden, probabilities, action, advantage, rate=0.018):
     back = [sum(weights[base + k * HIDDEN + j] * delta[k]
                 for k in range(ACTIONS)) * (1 - hidden[j] ** 2)
             for j in range(HIDDEN)]
+    active = [(i, value) for i, value in enumerate(obs) if value]
     for k in range(ACTIONS):
         for j in range(HIDDEN):
             ix = base + k * HIDDEN + j
-            weights[ix] = max(-4, min(4, weights[ix] + rate * delta[k] * hidden[j]))
+            candidate = weights[ix] + rate * delta[k] * hidden[j]
+            weights[ix] = -4 if candidate < -4 else 4 if candidate > 4 else candidate
     for j in range(HIDDEN):
-        for i in range(INPUTS):
+        for i, value in active:
             ix = j * INPUTS + i
-            weights[ix] = max(-4, min(4, weights[ix] + rate * back[j] * obs[i]))
+            candidate = weights[ix] + rate * back[j] * value
+            weights[ix] = -4 if candidate < -4 else 4 if candidate > 4 else candidate
 
 
 def available_cpus():

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.1 — 2026-10-02
+
+- Sparse neural observations now skip zero-valued input connections during CPU inference and online updates. Direct bounds checks replace nested `min`/`max` calls in the hot weight-update loop.
+- Added reference-equivalence tests for sparse/dense inference and learning. No save schema or policy dimensions changed.
+- On the local 200-tick, 250-initial-organism workload, one-worker throughput improved from 31.69 to 35.07 ticks/s on the first repeat (34.19 on a second). All-affinity workers remained slower at this scale; worker selection stays configurable.
+
 ## 0.14.0 — 2026-10-02
 
 - Added periodic lowest-spill drainage to ocean outlets and upstream flow accumulation across whole catchments. Channels receive water and slowly erode into sediment as rainfall and terrain change.

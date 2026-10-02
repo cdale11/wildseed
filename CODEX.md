@@ -39,6 +39,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 - powers.py: shared power catalog and measured authoritative effects. Every new power needs a state-effect test.
 - New server starts must request world selection with random seeds. Do not restore implicit auto-resume. Preserve old saves before replacing worlds.
 - brain.py: inference and training. Workers must not mutate authoritative state.
+- Preserve reference-equivalent neural updates when changing sparse CPU inference/training. Benchmark full ticks at multiple population sizes before altering worker thresholds; do not assume using more CPUs is faster.
 - Recurrent observations include each organism's previous hidden state; save/migrate that state and preserve old policy connections when input dimensions change.
 - Treat mate-signal bins and encounter rejection rates as proxies for reproductive divergence, not validated species. Preserve direct-mate compatibility and save migration when changing reproduction.
 - server.py: transport, validation, tick ownership, persistence orchestration.

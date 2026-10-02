@@ -1,5 +1,20 @@
 # Validation — 2026-10-02
 
+## Version 0.14.1 sparse CPU neural updates — 2026-10-02
+
+All 73 automated tests pass, including dense/sparse forward and update comparisons against the previous calculation to 12 decimal places, saturated weight bounds, scalar/process inference agreement, deterministic replay and loopback HTTP checks. Save schema remains v14. On this Linux host with Python 3.13.11 and 16 affinity CPUs, seed-42 full-tick runs ended with identical populations within each compared workload:
+
+| Workload | CPU workers | Before | After | Final population |
+|---|---:|---:|---:|---:|
+| 96×64, 250 start, 200 ticks | 1 | 31.69 ticks/s | 35.07 ticks/s; 34.19 repeat | 666 |
+| 96×64, 250 start, 200 ticks | 16 | 28.75 ticks/s | 29.98 ticks/s | 666 |
+| 96×64, 1,000 start, 50 ticks | 1 | — | 18.88 ticks/s | 1,023 |
+| 96×64, 1,000 start, 50 ticks | 16 | — | 18.05 ticks/s | 1,023 |
+| 96×64, 2,000 start, 30 ticks | 1 | — | 9.99 ticks/s | 1,841 |
+| 96×64, 2,000 start, 30 ticks | 16 | — | 10.02 ticks/s | 1,841 |
+
+These are sequential short runs on a shared host, not confidence intervals or long-run scaling curves. The all-CPU configuration remains available but is slower at small population sizes here; there is no evidence to hardcode a worker cutoff for other hardware. GPU validation remains deferred at the owner's request.
+
 ## Version 0.14.0 catchment routing — 2026-10-02
 
 All 71 automated tests pass, including deterministic lowest-spill routing down a constructed valley to a periodic ocean outlet, upstream accumulation, visible channel water and sediment-producing erosion, no false river in an all-land world, v13→v14 migration and exact save continuation. Browser JavaScript modules pass syntax checks. The 200-tick, 250-initial-organism, one-worker CPU benchmark reached 31.91 ticks/s (median 30.68 ms, p95 46.26 ms; 666 final organisms). The drainage network updates every 32 ticks, so the median alone understates periodic work; this short run is not a high-population scaling result. For seed 42 at 96×64 with no organisms, after the first 32-tick drainage update, the model produced 254/492/41 land tiles with channel strength above .03 in continents/riverlands/archipelago respectively. This checks that generated maps, not only a constructed valley, show channels. The model has no explicit lake storage or calibrated conservation of catchment water.
