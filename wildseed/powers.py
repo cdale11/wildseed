@@ -93,6 +93,7 @@ def apply(world, tool, x, y, radius=3, strength=1):
             elif tool=='plague':
                 if o.infection < 1:
                     world.infections+=int(o.infection==0)
+                    if o.infection==0:world.record_interaction('pathogen',o.kind)
                     o.infection=1;altered+=1
             elif tool=='mutate':
                 o.weights=[max(-4,min(4,w+world.rng.gauss(0,.12*strength))) for w in o.weights]

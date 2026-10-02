@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.29.0 — 2026-10-03
+
+- Added a persisted observed-interaction graph. The simulation counts actual feeding, hunting, seed deposition, resource harvesting and disease transmission as named links. The browser shows the most frequent links and the server snapshot exposes the complete bounded graph. Save schema v29 migrates older worlds with an empty history.
+- Link counts describe actions that occurred, not an emergent food web or beneficial adaptation; longer-run network reorganization remains an open research question.
+
 ## 0.28.0 — 2026-10-03
 
 - Added persistent pairwise settlement relations. Successful barter improves relations; repeated food scarcity can trigger a route-bound raid by a different-culture town with at least two eligible residents. Raiders pay an immediate energy cost, and a successful arrival transfers food from the target instead of creating it. Hostility rises when a raid launches and can eventually prevent trade.

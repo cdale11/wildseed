@@ -71,7 +71,7 @@ class Organism:
 
 
 class World:
-    VERSION = 28
+    VERSION = 29
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False, social_learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -93,6 +93,7 @@ class World:
         self.shipments = []
         self.relations = {}
         self.raids_launched = self.raids_succeeded = 0
+        self.ecology_events = {}
         self.next_town_id = self.next_household_id = 1
         self.ancestry = deque(maxlen=50000)
         self.births = self.deaths = self.training_steps = self.hunts = self.hunt_move_updates = 0
@@ -148,6 +149,11 @@ class World:
 
     def event(self, text):
         self.events.appendleft({'tick': self.tick, 'text': text})
+
+    def record_interaction(self, source, target):
+        """Count observed ecological interactions in a bounded named graph."""
+        key = f'{source}>{target}'
+        self.ecology_events[key] = self.ecology_events.get(key, 0) + 1
 
     def spawn(self, kind, x=None, y=None, parent=None, mate=None):
         if kind not in SPECIES or len(self.organisms) >= self.max_population:
@@ -442,7 +448,10 @@ class World:
                     t = dest
                     moved = True
                     if o.kind in ('grazer', 'human'):
-                        self.seed_transferred += plants.deposit_seed_cargo(t, o.seed_cargo)
+                        deposited = plants.deposit_seed_cargo(t, o.seed_cargo)
+                        self.seed_transferred += deposited
+                        if deposited > 0:
+                            self.record_interaction(o.kind, 'plants')
                     if guided:
                         o.migration_route.pop(0)
                         if not o.migration_route:
@@ -455,6 +464,7 @@ class World:
                         o.energy += min(65, max(0, prey.energy))
                         prey.energy = 0
                         self.hunts += 1
+                        self.record_interaction('grazer', 'predator')
                         hunted = True
                 else:
                     eaten = min(t['grass'], .15 * o.size)
@@ -465,6 +475,7 @@ class World:
                     o.energy += eaten * 65
                     if eaten > 0 and o.kind in ('grazer', 'human'):
                         plants.collect_seed_cargo(t, o.seed_cargo)
+                        self.record_interaction('grass', o.kind)
                     t['f'] = max(.05, t['f'] - eaten * .015)
             elif action == 5 and o.energy > 105 and o.age > 45:
                 if self.rng.random() < .3 * o.fertility:
@@ -524,7 +535,10 @@ class World:
             t = self.tiles[self.idx(o.x, o.y)]
             t['f'] = min(1, t['f'] + .04)
             if t['e'] > .37:
-                self.seed_transferred += plants.deposit_seed_cargo(t, o.seed_cargo, 1.0)
+                deposited = plants.deposit_seed_cargo(t, o.seed_cargo, 1.0)
+                self.seed_transferred += deposited
+                if deposited > 0:
+                    self.record_interaction(o.kind, 'plants')
                 before_litter = t['litter']
                 t['litter'] = min(1, t['litter'] + .035 * o.size)
                 self.nutrient_budget['death_exchange'] += t['litter'] - before_litter
@@ -571,6 +585,9 @@ class World:
                 'settlements': self.settlements, 'households': self.households,
                 'caravans': caravans,
                 'relations': self.relations,
+                'ecology_network': [{'from': source, 'to': target, 'events': count}
+                                    for key, count in sorted(self.ecology_events.items())
+                                    for source, target in [key.split('>', 1)]],
                 'events': list(self.events),
                 'novelty_archive': list(self.novelty_archive),
                 'diversity': lineage,
@@ -596,6 +613,7 @@ class World:
                           'raids_launched': self.raids_launched,
                           'raids_succeeded': self.raids_succeeded,
                           'relations_tracked': len(self.relations),
+                          'ecology_links': len(self.ecology_events),
                           'migrants': sum(bool(o.migration_route) for o in self.organisms),
                           'critic_updates': self.critic_updates,
                           'social_updates': self.social_updates,
@@ -633,6 +651,7 @@ class World:
                    'relations': self.relations,
                    'raids_launched': self.raids_launched,
                    'raids_succeeded': self.raids_succeeded,
+                   'ecology_events': self.ecology_events,
                    'next_town_id': self.next_town_id, 'next_household_id': self.next_household_id}
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -647,7 +666,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -715,6 +734,7 @@ class World:
         data.setdefault('relations', {})
         data.setdefault('raids_launched', 0)
         data.setdefault('raids_succeeded', 0)
+        data.setdefault('ecology_events', {})
         data.setdefault('next_town_id', max((town['id'] for town in data['settlements']), default=0) + 1)
         data.setdefault('next_household_id', 1)
         for town in data['settlements']:

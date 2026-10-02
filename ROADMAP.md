@@ -26,7 +26,7 @@
 - [x] Explicit basin-stored lakes, Lake Country preset and persistent lake brush with movement/plant effects.
 - [x] Persisted ledgers close the represented tile-water and mineral-plus-litter pools across weather, ecology, local routing and powers; external exchange categories are explicit.
 - [x] Controlled 5,000-tick burn-scar → grassland → woodland recovery and temperature-trait climate-reversal tests.
-- [ ] Calibrated, mass-conserving watershed and nutrient budgets across weather, terrain, plants and settlements; current local transport has only a conservation check.
+- [ ] Calibrated, mass-conserving watershed and nutrient budgets across weather, terrain, plants and settlements; represented tile-pool ledgers now close, but external reservoirs and organism/town nutrient stores are incomplete.
 
 ## Phase 1: ecological depth
 - [x] Species-aware directional perception of prey, threats, food and materials.
@@ -46,7 +46,7 @@
 - [x] Local water flow, suspended soil transport and lava cooling.
 - [x] Bounded soil nutrient/litter recycling with plant uptake, grazing/death returns, fire ash and runoff transport.
 - [x] Coarse traveling cloud fronts with elevation-sensitive rainfall and deterministic save/replay.
-- [ ] Calibrated watershed, weather and nutrient budgets across land, plants, animals and settlements.
+- [ ] Extend the tile-pool ledgers to physically meaningful atmospheric, ocean, biomass, animal and town stores with calibrated units and fluxes.
 - [x] Two-parent genetic recombination, bounded ancestry records and ecotype counts.
 - [x] Inherited mate-recognition signal, compatibility barrier and measured candidate rejection fraction.
 - [ ] Speciation with reproductive isolation and validated species metrics.
@@ -89,6 +89,7 @@ Acceptance: documented latency/memory curves and backend parity tolerances on sp
 - [x] Save-based causal intervention branches with source/output hashes and summary metrics.
 - [x] Bounded observed-action novelty archive and dominant-action diversity metric, with deterministic saves.
 - [x] Add per-kind trait spread and effective primary-parent lineage diversity, with bounded-ancestry caveats.
-- [ ] Add dynamic ecological interaction-network metrics beyond the current fixed trophic roles.
+- [x] Persist and display observed interaction links across feeding, predation, seed transport, extraction and transmission.
+- [ ] Test whether the interaction network reorganizes across generations and environments beyond fixed available actions.
 - [ ] Evaluate unexpected behaviors against baselines; distinguish novelty from bugs/reward exploitation.
 No promise of unlimited novelty or general intelligence. All behavior remains constrained by the simulated physical substrate.

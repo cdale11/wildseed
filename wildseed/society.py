@@ -21,9 +21,13 @@ def work(world, organism, tile):
     if town is None:
         timber = min(.035, tile['trees'])
         tile['trees'] -= timber
+        if timber > 0:
+            world.record_interaction('trees', 'human')
         organism.wood += timber * 10
         mineral = min(.03, tile['ore'])
         tile['ore'] -= mineral
+        if mineral > 0:
+            world.record_interaction('ore', 'human')
         organism.ore += mineral
         if organism.wood < 2.5:
             return 0
@@ -47,17 +51,23 @@ def work(world, organism, tile):
     if job == 'farmer':
         harvest = min(tile['grass'], .12 * craft.productivity(town))
         tile['grass'] -= harvest
+        if harvest > 0:
+            world.record_interaction('grass', 'settlement')
         tile['f'] = max(.05, tile['f'] - harvest * .01)
         town['stock'] = min(200, town['stock'] + harvest * 22)
         return harvest * .4
     if job == 'woodcutter':
         harvest = min(tile['trees'], .05 * craft.productivity(town))
         tile['trees'] -= harvest
+        if harvest > 0:
+            world.record_interaction('trees', 'settlement')
         town['wood'] = min(100, town['wood'] + harvest * 10)
         return harvest * .5
     if job == 'miner':
         harvest = min(tile['ore'], .05 * craft.productivity(town))
         tile['ore'] -= harvest
+        if harvest > 0:
+            world.record_interaction('ore', 'settlement')
         town['ore'] = min(100, town['ore'] + harvest)
         return harvest * .3
     if job == 'builder' and town['wood'] >= 2.5:
@@ -68,6 +78,8 @@ def work(world, organism, tile):
     # Unassigned people still gather materials for a future job.
     timber = min(.02, tile['trees'])
     tile['trees'] -= timber
+    if timber > 0:
+        world.record_interaction('trees', 'settlement')
     town['wood'] = min(100, town['wood'] + timber * 10)
     return 0
 

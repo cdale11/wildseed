@@ -15,6 +15,7 @@ def advance(world, occupancy):
                 if world.rng.random() < risk:
                     organism.infection = .65
                     world.infections += 1
+                    world.record_interaction('pathogen', organism.kind)
         for organism in alive:
             if organism.infection <= 0:
                 continue
