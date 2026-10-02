@@ -44,6 +44,7 @@
 - [x] Inherited mate-recognition signal, compatibility barrier and measured candidate rejection fraction.
 - [ ] Speciation with reproductive isolation and validated species metrics.
 - [x] Offline exact adult mating-compatibility component report for trusted saves; candidate groups are not validated species.
+- [x] Forced-contact test: two incompatible adult mating pools reproduce within their pools with no cross-group children. Persistence over generations remains untested.
 - [ ] Deferred by owner: multi-seed 100k-tick stability runs. Ten paired 500-tick learned/frozen runs are documented; random-policy comparison remains open.
 Acceptance: measurable behavioral adaptation and ecological diversity without scripted population replenishment, with published failure cases.
 

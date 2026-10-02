@@ -251,7 +251,10 @@ class World:
         t = self.tiles[index]
         rain = max(0, t['m'] - .48) * .003 * max(.1, .6 + .4 * math.sin(self.tick / 180))
         evaporation = .0004 + .0006 * t['temp']
-        t['water'] = max(0, min(1, t['water'] + rain - evaporation))
+        runoff = min(max(0.0, t['m']), rain, max(0.0, 1.0 - t['water']))
+        t['m'] -= runoff
+        t['water'] += runoff
+        t['water'] = max(0, t['water'] - evaporation)
         t['lake'] = max(0.0, t['lake'] - (.00006 + .00014 * t['temp']))
         impounded = min(t['water'], max(0.0, t['lake_cap'] - t['lake']))
         t['lake'] += impounded
@@ -277,7 +280,6 @@ class World:
                     neighbor['water'] = min(1, neighbor['water'] + outflow)
                     neighbor['sediment'] += carried
                     neighbor['nutrient'] = min(1, neighbor['nutrient'] + dissolved)
-                    neighbor['m'] = min(1, neighbor['m'] + outflow * .025)
                 else:
                     neighbor['e'] = min(1, neighbor['e'] + carried)
         if t['water'] < .005 and t['sediment'] > 0:

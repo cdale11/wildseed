@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.20.1 — 2026-10-03
+
+- Removed an artificial surface-water addition during river-channel refresh. Basin overflow now stays in lake storage when the surface pool is full, and local runoff transfers water from soil moisture rather than creating it.
+- Added focused water-storage conservation and forced-contact reproductive-isolation tests. These verify local mechanics only; atmospheric inputs/evaporation, nutrient flows, persistent speciation and neural behavioral gains remain unvalidated.
+
 ## 0.20.0 — 2026-10-03
 
 - Added Lake Country world creation, explicit freshwater storage in drainage basins, a rimmed inland-lake power, lake rendering and movement/ecology effects. Basin capacity refreshes with drainage; rain fills lakes and evaporation lowers them. Local runoff now respects water and nutrient receiving capacity.

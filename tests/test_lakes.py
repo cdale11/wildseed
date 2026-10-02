@@ -109,6 +109,17 @@ class LakeTests(unittest.TestCase):
         self.assertLessEqual(target['water'], 1)
         self.assertLessEqual(target['nutrient'], 1)
 
+    def test_runoff_moves_soil_moisture_into_surface_storage(self):
+        for tile in self.world.tiles:
+            tile.update(e=.9, m=.48, water=0, lake=0, lake_cap=0,
+                        sediment=0, nutrient=0, temp=.5)
+        tile = self.world.tiles[self.world.idx(8, 8)]
+        tile.update(e=.6, m=1.0)
+        before = tile['m'] + tile['water'] + tile['lake']
+        self.world.flow(self.world.idx(8, 8), 8, 8)
+        self.assertAlmostEqual(tile['m'] + tile['water'] + tile['lake'], before - .0007)
+        self.assertLess(tile['m'], 1.0)
+
 
 if __name__ == '__main__':
     unittest.main()

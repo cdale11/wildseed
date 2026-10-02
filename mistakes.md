@@ -102,3 +102,9 @@
 - Resolution: power results count actual changes, life casts target habitable cells only, and water clears incompatible vegetation/fire immediately.
 - Prevention: test every catalog power for real state changes and explicit no-effect cases; verify browser casts against server snapshots.
 - Verification: ocean brush changed exactly 29 cells through the UI, with immediate vegetation clearing; meteor removed six organisms and changed terrain. Unit coverage includes all 30 powers.
+# 2026-10-03 — Catchment visualization created water
+- Mistake: periodic river-channel refresh added surface water from a dimensionless catchment-strength estimate; local runoff also increased surface water without reducing soil moisture.
+- Cause: visual hydrology and water storage were coupled without a transfer invariant.
+- Resolution: channel strength now remains diagnostic, local runoff transfers from soil moisture, and basin overflow is retained when surface storage is full.
+- Prevention: test the sum of represented water stores around each transfer, while keeping atmospheric fluxes explicit in future budget work.
+- Verification: focused watershed and lake tests pass. A closed full-cycle water and nutrient budget is still open.

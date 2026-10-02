@@ -23,6 +23,25 @@ class SpeciationMetricsTests(unittest.TestCase):
         adults[3].energy = 40
         self.assertEqual(candidate_components(world.organisms)['grazer']['component_sizes'], [2, 1])
 
+    def test_two_isolated_mating_pools_produce_no_cross_group_children(self):
+        world = World(608, 16, 16, population=0)
+        self.addCleanup(world.engine.close)
+        world.tiles[world.idx(8, 8)].update(e=.55, lake=0, fire=0)
+        adults = [world.spawn('grazer', 8, 8) for _ in range(4)]
+        for organism, signal in zip(adults, (.1, .12, .8, .82)):
+            organism.age = 60
+            organism.energy = 150
+            organism.mate_signal = signal
+            organism.thermal_opt = world.tiles[world.idx(8, 8)]['temp']
+        groups = {organism.id: i // 2 for i, organism in enumerate(adults)}
+        world.rng.choices = lambda *args, **kwargs: [5]
+        world.rng.random = lambda: 0.0
+        world.step()
+        children = [o for o in world.organisms if o.parent_b]
+        self.assertGreaterEqual(len(children), 2)
+        self.assertTrue(all(groups[o.parent_a] == groups[o.parent_b] for o in children))
+        self.assertGreater(world.mate_rejections, 0)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -65,13 +65,18 @@ def advance(world):
             flow[parent[index]] += flow[index]
     for index, tile in enumerate(world.tiles):
         capacity = basin_capacity(tile, spill[index])
-        tile['water'] = min(1.0, tile['water'] + max(0.0, tile['lake'] - capacity))
+        overflow = max(0.0, tile['lake'] - capacity)
+        # Keep overflow in surface storage. A full surface cell cannot absorb
+        # more water, so retain the excess in the lake until it can drain.
+        accepted = min(overflow, max(0.0, 1.0 - tile['water']))
+        tile['water'] += accepted
         tile['lake_cap'] = capacity
-        tile['lake'] = min(tile['lake'], capacity)
+        tile['lake'] -= accepted
         strength = min(1.0, max(0.0, (flow[index] - 5.0) / 60.0)) if parent[index] >= 0 else 0.0
         tile['river'] = strength
         if strength > 0:
-            tile['water'] = min(1.0, tile['water'] + strength * .005)
+            # River strength is a diagnostic of catchment flow, not a source
+            # of surface water. Rain and local runoff supply the actual pool.
             erosion = min(max(0.0, tile['e'] - .38), strength * .0005)
             tile['e'] -= erosion
             tile['sediment'] += erosion

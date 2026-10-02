@@ -28,10 +28,20 @@ class WatershedTests(unittest.TestCase):
         before = mouth['e']
         watershed.advance(self.world)
         self.assertGreater(mouth['river'], 0)
-        self.assertGreater(mouth['water'], 0)
+        # Channel strength is a drainage estimate; it must not create water.
+        self.assertEqual(mouth['water'], 0)
         self.assertLess(mouth['e'], before)
         self.assertGreater(mouth['sediment'], 0)
         self.assertEqual(self.world.tiles[self.world.idx(0, 8)]['river'], 0)
+
+    def test_channel_refresh_conserves_surface_and_lake_storage(self):
+        self.valley()
+        mouth = self.world.tiles[self.world.idx(1, 8)]
+        mouth['water'] = .2
+        before = sum(t['water'] + t['lake'] for t in self.world.tiles)
+        watershed.advance(self.world)
+        self.assertAlmostEqual(sum(t['water'] + t['lake'] for t in self.world.tiles), before)
+        self.assertGreater(mouth['river'], 0)
 
     def test_no_ocean_has_no_false_river(self):
         for tile in self.world.tiles:
