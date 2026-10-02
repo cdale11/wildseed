@@ -65,7 +65,7 @@ class WeatherTests(unittest.TestCase):
                 b.step()
             self.assertEqual(a.snapshot(), b.snapshot())
             a.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'], 13)
+            self.assertEqual(json.loads(path.read_text())['version'], 14)
 
 
 if __name__ == '__main__':

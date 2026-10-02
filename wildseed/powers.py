@@ -65,7 +65,7 @@ def apply(world, tool, x, y, radius=3, strength=1):
                 t['nutrient']=fertility*.5;t['litter']=.08*t['grass']+.12*t['trees']
                 plants.initialize(t)
             if t['e']<=.37:
-                plants.clear(t);t['fire']=t['water']=t['lava']=t['road']=t['traffic']=0
+                plants.clear(t);t['fire']=t['water']=t['lava']=t['road']=t['traffic']=t['river']=0
                 if land or tool in ('ocean','lower','meteor','volcano'):
                     t['nutrient']=t['litter']=0
             if t!=before: changed+=1

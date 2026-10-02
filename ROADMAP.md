@@ -18,7 +18,8 @@
 - [x] Procedural biome colors, shaded relief, coasts, trees and creature sprites.
 - [x] Save v3 migration and archive-before-replacement.
 - [x] Bounded local runoff, sediment transport and cooling lava with visible map effects.
-- [ ] Watershed-scale rivers, biome succession and deeper temperature adaptation experiments.
+- [x] World-scale catchment routing and cumulative river channels that erode over time.
+- [ ] Explicit lakes, calibrated watershed hydrology, biome succession and deeper temperature adaptation experiments.
 
 ## Phase 1: ecological depth
 - [x] Species-aware directional perception of prey, threats, food and materials.
@@ -30,7 +31,7 @@
 - [x] Local water flow, suspended soil transport and lava cooling.
 - [x] Bounded soil nutrient/litter recycling with plant uptake, grazing/death returns, fire ash and runoff transport.
 - [x] Coarse traveling cloud fronts with elevation-sensitive rainfall and deterministic save/replay.
-- [ ] Watershed-scale rivers and calibrated weather/nutrient budgets across land, plants, animals and settlements.
+- [ ] Calibrated watershed, weather and nutrient budgets across land, plants, animals and settlements.
 - [x] Two-parent genetic recombination, bounded ancestry records and ecotype counts.
 - [x] Inherited mate-recognition signal, compatibility barrier and measured candidate rejection fraction.
 - [ ] Speciation with reproductive isolation and validated species metrics.

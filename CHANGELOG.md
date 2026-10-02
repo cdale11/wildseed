@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.0 — 2026-10-02
+
+- Added periodic lowest-spill drainage to ocean outlets and upstream flow accumulation across whole catchments. Channels receive water and slowly erode into sediment as rainfall and terrain change.
+- Added a river-catchment map layer and visible channel tint. Save schema v14 persists channel strength; older saves initialize it to zero.
+- The routing model has no explicit lake storage or calibrated water budget; it is a bounded world-scale drainage approximation.
+
 ## 0.13.0 — 2026-10-02
 
 - Added a deterministic 8×8-tile cloud grid with periodic wind advection, ocean/land evaporation, elevation-sensitive rainfall and cloud-driven changes to soil moisture, surface water and fire.

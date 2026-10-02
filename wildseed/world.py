@@ -12,6 +12,7 @@ from .powers import apply as apply_power
 from . import plants
 from . import society
 from . import weather
+from . import watershed
 
 from .brain import BrainEngine, PARAMS, HIDDEN, learn
 
@@ -54,7 +55,7 @@ class Organism:
 
 
 class World:
-    VERSION = 13
+    VERSION = 14
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -176,6 +177,8 @@ class World:
         season = math.sin(self.tick / 180)
         if self.tick % 8 == 0:
             weather.advance(self)
+        if self.tick % 32 == 0:
+            watershed.advance(self)
         # Staggered tile updates distribute climate work across ticks.
         for i in range(self.tick % 4, len(self.tiles), 4):
             t = self.tiles[i]
@@ -210,6 +213,7 @@ class World:
                 self.flow(i, x, y)
             else:
                 plants.clear(t)
+                t['river'] = 0
                 t['nutrient'] = t['litter'] = 0
                 t['fire'] = t['water'] = t['lava'] = t['traffic'] = t['road'] = 0
                 deposit = min(t['sediment'], max(0, 1 - t['e']))
@@ -432,7 +436,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -460,6 +464,7 @@ class World:
             tile.setdefault('lava', 0.0)
             tile.setdefault('traffic', 0.0)
             tile.setdefault('road', 0.0)
+            tile.setdefault('river', 0.0)
             tile.setdefault('nutrient', tile['f'] * .5 if tile['e'] > .37 else 0.0)
             tile.setdefault('litter', (.08 * tile['grass'] + .12 * tile['trees']) if tile['e'] > .37 else 0.0)
             plants.migrate(tile)

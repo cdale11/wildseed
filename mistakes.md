@@ -1,5 +1,12 @@
 # Development mistakes
 
+## 2026-10-02 — New watershed module landed outside its package
+- Mistake: the first patch created `watershed.py` at the repository root, so focused tests could not import `wildseed.watershed`.
+- Cause: the new-file patch target did not land at the intended package path; I did not verify placement before the first test run.
+- Resolution: moved the module into `wildseed/` and reran the routing tests.
+- Prevention: check `rg --files` or `ls` for newly created modules before running tests and review untracked paths before commit.
+- Verification: focused watershed tests and all 71 automated tests pass.
+
 ## 2026-10-02 — Nutrient fields initially broke preview and no-effect contracts
 - Mistake: the first nutrient implementation added two fields to active snapshots but not world previews, and cleared stale underwater nutrient state during unrelated no-effect nature casts.
 - Cause: schema and power changes were reviewed in isolation rather than against the exact-preview and truthful-effect contracts.

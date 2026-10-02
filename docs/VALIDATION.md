@@ -1,5 +1,9 @@
 # Validation — 2026-10-02
 
+## Version 0.14.0 catchment routing — 2026-10-02
+
+All 71 automated tests pass, including deterministic lowest-spill routing down a constructed valley to a periodic ocean outlet, upstream accumulation, visible channel water and sediment-producing erosion, no false river in an all-land world, v13→v14 migration and exact save continuation. Browser JavaScript modules pass syntax checks. The 200-tick, 250-initial-organism, one-worker CPU benchmark reached 31.91 ticks/s (median 30.68 ms, p95 46.26 ms; 666 final organisms). The drainage network updates every 32 ticks, so the median alone understates periodic work; this short run is not a high-population scaling result. For seed 42 at 96×64 with no organisms, after the first 32-tick drainage update, the model produced 254/492/41 land tiles with channel strength above .03 in continents/riverlands/archipelago respectively. This checks that generated maps, not only a constructed valley, show channels. The model has no explicit lake storage or calibrated conservation of catchment water.
+
 ## Version 0.13.0 cloud fronts — 2026-10-02
 
 All 67 automated tests pass, including periodic cloud advection, more rain on uplands than lowlands under an equal front, exact preview/weather match, v12→v13 migration and deterministic save continuation. Browser JavaScript modules pass syntax checks. The 200-tick, 250-initial-organism, one-worker CPU benchmark reached 33.07 ticks/s (median 29.28 ms, p95 44.85 ms; 669 final organisms). The changed weather rules alter the ecological trajectory, so this is not a controlled throughput comparison with v0.12. The model is an 8×8-tile cloud grid with bounded local effects; it has no pressure physics, watershed accounting or validated climatology.
