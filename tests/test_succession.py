@@ -50,6 +50,20 @@ class SuccessionTests(unittest.TestCase):
         tile['lava'] = 0
         self.assertEqual(classify(tile), 'burnscar')
 
+    def test_burned_woodland_recovers_through_grassland(self):
+        world = World(42, 16, 16, population=0, biome='woodland')
+        self.addCleanup(world.engine.close)
+        tile = world.tiles[world.idx(8, 8)]
+        tile.update(e=.55, m=.75, temp=.58, f=.8, grass=.03, trees=.02,
+                    grass_seed=.7, tree_seed=.85, grass_pop=4, tree_pop=2,
+                    nutrient=.7, litter=.25, scar=1, fire=0, lava=0, lake=0, lake_cap=0)
+        stages = {}
+        for tick in range(1, 5001):
+            world.step()
+            if tick in (1, 300, 5000):
+                stages[tick] = classify(tile)
+        self.assertEqual(stages, {1: 'burnscar', 300: 'grassland', 5000: 'woodland'})
+
     def test_new_biome_previews_match_active_world_and_save_migrates(self):
         for biome in ('grassland', 'woodland', 'burnscar'):
             with self.subTest(biome=biome):

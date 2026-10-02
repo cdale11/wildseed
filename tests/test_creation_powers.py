@@ -50,12 +50,12 @@ class PowersTests(unittest.TestCase):
     def setUp(self):
         self.w=World(width=24,height=20,population=0)
         self.addCleanup(self.w.engine.close)
-        for t in self.w.tiles:t.update(e=.55,m=.5,f=.5,grass=.3,trees=.3,ore=.2,temp=.55,fire=0)
+        for t in self.w.tiles:t.update(e=.55,m=.5,f=.5,grass=.3,trees=.3,ore=.2,temp=.55,fire=0,lake=0,lake_cap=0)
 
     def test_every_power_changes_real_state_and_reports_counts(self):
         for power in sorted(POWER_IDS):
             with self.subTest(power=power):
-                for t in self.w.tiles:t.update(e=.55,m=.5,f=.5,grass=.3,trees=.3,ore=.2,temp=.55,fire=0)
+                for t in self.w.tiles:t.update(e=.55,m=.5,f=.5,grass=.3,trees=.3,ore=.2,temp=.55,fire=0,lake=0,lake_cap=0)
                 self.w.organisms=[];o=self.w.spawn('human',8,8);o.energy=40
                 before=copy.deepcopy(self.w.tiles);weights=o.weights.copy()
                 result=self.w.intervene(power,8,8,2,1)

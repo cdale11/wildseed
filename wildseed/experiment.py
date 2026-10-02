@@ -29,6 +29,12 @@ def measure(world, predator_ticks=0):
         'mean_energy': round(sum(o.energy for o in world.organisms) / max(1, len(world.organisms)), 3),
         'grass_cover': round(sum(t['grass'] for t in land) / max(1, len(land)), 4),
         'tree_cover': round(sum(t['trees'] for t in land) / max(1, len(land)), 4),
+        'lake_tiles': sum(t['lake'] >= .05 for t in land),
+        'lake_storage': round(sum(t['lake'] for t in land), 4),
+        'surface_water': round(sum(t['water'] for t in land), 4),
+        'soil_moisture': round(sum(t['m'] for t in land), 4),
+        'mineral_nutrients': round(sum(t['nutrient'] for t in land), 4),
+        'organic_litter': round(sum(t['litter'] for t in land), 4),
     }
 
 
@@ -49,8 +55,27 @@ def directional_probe(world):
     return round(sum(scores) / len(scores) * 100, 3)
 
 
-def run(seed, ticks, population, width, height, cap, learning, interval=100):
-    world = World(seed, width, height, workers=1, population=population, learning=learning)
+def threat_avoidance_probe(world):
+    """Mean lower move probability toward a synthetic threat cue, in points."""
+    grazers = [organism for organism in world.organisms if organism.kind == 'grazer']
+    if not grazers:
+        return None
+    scores = []
+    for organism in grazers:
+        for direction in range(4):
+            danger = [0.0] * 4
+            danger[direction] = .8
+            observation = [1, .6, .2, .4, 0, .6, 0, 0,
+                           *([0.0] * 4), *danger, *([0.0] * 12)]
+            _, probabilities = forward((organism.weights, observation))
+            scores.append((sum(probabilities[:4]) - probabilities[direction]) / 3 -
+                          probabilities[direction])
+    return round(sum(scores) / len(scores) * 100, 3)
+
+
+def run(seed, ticks, population, width, height, cap, learning, interval=100, value_learning=True):
+    world = World(seed, width, height, workers=1, population=population,
+                  learning=learning, value_learning=value_learning)
     world.max_population = cap
     predator_ticks = 0
     samples = [measure(world)]
@@ -61,10 +86,13 @@ def run(seed, ticks, population, width, height, cap, learning, interval=100):
             if world.tick % interval == 0 or world.tick == ticks:
                 samples.append(measure(world, predator_ticks))
         probe = directional_probe(world)
+        threat_probe = threat_avoidance_probe(world)
     finally:
         world.engine.close()
-    return {'seed': seed, 'learning': learning, 'samples': samples,
-            'predator_directional_probe_pp': probe}
+    return {'seed': seed, 'learning': learning, 'value_learning': value_learning,
+            'samples': samples,
+            'predator_directional_probe_pp': probe,
+            'grazer_threat_avoidance_probe_pp': threat_probe}
 
 
 def main():
@@ -76,6 +104,8 @@ def main():
     parser.add_argument('--height', type=int, default=32)
     parser.add_argument('--cap', type=int, default=500)
     parser.add_argument('--interval', type=int, default=100)
+    parser.add_argument('--value-ablation', action='store_true',
+                        help='Also run online policy learning without the value head')
     args = parser.parse_args()
     try:
         seeds = [int(value) for value in args.seeds.split(',')]
@@ -87,9 +117,12 @@ def main():
         parser.error('population must be positive and no greater than cap (maximum 2500)')
     if not 16 <= args.width <= 256 or not 16 <= args.height <= 256:
         parser.error('dimensions must be between 16 and 256')
+    modes = [(False, True), (True, True)]
+    if args.value_ablation:
+        modes.insert(1, (True, False))
     results = [run(seed, args.ticks, args.population, args.width, args.height,
-                   args.cap, learning, args.interval)
-               for seed in seeds for learning in (False, True)]
+                   args.cap, learning, args.interval, value_learning)
+               for seed in seeds for learning, value_learning in modes]
     print(json.dumps({'config': vars(args), 'runs': results}, indent=2))
 
 

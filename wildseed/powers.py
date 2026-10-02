@@ -4,7 +4,7 @@ from . import plants
 
 POWER_INFO = [
  ('raise','↟','Raise land','Land'),('lower','↡','Lower land','Land'),
- ('ocean','≈','Deep ocean','Land'),('mountain','▲','Mountains','Land'),
+ ('ocean','≈','Deep ocean','Land'),('lake','◉','Inland lake','Land'),('mountain','▲','Mountains','Land'),
  ('rain','☂','Rain','Nature'),('drought','☀','Drought','Nature'),
  ('forest','♠','Forest','Nature'),('grass','❧','Meadows','Nature'),
  ('fertile','✿','Fertile soil','Nature'),('minerals','◆','Minerals','Nature'),
@@ -27,7 +27,7 @@ def apply(world, tool, x, y, radius=3, strength=1):
     changed = spawned = altered = removed = buildings = 0
     if tool in ('human','grazer','predator'):
         # Spawn only on actual habitable brush cells: water casts report no effect.
-        land = [i for i in affected if .37 < world.tiles[i]['e'] < .88]
+        land = [i for i in affected if .37 < world.tiles[i]['e'] < .88 and world.tiles[i]['lake'] < .05]
         if land:
             for _ in range(8*strength):
                 index = world.rng.choice(land)
@@ -35,18 +35,29 @@ def apply(world, tool, x, y, radius=3, strength=1):
     else:
         for i,(dx,dy) in affected.items():
             t=world.tiles[i]; before=t.copy(); land=t['e']>.37
+            if tool in ('raise','lower','mountain','meteor','volcano'):
+                t['water']=min(1, t['water']+t['lake'])
+                t['lake']=t['lake_cap']=0
             if tool=='raise': t['e']=min(.95,t['e']+.055*strength)
             elif tool=='lower': t['e']=max(.05,t['e']-.055*strength)
             elif tool=='ocean': t['e']=.18
+            elif tool=='lake':
+                distance = math_distance(dx, dy) / max(1, radius)
+                t['e'] = .40 + .16 * min(1, distance)
+                t['lake_cap'] = min(.12, max(0, .56 - t['e']))
+                t['lake'] = min(.10, t['lake_cap'])
+                t['water']=0
+                if t['lake'] >= .05:
+                    plants.clear(t)
             elif tool=='mountain': t['e']=max(t['e'],.76+.1*(1-math_distance(dx,dy)/max(1,radius)))
             elif tool=='rain': t['m']=min(1,t['m']+.3*strength);t['water']=min(1,t['water']+.12*strength);t['fire']=0
             elif tool=='drought': t['m']=max(0,t['m']-.3*strength);t['water']*=.2;t['grass']*=.6
-            elif tool=='forest' and land:
+            elif tool=='forest' and land and t['lake'] < .05:
                 t['trees']=min(1,t['trees']+.4*strength);t['grass']=min(1,t['grass']+.3)
                 t['scar']*=.3
                 t['tree_seed']=max(t['tree_seed'],t['trees']);t['grass_seed']=max(t['grass_seed'],t['grass'])
                 plants.establish(t,'tree');plants.establish(t,'grass')
-            elif tool=='grass' and land:
+            elif tool=='grass' and land and t['lake'] < .05:
                 t['scar']*=.7
                 t['grass']=min(1,t['grass']+.45*strength);t['grass_seed']=max(t['grass_seed'],t['grass']);plants.establish(t,'grass')
             elif tool=='fertile' and land:
@@ -55,12 +66,12 @@ def apply(world, tool, x, y, radius=3, strength=1):
             elif tool=='minerals' and land: t['ore']=min(20,t['ore']+2*strength)
             elif tool=='freeze': t['temp']=max(0,t['temp']-.4*strength);t['fire']=0
             elif tool=='heat': t['temp']=min(1,t['temp']+.4*strength);t['m']=max(0,t['m']-.15*strength);t['water']*=.5
-            elif tool in ('fire','lightning') and land: t['fire']=1;t['scar']=max(t['scar'],.35)
+            elif tool in ('fire','lightning') and land and t['lake'] < .05: t['fire']=1;t['scar']=max(t['scar'],.35)
             elif tool=='meteor': t['e']=max(.05,t['e']-.3*strength);plants.clear(t);t['fire']=1;t['scar']=1;t['ore']+=strength
             elif tool=='volcano':
                 t['e']=min(.95,.65+.25*(1-math_distance(dx,dy)/max(1,radius)))
                 t['temp']=1;t['m']=.05;plants.clear(t);t['fire']=1;t['scar']=1;t['ore']+=strength;t['lava']=min(1,t['lava']+.8)
-            elif tool.startswith('biome_') and land:
+            elif tool.startswith('biome_') and land and t['lake'] < .05:
                 temp,moisture,fertility,trees=BIOMES[tool[6:]][1]
                 t.update(temp=temp,m=moisture,f=fertility,trees=trees*moisture,grass=moisture*fertility,fire=0)
                 t['scar']=1.0 if tool=='biome_burnscar' else 0.0
@@ -68,7 +79,7 @@ def apply(world, tool, x, y, radius=3, strength=1):
                 t['nutrient']=fertility*.5;t['litter']=.08*t['grass']+.12*t['trees']
                 plants.initialize(t)
             if t['e']<=.37:
-                plants.clear(t);t['fire']=t['water']=t['lava']=t['road']=t['traffic']=t['river']=t['scar']=0
+                plants.clear(t);t['fire']=t['water']=t['lake']=t['lake_cap']=t['lava']=t['road']=t['traffic']=t['river']=t['scar']=0
                 if land or tool in ('ocean','lower','meteor','volcano'):
                     t['nutrient']=t['litter']=0
             if t!=before: changed+=1

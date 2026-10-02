@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.20.0 — 2026-10-03
+
+- Added Lake Country world creation, explicit freshwater storage in drainage basins, a rimmed inland-lake power, lake rendering and movement/ecology effects. Basin capacity refreshes with drainage; rain fills lakes and evaporation lowers them. Local runoff now respects water and nutrient receiving capacity.
+- Raised bounded tree regrowth after disturbance. A controlled 5,000-tick single-site history now passes from burn scar through grassland to woodland; a two-trait climate-reversal experiment confirms that inherited plant temperature preference changes which cohort thrives.
+- Added a value-learning ablation mode, predator prey-direction and grazer threat-direction probes, and an offline adult mating-compatibility graph. Ten short paired seeds found the original value-policy correction reduced hunting versus immediate-reward learning; a smaller correction narrowed that gap in the earlier ecology. After tree and lake changes the comparison was mixed across seeds. Behavioral gains and speciation claims remain open.
+
 ## 0.19.0 — 2026-10-02
 
 - Added a bounded behavioral novelty archive. Every 100 ticks, each species can contribute one sufficiently observed organism whose seven-action frequency distribution differs from archived examples; the archive holds at most 64 records. Guided human migration does not count as a neural choice.

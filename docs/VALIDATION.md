@@ -1,4 +1,10 @@
-# Validation — 2026-10-02
+# Validation — 2026-10-03
+
+## Version 0.20.0 lakes and Phase 1 controls — 2026-10-03
+
+The 108-test suite covers basin storage, a lake brush surviving drainage refresh, immediate ocean cleanup, passability, save v19→v20 migration and deterministic continuation, receiving-capacity conservation for local water/nutrient transport, a 5,000-tick controlled burn-scar → grassland → woodland sequence, a two-trait climate reversal, immediate-reward value-head ablation and an exact adult mate-compatibility graph. Browser modules pass Node syntax checks. In a temporary browser session, Lake Country was selectable and rendered inland water; the lake brush reported 29 changed tiles. The browser also exposed a defect: the first brush design drained after a watershed refresh. After the rim fix, replaying that browser seed and cast coordinate retained 0.119 lake depth after 64 ticks. The temporary browser tab and server were closed.
+
+A seed-42, 96×64, 250-starting-organism, 200-tick one-worker CPU run reached 33.09 ticks/s with 692 final organisms. Ten 200-tick paired value-head ablations were negative on the earlier ecology; after the tree and lake changes, the value mode gained in five of ten seeds with a small, uncertain mean difference. Synthetic prey and threat probes remained near zero; details are in [EXPERIMENTS.md](EXPERIMENTS.md). The watershed/weather/nutrient pools are bounded and locally audited, not physically calibrated or globally mass-conserving. The mating graph identifies candidate isolated groups, not validated speciation. No GPU or multi-seed 100k-tick stability study was performed.
 
 ## Version 0.19.0 observed behavior archive — 2026-10-02
 

@@ -3,8 +3,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from wildseed.experiment import run
-from wildseed.brain import forward
+from wildseed.experiment import run, threat_avoidance_probe
+from wildseed.brain import forward, INPUTS, HIDDEN
 from wildseed.world import World
 
 
@@ -38,6 +38,43 @@ class ExperimentTests(unittest.TestCase):
         self.assertEqual(frozen_a['samples'][-1]['training_steps'], 0)
         self.assertGreater(learned['samples'][-1]['training_steps'], 0)
         self.assertEqual(frozen_a['samples'][0], learned['samples'][0])
+
+    def test_value_ablation_keeps_immediate_policy_learning_and_replays(self):
+        ablated = run(7, 25, 12, 24, 20, 60, True, 10, value_learning=False)
+        full = run(7, 25, 12, 24, 20, 60, True, 10, value_learning=True)
+        self.assertEqual(ablated['samples'][0], full['samples'][0])
+        self.assertGreater(ablated['samples'][-1]['training_steps'], 0)
+        self.assertEqual(ablated['samples'][-1]['critic_updates'], 0)
+        self.assertGreater(full['samples'][-1]['critic_updates'], 0)
+
+        world = World(7, 24, 20, population=12, value_learning=False)
+        self.addCleanup(world.engine.close)
+        for _ in range(8):
+            world.step()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'ablation.json'
+            world.save(path)
+            resumed = World.load(path)
+            self.addCleanup(resumed.engine.close)
+            self.assertFalse(resumed.value_learning)
+            for _ in range(8):
+                world.step()
+                resumed.step()
+            self.assertEqual(world.snapshot(), resumed.snapshot())
+
+    def test_threat_probe_detects_avoidance_and_approach(self):
+        world = World(8, 16, 16, population=0)
+        self.addCleanup(world.engine.close)
+        world.tiles[world.idx(8, 8)].update(e=.55, lake=0)
+        grazer = world.spawn('grazer', 8, 8)
+        grazer.weights = [0.0] * len(grazer.weights)
+        for direction in range(4):
+            grazer.weights[direction * INPUTS + 12 + direction] = 2.0
+            grazer.weights[INPUTS * HIDDEN + direction * HIDDEN + direction] = -2.0
+        self.assertGreater(threat_avoidance_probe(world), 0)
+        for direction in range(4):
+            grazer.weights[INPUTS * HIDDEN + direction * HIDDEN + direction] = 2.0
+        self.assertLess(threat_avoidance_probe(world), 0)
 
     def test_v4_save_defaults_to_learning_and_zero_hunts(self):
         world = World(7, 24, 20, population=0)

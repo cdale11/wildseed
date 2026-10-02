@@ -1,7 +1,7 @@
 """Seeded, periodic terrain and climate generation; no simulation side effects."""
 import math
 import random
-from . import plants
+from . import plants, watershed
 
 GEOGRAPHIES = {
     'continents': ('Continents', 'Broad landmasses, sheltered bays and open oceans.'),
@@ -11,6 +11,7 @@ GEOGRAPHIES = {
     'caldera': ('Caldera', 'A volcanic crater enclosed by a mountainous rim.'),
     'atoll': ('Atoll', 'A broken island ring around a blue lagoon.'),
     'inland_sea': ('Inland sea', 'A large central sea surrounded by habitable land.'),
+    'lake_country': ('Lake country', 'Inland basins and low ridges surrounding freshwater lakes.'),
     'shattered': ('Shattered coast', 'Rugged peninsulas, straits and fragmented shores.'),
 }
 # temperature, moisture, fertility, tree cover
@@ -27,11 +28,12 @@ BIOMES = {
     'woodland': ('Woodland', (.58, .68, .75, .85)),
     'burnscar': ('Burn scar', (.55, .3, .3, 0.0)),
 }
-BIOME_NAMES = list(BIOMES)
+BIOME_NAMES = list(BIOMES) + ['lake']
 SIZES = {'small': (64, 48), 'standard': (96, 64), 'large': (144, 96)}
 
 
 def classify(t):
+    if t.get('lake', 0) >= .05: return 'lake'
     if t.get('lava', 0) > .1: return 'volcanic'
     if t.get('scar', 0) > .25 and t['grass'] + t['trees'] < .35: return 'burnscar'
     if t['temp'] < .17: return 'tundra'
@@ -80,6 +82,10 @@ def generate(seed, width, height, geography='continents', biome='mixed'):
             elif geography == 'caldera': e = .26 + .51*math.exp(-((radius-.24)/.09)**2) + (n-.5)*.25
             elif geography == 'atoll': e = .24 + .24*math.exp(-((radius-.29)/.065)**2) + (n-.5)*.18
             elif geography == 'inland_sea': e = .57+n*.22 - .43*math.exp(-(radius/.28)**4)
+            elif geography == 'lake_country':
+                basin_a = math.exp(-(((nx-.29)/.09)**2 + ((ny-.41)/.11)**2))
+                basin_b = math.exp(-(((nx-.69)/.10)**2 + ((ny-.63)/.09)**2))
+                e = .53 + (n-.5)*.20 - .16*max(basin_a, basin_b)
             else: e = .15 + .35*detail[i] + .20*coarse[i] + .12*fine[i]
             e = max(.05,min(.95,e))
             if biome == 'mixed':
@@ -110,6 +116,7 @@ def generate(seed, width, height, geography='continents', biome='mixed'):
             t['litter'] = (.08 * t['grass'] + .12 * t['trees']) if land else 0.0
             plants.initialize(t, (fine[i] - .5) * .12)
             tiles.append(t)
+    watershed.seed_lakes(tiles, width, height)
     return tiles
 
 
@@ -125,4 +132,4 @@ def client_tiles(tiles):
             [BIOME_NAMES.index(classify(t)), round(t['water'], 3), round(t['lava'], 3),
              t['grass_pop'], t['tree_pop'], round(t['road'], 3),
              round(t['nutrient'], 3), round(t['litter'], 3), round(t['river'], 3),
-             round(t['scar'], 3)] for t in tiles]
+             round(t['scar'], 3), round(t['lake'], 3)] for t in tiles]

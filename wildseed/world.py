@@ -65,14 +65,15 @@ class Organism:
 
 
 class World:
-    VERSION = 19
+    VERSION = 20
 
-    def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
+    def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
             raise ValueError('Dimensions must be between 16 and 256')
         self.seed, self.width, self.height = seed, width, height
         self.geography, self.biome = geography, biome
         self.learning = learning
+        self.value_learning = value_learning
         self.rng = random.Random(seed)
         self.tick = 0
         self.next_id = 1
@@ -110,13 +111,13 @@ class World:
         if kind not in SPECIES or len(self.organisms) >= self.max_population:
             return None
         if x is None:
-            land = [i for i, t in enumerate(self.tiles) if .38 < t['e'] < .75]
+            land = [i for i, t in enumerate(self.tiles) if .38 < t['e'] < .75 and t['lake'] < .05]
             if not land:
                 return None
             index = self.rng.choice(land)
             x, y = index % self.width, index // self.width
         x, y = x % self.width, y % self.height
-        if self.tiles[self.idx(x, y)]['e'] <= .37:
+        if self.tiles[self.idx(x, y)]['e'] <= .37 or self.tiles[self.idx(x, y)]['lake'] >= .05:
             return None
         if mate and (not parent or not compatible_mates(parent, mate)):
             raise ValueError('Invalid mate')
@@ -172,7 +173,7 @@ class World:
             for distance in range(1, 4):
                 target = self.idx(o.x + dx * distance, o.y + dy * distance)
                 dest = self.tiles[target]
-                if dest['e'] <= .37 or dest['e'] >= .88:
+                if dest['e'] <= .37 or dest['e'] >= .88 or dest['lake'] >= .05:
                     if distance == 1:
                         food_signal = -1
                     break
@@ -206,7 +207,11 @@ class World:
                 t['scar'] = max(0, t['scar'] - .015 - .02 * t['m'])
                 t['traffic'] *= .999
                 t['road'] = max(0, t['road'] - .00002)
-                plants.advance(t, season)
+                if t['lake'] >= .05:
+                    plants.clear(t)
+                    t['fire'] = 0
+                else:
+                    plants.advance(t, season)
                 t['f'] = min(1, t['f'] + .0003)
                 if t['fire'] > 0:
                     burned = t['grass'] * .4 + t['trees'] * .12 + t['litter'] * .25
@@ -228,7 +233,7 @@ class World:
                 # Seeds move locally; surface water and lava follow the lowest neighbor.
                 dx, dy = self.rng.choice(DIRECTIONS)
                 neighbor = self.tiles[self.idx(x + dx, y + dy)]
-                if neighbor['e'] > .37:
+                if neighbor['e'] > .37 and neighbor['lake'] < .05:
                     plants.disperse(t, neighbor, self.rng)
                 self.flow(i, x, y)
             else:
@@ -236,7 +241,7 @@ class World:
                 t['river'] = 0
                 t['scar'] = 0
                 t['nutrient'] = t['litter'] = 0
-                t['fire'] = t['water'] = t['lava'] = t['traffic'] = t['road'] = 0
+                t['fire'] = t['water'] = t['lake'] = t['lake_cap'] = t['lava'] = t['traffic'] = t['road'] = 0
                 deposit = min(t['sediment'], max(0, 1 - t['e']))
                 t['sediment'] -= deposit
                 t['e'] += deposit
@@ -247,20 +252,26 @@ class World:
         rain = max(0, t['m'] - .48) * .003 * max(.1, .6 + .4 * math.sin(self.tick / 180))
         evaporation = .0004 + .0006 * t['temp']
         t['water'] = max(0, min(1, t['water'] + rain - evaporation))
+        t['lake'] = max(0.0, t['lake'] - (.00006 + .00014 * t['temp']))
+        impounded = min(t['water'], max(0.0, t['lake_cap'] - t['lake']))
+        t['lake'] += impounded
+        t['water'] -= impounded
         if t['water'] > .001 and t['temp'] > .16:
             neighbor = min((self.tiles[self.idx(x + dx, y + dy)] for dx, dy in DIRECTIONS),
-                           key=lambda n: n['e'] + n['water'])
-            slope = t['e'] + t['water'] - (neighbor['e'] + neighbor['water'])
+                           key=lambda n: n['e'] + n['lake'] + n['water'])
+            slope = t['e'] + t['lake'] + t['water'] - (neighbor['e'] + neighbor['lake'] + neighbor['water'])
             if slope > .001:
                 before = t['water']
-                outflow = min(before, slope * .25, .035)
+                capacity = max(0.0, 1 - neighbor['water']) if neighbor['e'] > .37 else 1.0
+                outflow = min(before, slope * .25, .035, capacity)
                 t['water'] -= outflow
                 erosion = min(max(0, t['e'] - .05), outflow * max(0, t['e'] - neighbor['e']) * .006)
                 t['e'] -= erosion
                 t['sediment'] += erosion
                 carried = t['sediment'] * outflow / before
                 t['sediment'] -= carried
-                dissolved = min(t['nutrient'], outflow * .025)
+                nutrient_capacity = max(0.0, 1 - neighbor['nutrient']) if neighbor['e'] > .37 else 1.0
+                dissolved = min(t['nutrient'], outflow * .025, nutrient_capacity)
                 t['nutrient'] -= dissolved
                 if neighbor['e'] > .37:
                     neighbor['water'] = min(1, neighbor['water'] + outflow)
@@ -295,15 +306,15 @@ class World:
 
     def finish_credit(self, organism, next_value):
         """Resolve a previous neural choice using its successor state's value."""
-        if not self.learning or organism.pending_credit is None:
+        if not self.learning or not self.value_learning or organism.pending_credit is None:
             return
         obs, hidden, probabilities, action, estimate, reward = organism.pending_credit
         future = DISCOUNT * next_value - estimate
         learn_value(organism.value_weights, hidden, reward + future)
         organism.value_updates += 1
         self.critic_updates += 1
-        if abs(future) >= .05:
-            learn(organism.weights, obs, hidden, probabilities, action, future, rate=.006)
+        if abs(future) >= .10:
+            learn(organism.weights, obs, hidden, probabilities, action, future, rate=.001)
             organism.updates += 1
             self.training_steps += 1
         organism.pending_credit = None
@@ -321,7 +332,7 @@ class World:
         for o, obs, (hidden, probs) in zip(cohort, observations, predictions):
             if o.energy <= 0:
                 continue
-            current_value = predict_value(o.value_weights, hidden)
+            current_value = predict_value(o.value_weights, hidden) if self.value_learning else 0.0
             self.finish_credit(o, current_value)
             o.memory = hidden.copy()
             before = o.energy
@@ -337,7 +348,7 @@ class World:
                     target = o.migration_route[0]
                     direction = next((i for i, (dx, dy) in enumerate(DIRECTIONS)
                                       if self.idx(o.x + dx, o.y + dy) == target), None)
-                    if direction is None or not .37 < self.tiles[target]['e'] < .88:
+                    if direction is None or not .37 < self.tiles[target]['e'] < .88 or self.tiles[target]['lake'] >= .05:
                         o.migration_route = []
                         o.migration_town = 0
                     else:
@@ -351,7 +362,7 @@ class World:
                 dx, dy = DIRECTIONS[action]
                 nx, ny = (o.x + dx) % self.width, (o.y + dy) % self.height
                 dest = self.tiles[self.idx(nx, ny)]
-                if dest['e'] > .37 and dest['e'] < .88:
+                if dest['e'] > .37 and dest['e'] < .88 and dest['lake'] < .05:
                     occupancy[self.idx(o.x, o.y)].remove(o)
                     o.x, o.y = nx, ny
                     occupancy.setdefault(self.idx(nx, ny), []).append(o)
@@ -398,7 +409,7 @@ class World:
                         bonus = 1.8
             elif action == 6 and o.kind == 'human':
                 bonus += society.work(self, o, t)
-            if t['e'] <= .37:
+            if t['e'] <= .37 or t['lake'] >= .05:
                 o.energy -= 3
             o.energy -= t['fire'] * 8 + max(0, abs(t['temp'] - o.thermal_opt) - .08) * .6
             o.energy = min(160, o.energy)
@@ -425,7 +436,8 @@ class World:
                 o.updates += 1
                 self.training_steps += 1
                 o.last_move = [obs, hidden, probs, action] if moved and o.kind == 'predator' else None
-                o.pending_credit = [obs, hidden, probs, action, current_value, reward]
+                if self.value_learning:
+                    o.pending_credit = [obs, hidden, probs, action, current_value, reward]
         dead = [o for o in self.organisms if o.energy <= 0]
         for o in dead:
             self.finish_credit(o, 0.0)
@@ -496,7 +508,8 @@ class World:
                    'settlements': self.settlements, 'events': list(self.events),
                    'births': self.births, 'deaths': self.deaths, 'training_steps': self.training_steps,
                    'hunts': self.hunts, 'hunt_move_updates': self.hunt_move_updates,
-                   'learning': self.learning, 'sexual_births': self.sexual_births,
+                   'learning': self.learning, 'value_learning': self.value_learning,
+                   'sexual_births': self.sexual_births,
                    'mate_encounters': self.mate_encounters, 'mate_rejections': self.mate_rejections,
                    'critic_updates': self.critic_updates,
                    'social_updates': self.social_updates,
@@ -517,7 +530,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -546,6 +559,8 @@ class World:
             tile.setdefault('traffic', 0.0)
             tile.setdefault('road', 0.0)
             tile.setdefault('river', 0.0)
+            tile.setdefault('lake', 0.0)
+            tile.setdefault('lake_cap', 0.0)
             tile.setdefault('scar', 0.0)
             tile.setdefault('nutrient', tile['f'] * .5 if tile['e'] > .37 else 0.0)
             tile.setdefault('litter', (.08 * tile['grass'] + .12 * tile['trees']) if tile['e'] > .37 else 0.0)
@@ -553,6 +568,7 @@ class World:
         data.setdefault('geography', 'continents')
         data.setdefault('biome', 'mixed')
         data.setdefault('learning', True)
+        data.setdefault('value_learning', True)
         data.setdefault('hunts', 0)
         data.setdefault('hunt_move_updates', 0)
         data.setdefault('sexual_births', 0)
@@ -570,7 +586,8 @@ class World:
             town.setdefault('wood', 0.0)
             town.setdefault('empty_ticks', 0)
         world = cls(data['seed'], data['width'], data['height'], workers, device, population=0,
-                    geography=data['geography'], biome=data['biome'], learning=data['learning'])
+                    geography=data['geography'], biome=data['biome'], learning=data['learning'],
+                    value_learning=data['value_learning'])
         rng = data.pop('rng')
         world.rng.setstate((rng[0], tuple(rng[1]), rng[2]))
         for organism in data['organisms']:

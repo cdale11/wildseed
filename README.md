@@ -23,9 +23,9 @@ python3 -m wildseed.backup data/world.json /mnt/wildseed-backups
 
 ## Play
 
-Start by choosing one of eight geography styles and twelve biome/climate choices, then reroll until you like the random landscape. Choose small, standard or large size and an empty or populated world. Create starts the exact previewed seed. Browser refresh/reconnection joins the running shared world rather than resetting everyone.
+Start by choosing one of nine geography styles and twelve biome/climate choices, then reroll until you like the random landscape. Choose small, standard or large size and an empty or populated world. Create starts the exact previewed seed. Browser refresh/reconnection joins the running shared world rather than resetting everyone.
 
-Select a power category and click the map. Thirty-three powers include terrain sculpting, oceans, mountains, rain/drought, vegetation, fertility, minerals, freeze/heat, life spawning, healing, neural mutation, extinction, wildfire, lightning, meteors, volcanoes and eleven biome brushes. Brush radius (1–10) and strength (1–3) are adjustable. Every cast reports actual effect counts or explicitly reports no effect. Drag to pan; scroll to zoom; Fit world resets the camera. Inspect displays organisms' traits and learning counts. Map layers show moisture, food, minerals, and fertility. Pause/speed affect the shared server world. Save world persists state, policies, and RNG state. The browser polls at 2 Hz; the server targets 8 ticks/second at 1× speed.
+Select a power category and click the map. Thirty-four powers include terrain sculpting, oceans, inland lakes, mountains, rain/drought, vegetation, fertility, minerals, freeze/heat, life spawning, healing, neural mutation, extinction, wildfire, lightning, meteors, volcanoes and eleven biome brushes. Brush radius (1–10) and strength (1–3) are adjustable. Every cast reports actual effect counts or explicitly reports no effect. Drag to pan; scroll to zoom; Fit world resets the camera. Inspect displays organisms' traits and learning counts. Map layers show moisture, food, minerals, and fertility. Pause/speed affect the shared server world. Save world persists state, policies, and RNG state. The browser polls at 2 Hz; the server targets 8 ticks/second at 1× speed.
 
 ## What exists
 

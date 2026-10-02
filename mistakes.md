@@ -1,5 +1,26 @@
 # Development mistakes
 
+## 2026-10-03 — Lake brush drained after the next watershed refresh
+- Mistake: the first lake brush reported 29 changed tiles, but an inspected center tile had zero stored lake water 50 ticks later.
+- Cause: the brush painted equal-elevation flooded tiles without a retaining rim, so lowest-spill routing reduced their basin capacity to zero.
+- Resolution: carve a sloped depression with a raised rim; a controlled test and the exact browser seed retain lake water after 64 ticks and drainage refreshes.
+- Prevention: test powers for persistence after the next relevant simulation phase, not only immediate effect counts.
+- Verification: the same seed and coordinate retained 0.119 lake depth after 64 ticks; full tests include brush persistence.
+
+## 2026-10-03 — Strong temporal-value correction hurt predator hunting
+- Mistake: the initial value-policy correction was treated as a promising learning mechanism without a direct immediate-reward ablation.
+- Cause: future-value estimates were applied to prior policy actions at rate 0.006 with a 0.05 threshold; a ten-seed comparison found lower exposure-adjusted hunts in nine pairs.
+- Resolution: add a reproducible ablation mode and reduce the correction to rate 0.001 with a 0.10 threshold. The reduced setting remains below the immediate-reward control and is not claimed as a gain.
+- Prevention: require a matched ablation and held-out behavioral probe before marking learning benefits complete.
+- Verification: the documented ten-seed comparison and save-replay ablation test reproduce the negative finding.
+
+## 2026-10-03 — Power test fixture left lake storage behind
+- Mistake: the lake power caused subsequent power subtests to fail while spawning a creature at the fixed test coordinate.
+- Cause: the fixture reset elevation and vegetation but not the new lake and capacity fields, so the coordinate remained uninhabitable.
+- Resolution: reset both lake fields with the other tile fields before each power subtest.
+- Prevention: when adding habitat state, update reusable fixtures to establish all passability preconditions explicitly.
+- Verification: all power effect tests pass, including the lake power.
+
 ## 2026-10-02 — Neural-mutation test assumed a fixed tile was land
 - Mistake: the new value-head mutation test dereferenced a failed organism spawn.
 - Cause: its chosen seed placed the test coordinate underwater, and the fixture did not establish passable land first.

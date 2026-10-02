@@ -36,6 +36,26 @@ class PlantTests(unittest.TestCase):
         plants.advance(destination, 0)
         self.assertGreater(destination['grass_pop'], 0)
 
+    def test_climate_reversal_favors_opposite_inherited_temperature_trait(self):
+        world = World(777, 16, 16, population=0)
+        self.addCleanup(world.engine.close)
+        base = world.tiles[0].copy()
+        base.update(e=.55, m=.7, temp=.2, f=.8, grass=.2, trees=0,
+                    grass_seed=.5, tree_seed=0, grass_pop=30, tree_pop=0,
+                    nutrient=.8, litter=.2, scar=0, grass_moist=.7)
+        cold, warm = base.copy(), base.copy()
+        cold['grass_temp'], warm['grass_temp'] = .2, .8
+        for _ in range(200):
+            plants.advance(cold, 0)
+            plants.advance(warm, 0)
+        self.assertGreater(cold['grass'] - warm['grass'], .5)
+        cold['temp'] = warm['temp'] = .8
+        cold['nutrient'] = warm['nutrient'] = .8
+        for _ in range(200):
+            plants.advance(cold, 0)
+            plants.advance(warm, 0)
+        self.assertGreater(warm['grass'] - cold['grass'], .2)
+
     def test_flood_and_meteor_remove_plant_cohorts(self):
         world = World(17, 16, 16, population=0)
         self.addCleanup(world.engine.close)

@@ -56,7 +56,7 @@ def advance(tile, season):
     grass_growth = .035 * tile['m'] * tile['f'] * (.7 + .3 * season) * (1 + .25 * tile['scar'])
     grass_gain = min(1 - tile['grass'], grass_growth * grass_fit *
                      tile['grass_pop'] / 100 * (1 - tile['trees'] * .65) * available)
-    tree_gain = min(1 - tile['trees'], .0035 * tile['m'] * tile['f'] *
+    tree_gain = min(1 - tile['trees'], .012 * tile['m'] * tile['f'] *
                     max(0, tile['temp'] - .12) * tree_fit * (1 - .65 * tile['scar']) *
                     tile['tree_pop'] / 40 * (1 - tile['grass'] * .25) * available)
     uptake = min(tile['nutrient'], grass_gain * .20 + tree_gain * .35)

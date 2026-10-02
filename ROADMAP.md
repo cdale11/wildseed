@@ -15,22 +15,25 @@
 - [x] Publish tested source on the public main branch.
 
 ## World creation and powers (0.3.0)
-- [x] Fresh random world setup, eight geographies, twelve climate choices and exact previews.
-- [x] Thirty-three validated god powers with brush controls and measured feedback.
+- [x] Fresh random world setup, nine geographies, twelve climate choices and exact previews.
+- [x] Thirty-four validated god powers with brush controls and measured feedback.
 - [x] Procedural biome colors, shaded relief, coasts, trees and creature sprites.
 - [x] Save v3 migration and archive-before-replacement.
 - [x] Bounded local runoff, sediment transport and cooling lava with visible map effects.
 - [x] World-scale catchment routing and cumulative river channels that erode over time.
 - [x] Disturbance-driven grassland, woodland and burn-scar succession with an ecological growth effect.
-- [ ] Explicit lakes, calibrated watershed hydrology, long-horizon biome succession validation and deeper temperature adaptation experiments.
+- [x] Explicit basin-stored lakes, Lake Country preset and persistent lake brush with movement/plant effects.
+- [x] Controlled 5,000-tick burn-scar → grassland → woodland recovery and temperature-trait climate-reversal tests.
+- [ ] Calibrated, mass-conserving watershed and nutrient budgets across weather, terrain, plants and settlements; current local transport has only a conservation check.
 
 ## Phase 1: ecological depth
 - [x] Species-aware directional perception of prey, threats, food and materials.
 - [ ] Demonstrate learned predator tracking/threat avoidance against frozen-policy baselines.
-- [x] Reproducible paired learned/frozen runs with exposure-adjusted hunts and a directional policy probe.
+- [x] Reproducible paired learned/frozen/value-ablation runs with exposure-adjusted hunts and predator-prey and grazer-threat directional probes.
 - [x] Eight-value recurrent hidden-state memory persisted per organism; long-horizon gradient training remains open.
 - [x] Per-organism online value heads and one-step temporal-difference credit for earlier neural actions, with frozen controls and save migration.
 - [ ] Demonstrate a reliable behavioral gain from value learning against an immediate-reward ablation across replicated seeds and held-out tasks.
+- [x] Run a ten-seed matched immediate-reward ablation and retain the negative result; provide a repeatable `--value-ablation` experiment mode.
 - [x] Tile seed banks, local dispersal and grass/tree competition.
 - [x] Explicit local plant cohorts, population counts and inherited climate trait means.
 - [x] Local water flow, suspended soil transport and lava cooling.
@@ -40,6 +43,7 @@
 - [x] Two-parent genetic recombination, bounded ancestry records and ecotype counts.
 - [x] Inherited mate-recognition signal, compatibility barrier and measured candidate rejection fraction.
 - [ ] Speciation with reproductive isolation and validated species metrics.
+- [x] Offline exact adult mating-compatibility component report for trusted saves; candidate groups are not validated species.
 - [ ] Deferred by owner: multi-seed 100k-tick stability runs. Ten paired 500-tick learned/frozen runs are documented; random-policy comparison remains open.
 Acceptance: measurable behavioral adaptation and ecological diversity without scripted population replenishment, with published failure cases.
 

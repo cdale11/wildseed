@@ -33,7 +33,7 @@ def advance(world):
             cells = [world.tiles[y * world.width + x]
                      for y in range(cy * CELL, min(world.height, (cy + 1) * CELL))
                      for x in range(cx * CELL, min(world.width, (cx + 1) * CELL))]
-            sea = sum(t['e'] <= .37 for t in cells) / len(cells)
+            sea = sum(t['e'] <= .37 or t['lake'] >= .05 for t in cells) / len(cells)
             elevation = sum(t['e'] for t in cells) / len(cells)
             moisture = sum(t['m'] for t in cells) / len(cells)
             temperature = sum(t['temp'] for t in cells) / len(cells)

@@ -2,7 +2,7 @@
 import heapq
 
 
-def drainage(tiles, width, height):
+def drainage(tiles, width, height, with_spill=False):
     """Return a forest of routes to ocean outlets in upstream-to-downstream order."""
     count = len(tiles)
     cost = [float('inf')] * count
@@ -29,11 +29,31 @@ def drainage(tiles, width, height):
                 cost[neighbor] = proposed
                 parent[neighbor] = index
                 heapq.heappush(heap, (proposed, neighbor))
-    return parent, downstream_first
+    return (parent, downstream_first, cost) if with_spill else (parent, downstream_first)
+
+
+def basin_capacity(tile, spill):
+    """Water depth available below a basin's lowest ocean outlet."""
+    if tile['e'] <= .37:
+        return 0.0
+    if spill == float('inf'):
+        # A completely landlocked periodic world has no ocean outlet. Retain
+        # deliberately carved basin capacity rather than draining it away.
+        return min(.16, tile.get('lake_cap', 0.0))
+    depth = min(.16, max(0.0, spill - tile['e']))
+    return depth if depth >= .015 else 0.0
+
+
+def seed_lakes(tiles, width, height):
+    """Give fresh-world basins a climate-dependent initial water level."""
+    _, _, spill = drainage(tiles, width, height, with_spill=True)
+    for tile, outlet in zip(tiles, spill):
+        tile['lake_cap'] = basin_capacity(tile, outlet)
+        tile['lake'] = tile['lake_cap'] * (.35 + .5 * tile['m'])
 
 
 def advance(world):
-    parent, downstream_first = drainage(world.tiles, world.width, world.height)
+    parent, downstream_first, spill = drainage(world.tiles, world.width, world.height, with_spill=True)
     flow = [0.0] * len(world.tiles)
     for index, tile in enumerate(world.tiles):
         if tile['e'] > .37:
@@ -44,6 +64,10 @@ def advance(world):
         if parent[index] >= 0:
             flow[parent[index]] += flow[index]
     for index, tile in enumerate(world.tiles):
+        capacity = basin_capacity(tile, spill[index])
+        tile['water'] = min(1.0, tile['water'] + max(0.0, tile['lake'] - capacity))
+        tile['lake_cap'] = capacity
+        tile['lake'] = min(tile['lake'], capacity)
         strength = min(1.0, max(0.0, (flow[index] - 5.0) / 60.0)) if parent[index] >= 0 else 0.0
         tile['river'] = strength
         if strength > 0:

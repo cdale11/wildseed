@@ -214,7 +214,8 @@ def land_route(world, start, goal):
     """Shortest passable periodic route, biased toward existing roads."""
     origin = world.idx(start['x'], start['y'])
     destination = world.idx(goal['x'], goal['y'])
-    if any(not .37 < world.tiles[index]['e'] < .88 for index in (origin, destination)):
+    if any(not .37 < world.tiles[index]['e'] < .88 or world.tiles[index]['lake'] >= .05
+           for index in (origin, destination)):
         return None
     queue = [(0.0, origin)]
     best = {origin: 0.0}
@@ -233,7 +234,7 @@ def land_route(world, start, goal):
         for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0)):
             neighbor = world.idx(x + dx, y + dy)
             tile = world.tiles[neighbor]
-            if not .37 < tile['e'] < .88:
+            if not .37 < tile['e'] < .88 or tile['lake'] >= .05:
                 continue
             new_cost = cost + 1 - tile['road'] * .4
             if new_cost < best.get(neighbor, float('inf')):

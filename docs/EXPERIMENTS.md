@@ -33,6 +33,24 @@ Each organism now trains a bounded value head from one-step temporal-difference 
 
 These results are mixed and do not show that the new value head improves tracking. The learned/frozen comparison tests the whole learning system, not the marginal value-head effect; a matched immediate-reward ablation and held-out navigation tasks remain open. Value learning provides a mechanism for future reward estimates to influence an earlier policy action without claiming validated long-horizon planning.
 
+## Value-head ablation and ecological recovery, version 0.20.0
+
+Run `python3 -m wildseed.experiment --seeds 40,41,42,43,44,45,46,47,48,49 --ticks 200 --population 80 --width 48 --height 32 --cap 500 --interval 200 --value-ablation` to compare frozen policy, immediate-reward policy learning and policy plus value head from matching initial seeds. The metric below is mean hunts per 1,000 predator-ticks. These are short ecology runs, not held-out navigation tests.
+
+| Mode | Earlier TD correction | Reduced TD correction |
+|---|---:|---:|
+| Frozen | 9.573 | 9.573 |
+| Immediate reward only | 11.249 | 11.249 |
+| Immediate reward plus value head | 9.505 | 10.524 |
+
+The original 0.006-rate, 0.05-threshold future-value correction hurt hunting in nine of ten pairs against immediate reward alone. Reducing it to rate 0.001 and threshold 0.10 narrowed the mean gap on that ecology, but the value mode still lost overall. The directional prey probe remained near zero (0.070 percentage points for reduced value mode versus 0.058 for immediate reward).
+
+The same ten-seed protocol was rerun after v0.20.0 lake and tree-succession changes. Frozen, immediate-only and value modes averaged 9.367, 9.850 and 10.250 hunts per 1,000 predator-ticks. The value mode beat immediate-only in five of ten seeds; the mean paired difference was +0.400 with a standard error of 0.538. The synthetic prey-direction probe averaged 0.011 percentage points for value mode versus 0.026 for immediate-only. A new grazer threat-direction probe averaged -0.020 versus -0.027, respectively; negative means a slight preference *toward* the threat cue. None of these results establishes reliable tracking, threat avoidance or a value-head benefit. Use independent held-out tasks before retuning again.
+
+A controlled woodland site initialized with a burn scar, tiny surviving plant cohorts and viable seed banks passed through burn scar at tick 1, grassland at tick 300 and woodland at tick 5,000 after bounded tree regrowth was adjusted. This is one deterministic site, not a multi-seed ecological stability result. In a separate two-cohort climate reversal, cold-adapted grass reached 0.999 cover versus 0.151 for warm-adapted grass after 200 cold updates; 200 warm updates later, warm-adapted grass reached 0.999 versus 0.750 for cold-adapted grass. This tests sorting of inherited trait means, not the spontaneous origin of new species.
+
+`python3 -m wildseed.speciation data/world.json` reports exact mate-compatibility components among living, fertile adults in a trusted save. Separate components cannot directly mate under the current recognition rules, but a single snapshot cannot establish persistent isolation or gene-flow history. Do not label these components as confirmed species.
+
 ## Save-based causal branches
 
 Use a trusted local save as a fixed starting point. Each command creates a new world save and a neighboring `.experiment.json` manifest; existing outputs are never replaced.
