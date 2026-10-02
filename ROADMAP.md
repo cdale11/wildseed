@@ -44,7 +44,8 @@ Acceptance: measurable behavioral adaptation and ecological diversity without sc
 - [x] Households with food ownership, demand-based occupations, house construction and traffic-made roads.
 - [x] House/road decay and route-based inter-settlement caravans.
 - [x] Resource-scarcity-driven occupations and barter between settlements.
-- [ ] Sustained society validation, institutions, directed migration and deeper cultural transmission.
+- [x] Food-shortage-driven, route-based migration between reachable settlements with spare food and housing.
+- [ ] Sustained society validation, institutions, broader migration paths and deeper cultural transmission.
 - [ ] Technology from composable operations and experimentation rather than fixed era transitions.
 - [ ] Diplomacy/conflict grounded in resources and individual/social objectives.
 Acceptance: settlements survive and fail for inspectable reasons; reproducible histories show several distinct development paths across seeds.

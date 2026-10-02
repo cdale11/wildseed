@@ -118,3 +118,91 @@ class SocietyTests(unittest.TestCase):
             society.update(self.world)
         self.assertEqual(self.world.settlements, [])
         self.assertTrue(any('abandoned' in event['text'] for event in self.world.events))
+
+    def _migration_towns(self):
+        source = {'id': 1, 'x': 3, 'y': 3, 'culture': 1, 'houses': 1,
+                  'stock': 0.0, 'wood': 0.0, 'ore': 0.0, 'population': 0, 'age': 0}
+        target = {'id': 2, 'x': 10, 'y': 3, 'culture': 2, 'houses': 2,
+                  'stock': 40.0, 'wood': 0.0, 'ore': 0.0, 'population': 0, 'age': 0}
+        self.world.settlements = [source, target]
+        self.world.tiles[self.world.idx(3, 3)]['grass'] = 0
+        human = self.world.spawn('human', 3, 3)
+        human.energy = 90
+        self.world.engine.infer = lambda items: [([0.0] * 8, [0, 0, 0, 0, 0, 0, 1]) for _ in items]
+        return human
+
+    def test_food_shortage_guides_a_reachable_migrant_and_survives_save(self):
+        human = self._migration_towns()
+        society.update(self.world)
+        self.assertEqual(human.migration_town, 2)
+        self.assertEqual(self.world.snapshot()['stats']['migrants'], 1)
+        for _ in range(3):
+            self.world.step()
+        self.assertEqual((human.x, human.y), (6, 3))
+        self.assertEqual(human.updates, 0)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'migration.json'
+            self.world.save(path)
+            loaded = World.load(path)
+            self.addCleanup(loaded.engine.close)
+            loaded.engine.infer = self.world.engine.infer
+            self.assertEqual(loaded.organisms[0].migration_route, human.migration_route)
+            for _ in range(4):
+                self.world.step()
+                loaded.step()
+            self.assertEqual(self.world.snapshot(), loaded.snapshot())
+            society.update(self.world)
+            society.update(loaded)
+            self.assertEqual(self.world.snapshot(), loaded.snapshot())
+        self.assertEqual((human.x, human.y), (10, 3))
+        self.assertEqual(human.migration_town, 0)
+        self.assertNotEqual(human.household, 0)
+        self.assertEqual(next(home for home in self.world.households
+                              if home['id'] == human.household)['town'], 2)
+        self.assertTrue(any('reached settlement 2' in event['text'] for event in self.world.events))
+
+    def test_migration_respects_water_barriers_and_food_capacity(self):
+        human = self._migration_towns()
+        for y in range(self.world.height):
+            for x in (5, 15):
+                self.world.tiles[self.world.idx(x, y)]['e'] = .2
+        society.update(self.world)
+        self.assertEqual(human.migration_route, [])
+        self.world.settlements[1]['stock'] = 0
+        for y in range(self.world.height):
+            for x in (5, 15):
+                self.world.tiles[self.world.idx(x, y)]['e'] = .55
+        society.update(self.world)
+        self.assertEqual(human.migration_route, [])
+
+    def test_migration_cancels_if_next_tile_floods_or_town_disappears(self):
+        human = self._migration_towns()
+        society.update(self.world)
+        next_tile = human.migration_route[0]
+        self.world.tiles[next_tile]['e'] = .2
+        self.world.step()
+        self.assertEqual(human.migration_route, [])
+        self.assertEqual(human.migration_town, 0)
+        self.world.tiles[next_tile]['e'] = .55
+        society.update(self.world)
+        self.assertTrue(human.migration_route)
+        self.world.settlements.pop()
+        self.world.step()
+        self.assertEqual(human.migration_route, [])
+        self.assertEqual(human.migration_town, 0)
+
+    def test_v14_save_migrates_missing_migration_fields(self):
+        self.world.spawn('human', 3, 3)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'old.json'
+            self.world.save(path)
+            data = json.loads(path.read_text())
+            data['version'] = 14
+            for organism in data['organisms']:
+                del organism['migration_town']
+                del organism['migration_route']
+            path.write_text(json.dumps(data))
+            loaded = World.load(path)
+            self.addCleanup(loaded.engine.close)
+            self.assertEqual(loaded.organisms[0].migration_town, 0)
+            self.assertEqual(loaded.organisms[0].migration_route, [])

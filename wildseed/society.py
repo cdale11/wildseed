@@ -84,11 +84,13 @@ def assign_jobs(world, town, residents):
 def update(world):
     deliver_shipments(world)
     humans = [organism for organism in world.organisms if organism.kind == 'human']
+    residents_by_town = {}
     homes_used = set()
     abandoned = set()
     for town in world.settlements:
         residents = [organism for organism in humans
                      if nearest_town(world, organism.x, organism.y) is town]
+        residents_by_town[town['id']] = residents
         town['population'] = len(residents)
         town['age'] += 20
         town['empty_ticks'] = 0 if residents else town.get('empty_ticks', 0) + 20
@@ -140,7 +142,43 @@ def update(world):
     if abandoned:
         world.settlements = [town for town in world.settlements if town['id'] not in abandoned]
     world.households = [home for home in world.households if home['id'] in homes_used and home['town'] not in abandoned]
+    plan_migration(world, residents_by_town)
     dispatch_trade(world)
+
+
+def plan_migration(world, residents_by_town):
+    """Send at most one resident per hungry town toward reachable spare capacity."""
+    incoming = {town['id']: sum(o.migration_town == town['id']
+                                for o in world.organisms) for town in world.settlements}
+    for source in world.settlements:
+        residents = residents_by_town.get(source['id'], [])
+        if not residents or source['stock'] >= max(2.0, .8 * len(residents)):
+            continue
+        if world.tiles[world.idx(source['x'], source['y'])]['grass'] >= .18:
+            continue
+        travelers = [o for o in residents if o.energy > 35 and not o.migration_route]
+        if not travelers:
+            continue
+        traveler = min(travelers, key=lambda o: (o.energy, o.id))
+        choices = []
+        for target in world.settlements:
+            if target is source:
+                continue
+            expected = target['population'] + incoming[target['id']]
+            if (target['houses'] * 4 <= expected or
+                    target['stock'] <= max(8.0, 2.0 * (expected + 1)) or
+                    distance(world, traveler.x, traveler.y, target['x'], target['y']) > 24):
+                continue
+            route = land_route(world, {'x': traveler.x, 'y': traveler.y}, target)
+            if route and 1 < len(route) <= 25:
+                score = target['stock'] / (expected + 1) - .15 * (len(route) - 1)
+                choices.append((-score, len(route), target['id'], route))
+        if choices:
+            _, _, destination, route = min(choices)
+            traveler.migration_town = destination
+            traveler.migration_route = route[1:]
+            incoming[destination] += 1
+            world.event(f"Human {traveler.id} left settlement {source['id']} for settlement {destination} as food ran short.")
 
 
 def land_route(world, start, goal):

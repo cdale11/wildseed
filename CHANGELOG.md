@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.15.0 — 2026-10-02
+
+- Hungry settlements with depleted local forage now send one able resident per society update toward a reachable settlement with food and housing. Migrants follow passable land routes, stop when a route floods or the destination disappears, and join a destination household after arrival.
+- Migration plans persist in save schema v15 and resume deterministically. The browser shows active migrant counts, destinations and departure/arrival events. Guided travel is kept separate from neural training so its outcomes are not falsely credited to a policy choice.
+
 ## 0.14.2 — 2026-10-02
 
 - Reduced Python generator overhead in the neural policy's hidden, action and gradient sums while preserving the same arithmetic order and save format.

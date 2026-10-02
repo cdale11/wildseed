@@ -1,5 +1,9 @@
 # Validation — 2026-10-02
 
+## Version 0.15.0 directed human migration — 2026-10-02
+
+All 77 automated tests pass, including deterministic save continuation during travel, arrival and household reassignment, blocked water routes, lack of destination food, flooding or destination loss during travel, and v14 save migration. Browser JavaScript passes syntax check. The feature sends at most one migrant per hungry town every 20 ticks, along a land route of at most 24 steps; a destination needs available housing and a food reserve. The choice is an explicit social rule, separate from the organism's adaptive neural policy. Tests establish these local mechanics, not that civilizations remain viable over long periods.
+
 ## Version 0.14.2 neural loop profiling — 2026-10-02
 
 All 73 tests pass, including sparse/dense neural reference equivalence, deterministic replay and loopback HTTP. The policy dimensions and save schema remain unchanged. A 30-tick `cProfile` run with 1,000 starting organisms attributed about 1.24 s to inference, 0.97 s to training, 0.71 s to climate and 0.63 s to observation within 3.83 s total, indicating neural work is still the largest cost. Explicit accumulation loops remove generator setup in hidden, action and backward sums while retaining arithmetic order.

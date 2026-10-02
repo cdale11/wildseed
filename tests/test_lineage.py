@@ -76,7 +76,7 @@ class LineageTests(unittest.TestCase):
             self.assertEqual(migrated.organisms[0].mate_signal, .5)
             self.assertEqual((migrated.mate_encounters, migrated.mate_rejections), (0, 0))
             migrated.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'], 14)
+            self.assertEqual(json.loads(path.read_text())['version'], World.VERSION)
 
     def test_local_temperature_affects_heritable_fitness(self):
         adapted = self.world.spawn('grazer', 8, 8)

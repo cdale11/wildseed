@@ -52,10 +52,12 @@ class Organism:
     household: int = 0
     occupation: str = 'forager'
     memory: list = field(default_factory=lambda: [0.0] * HIDDEN)
+    migration_town: int = 0
+    migration_route: list = field(default_factory=list)
 
 
 class World:
-    VERSION = 14
+    VERSION = 15
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -290,9 +292,25 @@ class World:
             o.age += 1
             o.energy -= .22 * o.size + (.08 if o.kind == 'predator' else 0)
             action = self.rng.choices(range(7), weights=probs)[0]
+            guided = False
+            if o.kind == 'human' and o.migration_route:
+                if not any(town['id'] == o.migration_town for town in self.settlements):
+                    o.migration_route = []
+                    o.migration_town = 0
+                else:
+                    target = o.migration_route[0]
+                    direction = next((i for i, (dx, dy) in enumerate(DIRECTIONS)
+                                      if self.idx(o.x + dx, o.y + dy) == target), None)
+                    if direction is None or not .37 < self.tiles[target]['e'] < .88:
+                        o.migration_route = []
+                        o.migration_town = 0
+                    else:
+                        action = direction
+                        guided = True
             t = self.tiles[self.idx(o.x, o.y)]
             bonus = 0
             moved = hunted = False
+            arrived_town = 0
             if action < 4:
                 dx, dy = DIRECTIONS[action]
                 nx, ny = (o.x + dx) % self.width, (o.y + dy) % self.height
@@ -307,6 +325,10 @@ class World:
                         dest['road'] = max(dest['road'], max(0, dest['traffic'] - .3) * .7)
                     t = dest
                     moved = True
+                    if guided:
+                        o.migration_route.pop(0)
+                        if not o.migration_route:
+                            arrived_town = o.migration_town
             elif action == 4:
                 if o.kind == 'predator':
                     prey = next((p for p in occupancy.get(self.idx(o.x, o.y), [])
@@ -346,8 +368,12 @@ class World:
             o.energy = min(160, o.energy)
             if o.age > 1400 / o.size:
                 o.energy = 0
+            if arrived_town and o.energy > 0:
+                o.household = 0
+                o.migration_town = 0
+                self.event(f"Human {o.id} reached settlement {arrived_town} after migrating.")
             reward = (o.energy - before) / 20 + bonus
-            if self.learning:
+            if self.learning and not guided:
                 # A hunt pays the move that put the predator on its prey's tile.
                 if hunted and o.last_move:
                     old_obs, old_hidden, old_probs, old_action = o.last_move
@@ -395,7 +421,7 @@ class World:
                             'clouds': [round(value, 3) for value in self.clouds],
                             'wind': weather.wind(self.tick)},
                 'tiles': client_tiles(self.tiles),
-                'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move', 'memory')} for o in self.organisms],
+                'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move', 'memory', 'migration_route')} for o in self.organisms],
                 'settlements': self.settlements, 'households': self.households,
                 'caravans': caravans,
                 'events': list(self.events),
@@ -406,6 +432,7 @@ class World:
                           'mate_types': len(mate_types), 'mate_encounters': self.mate_encounters,
                           'mate_rejections': self.mate_rejections,
                           'caravans': len(self.shipments),
+                          'migrants': sum(bool(o.migration_route) for o in self.organisms),
                           'generation': max((o.generation for o in self.organisms), default=0),
                           'cultures': len(set(o.culture for o in self.organisms if o.kind == 'human'))}}
 
@@ -436,7 +463,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.

@@ -41,6 +41,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 - brain.py: inference and training. Workers must not mutate authoritative state.
 - Preserve reference-equivalent neural updates when changing sparse CPU inference/training. Benchmark full ticks at multiple population sizes before altering worker thresholds; do not assume using more CPUs is faster.
 - Recurrent observations include each organism's previous hidden state; save/migrate that state and preserve old policy connections when input dimensions change.
+- Society-directed migration routes are authoritative saved state. Check passability and destination existence each step; do not train the neural policy on a socially directed move as though it chose that action.
 - Treat mate-signal bins and encounter rejection rates as proxies for reproductive divergence, not validated species. Preserve direct-mate compatibility and save migration when changing reproduction.
 - server.py: transport, validation, tick ownership, persistence orchestration.
 - Preserve admin/spectator roles, per-peer API limits and bounded connections when changing transport; no viewer command may mutate world state.

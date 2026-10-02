@@ -67,7 +67,7 @@ class NutrientTests(unittest.TestCase):
                 b.step()
             self.assertEqual(a.snapshot(), b.snapshot())
             a.save(path)
-            self.assertEqual(json.loads(path.read_text())['version'], 14)
+            self.assertEqual(json.loads(path.read_text())['version'], World.VERSION)
 
 
 if __name__ == '__main__':

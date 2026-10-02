@@ -1,5 +1,12 @@
 # Development mistakes
 
+## 2026-10-02 — Save schema bump exposed hardcoded migration-test versions
+- Mistake: the first full-suite run after adding migration failed seven legacy-save tests, and an initial patch placed a food-capacity assertion inside the route-cancellation test.
+- Cause: legacy tests asserted the previous current-version literal instead of `World.VERSION`; the test edit was inserted before the earlier test's final assertions.
+- Resolution: current-version assertions now use `World.VERSION`, and the food-capacity assertions are back in their intended test.
+- Prevention: search migration fixtures for hardcoded current-version assertions after each schema bump; inspect the surrounding test method before inserting cases.
+- Verification: all 77 tests pass, including v14 migration and in-progress route replay.
+
 ## 2026-10-02 — New watershed module landed outside its package
 - Mistake: the first patch created `watershed.py` at the repository root, so focused tests could not import `wildseed.watershed`.
 - Cause: the new-file patch target did not land at the intended package path; I did not verify placement before the first test run.
