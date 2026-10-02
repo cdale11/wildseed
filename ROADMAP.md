@@ -68,6 +68,7 @@ Acceptance: documented latency/memory curves and backend parity tolerances on sp
 ## Phase 4: open-ended evolution research
 - [ ] Adaptable network topology, developmental body plans and evolving sensory/action capabilities.
 - [x] Save-based causal intervention branches with source/output hashes and summary metrics.
-- [ ] Novelty archives and deeper ecosystem diversity metrics.
+- [x] Bounded observed-action novelty archive and dominant-action diversity metric, with deterministic saves.
+- [ ] Add ecological network, trait and lineage diversity metrics beyond dominant action modes.
 - [ ] Evaluate unexpected behaviors against baselines; distinguish novelty from bugs/reward exploitation.
 No promise of unlimited novelty or general intelligence. All behavior remains constrained by the simulated physical substrate.

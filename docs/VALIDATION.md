@@ -1,5 +1,9 @@
 # Validation — 2026-10-02
 
+## Version 0.19.0 observed behavior archive — 2026-10-02
+
+All 96 automated tests pass, including guided-move exclusion, distinct-versus-duplicate archive admission, minimum observations, action recording, v18 migration and exact save continuation. Browser JavaScript passes syntax check. A temporary local browser session displayed recent archive records, 15 accumulated records and seven action modes; its console had no errors. The tab and server were closed afterward. A seed-42, 96×64, 250-starting-organism, 200-tick one-worker run produced six records, seven action modes across 584 eligible living organisms, and 23.34 ticks/s (669 final organisms). The benchmark overlapped automated tests and is only a throughput sanity check. Action-frequency distance does not establish that behaviors are useful, surprising or learned.
+
 ## Version 0.18.0 local human peer learning — 2026-10-02
 
 All 92 automated tests pass, including settlement-triggered peer learning, same-culture and reward-gap gates, frozen worlds, save continuation and v17 migration. Browser JavaScript passes syntax check; the new lesson counters were not visually inspected in a browser. In a seed-42, 96×64, 250-starting-organism, 200-tick one-worker CPU run, 17 peer lessons occurred among 95 surviving humans and 47 settlements. The run reached 26.94 ticks/s with 669 final organisms, above the 8-tick/s target; this is a short sanity check, not a social-benefit or stability study. No controlled no-imitation comparison has established better settlement outcomes or retained policy diversity.

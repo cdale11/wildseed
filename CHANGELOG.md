@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.19.0 — 2026-10-02
+
+- Added a bounded behavioral novelty archive. Every 100 ticks, each species can contribute one sufficiently observed organism whose seven-action frequency distribution differs from archived examples; the archive holds at most 64 records. Guided human migration does not count as a neural choice.
+- The browser shows recent records and dominant-action diversity. Schema v19 persists per-organism action counts and the archive; older saves begin with empty histories. These descriptors measure distinct observed actions, not intelligence, beneficial adaptation or unexpected emergence.
+
 ## 0.18.0 — 2026-10-02
 
 - Humans in the same settlement and culture can now weakly imitate a peer whose recent action reward is higher. Every society update selects one sufficiently trained mentor per local culture and blends 2% of that mentor's policy and value head into lower-scoring residents. Frozen worlds never share weights, and stale action-credit traces are cleared after imitation.

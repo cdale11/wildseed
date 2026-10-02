@@ -10,6 +10,7 @@ import random
 from .geography import generate, client_tiles
 from .powers import apply as apply_power
 from . import plants
+from . import novelty
 from . import society
 from . import weather
 from . import watershed
@@ -60,10 +61,11 @@ class Organism:
     value_updates: int = 0
     reward_ema: float = 0.0
     social_updates: int = 0
+    action_counts: list = field(default_factory=lambda: [0] * 7)
 
 
 class World:
-    VERSION = 18
+    VERSION = 19
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -87,6 +89,7 @@ class World:
         self.mate_encounters = self.mate_rejections = 0
         self.critic_updates = 0
         self.social_updates = 0
+        self.novelty_archive = []
         self.engine = BrainEngine(workers, device)
         self.tiles = self.generate()
         self.weather_width, self.weather_height, self.clouds = weather.initialize(seed, width, height)
@@ -406,6 +409,8 @@ class World:
                 o.migration_town = 0
                 self.event(f"Human {o.id} reached settlement {arrived_town} after migrating.")
             reward = (o.energy - before) / 20 + bonus
+            if not guided:
+                o.action_counts[action] += 1
             o.reward_ema = .95 * o.reward_ema + .05 * max(-2, min(2, reward))
             if self.learning and not guided:
                 # A hunt pays the move that put the predator on its prey's tile.
@@ -435,12 +440,15 @@ class World:
         if self.tick % 300 == 0:
             counts = Counter(o.kind for o in self.organisms)
             self.event(f"Census: {counts['human']} humans, {counts['grazer']} grazers, {counts['predator']} predators.")
+        if self.tick % 100 == 0:
+            novelty.collect(self)
 
     def intervene(self, tool, x, y, radius=3, strength=1):
         return apply_power(self, tool, x, y, radius, strength)
 
     def snapshot(self):
         counts = dict(Counter(o.kind for o in self.organisms))
+        behaviors = novelty.diversity(self.organisms)
         ecotypes = {(o.kind, int(o.thermal_opt * 4), int(o.size * 2)) for o in self.organisms}
         mate_types = {(o.kind, min(9, int(o.mate_signal * 10))) for o in self.organisms}
         caravans = []
@@ -461,6 +469,7 @@ class World:
                 'settlements': self.settlements, 'households': self.households,
                 'caravans': caravans,
                 'events': list(self.events),
+                'novelty_archive': list(self.novelty_archive),
                 'stats': {'population': len(self.organisms), 'counts': counts, 'births': self.births,
                           'deaths': self.deaths, 'training': self.training_steps, 'hunts': self.hunts,
                           'hunt_move_updates': self.hunt_move_updates, 'sexual_births': self.sexual_births,
@@ -471,6 +480,10 @@ class World:
                           'migrants': sum(bool(o.migration_route) for o in self.organisms),
                           'critic_updates': self.critic_updates,
                           'social_updates': self.social_updates,
+                          'novelty_records': len(self.novelty_archive),
+                          'behavior_modes': behaviors['modes'],
+                          'behavior_entropy': behaviors['entropy'],
+                          'behavior_eligible': behaviors['eligible'],
                           'generation': max((o.generation for o in self.organisms), default=0),
                           'cultures': len(set(o.culture for o in self.organisms if o.kind == 'human'))}}
 
@@ -487,6 +500,7 @@ class World:
                    'mate_encounters': self.mate_encounters, 'mate_rejections': self.mate_rejections,
                    'critic_updates': self.critic_updates,
                    'social_updates': self.social_updates,
+                   'novelty_archive': self.novelty_archive,
                    'ancestry': list(self.ancestry), 'households': self.households,
                    'shipments': self.shipments,
                    'next_town_id': self.next_town_id, 'next_household_id': self.next_household_id}
@@ -503,7 +517,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -546,6 +560,7 @@ class World:
         data.setdefault('mate_rejections', 0)
         data.setdefault('critic_updates', 0)
         data.setdefault('social_updates', 0)
+        data.setdefault('novelty_archive', [])
         data.setdefault('ancestry', [])
         data.setdefault('households', [])
         data.setdefault('shipments', [])
@@ -564,6 +579,9 @@ class World:
             organism.setdefault('value_updates', 0)
             organism.setdefault('reward_ema', 0.0)
             organism.setdefault('social_updates', 0)
+            organism.setdefault('action_counts', [0] * 7)
+            if len(organism['action_counts']) != 7:
+                raise ValueError('Invalid action history length')
             if len(organism['value_weights']) != VALUE_PARAMS:
                 raise ValueError('Invalid value head length')
             organism.setdefault('thermal_opt', data['tiles'][organism['y'] * data['width'] + organism['x']]['temp'])
