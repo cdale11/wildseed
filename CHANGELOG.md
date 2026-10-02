@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.0 — 2026-10-02
+
+- Each organism now inherits a nine-parameter value head over its recurrent policy features and trains it online with bounded one-step temporal-difference error. A small future-value correction can train the preceding neural action; immediate reward-baseline training and predator hunt credit remain. Tiny corrections are filtered to limit CPU work.
+- Value parameters, pending action credit and critic update counts persist in save schema v17. Older saves start with neutral value heads. Frozen-policy mode trains neither network, guided migration is excluded from policy credit, terminal deaths resolve pending credit, and the mutation power changes both neural components while clearing stale traces.
+- Three short learned/frozen seed pairs did not establish improved predator tracking. The added training reduced measured one-worker throughput on the 250-organism workload; the result remains above the initial 8-tick/s target.
+
 ## 0.16.0 — 2026-10-02
 
 - Added grassland, woodland and burn-scar map presets and god brushes. Biome labels now reflect plant cover and recent burning as well as climate.

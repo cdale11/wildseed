@@ -25,6 +25,7 @@ def measure(world, predator_ticks=0):
         'births': world.births,
         'deaths': world.deaths,
         'training_steps': world.training_steps,
+        'critic_updates': world.critic_updates,
         'mean_energy': round(sum(o.energy for o in world.organisms) / max(1, len(world.organisms)), 3),
         'grass_cover': round(sum(t['grass'] for t in land) / max(1, len(land)), 4),
         'tree_cover': round(sum(t['trees'] for t in land) / max(1, len(land)), 4),

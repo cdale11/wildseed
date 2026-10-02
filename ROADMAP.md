@@ -29,6 +29,8 @@
 - [ ] Demonstrate learned predator tracking/threat avoidance against frozen-policy baselines.
 - [x] Reproducible paired learned/frozen runs with exposure-adjusted hunts and a directional policy probe.
 - [x] Eight-value recurrent hidden-state memory persisted per organism; long-horizon gradient training remains open.
+- [x] Per-organism online value heads and one-step temporal-difference credit for earlier neural actions, with frozen controls and save migration.
+- [ ] Demonstrate a reliable behavioral gain from value learning against an immediate-reward ablation across replicated seeds and held-out tasks.
 - [x] Tile seed banks, local dispersal and grass/tree competition.
 - [x] Explicit local plant cohorts, population counts and inherited climate trait means.
 - [x] Local water flow, suspended soil transport and lava cooling.

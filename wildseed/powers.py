@@ -78,6 +78,9 @@ def apply(world, tool, x, y, radius=3, strength=1):
                 previous=o.energy;o.energy=min(160,o.energy+45*strength);altered+=int(o.energy!=previous)
             elif tool=='mutate':
                 o.weights=[max(-4,min(4,w+world.rng.gauss(0,.12*strength))) for w in o.weights]
+                o.value_weights=[max(-4,min(4,w+world.rng.gauss(0,.06*strength))) for w in o.value_weights]
+                o.pending_credit=None
+                o.last_move=None
                 o.size=max(.5,min(1.6,o.size+world.rng.gauss(0,.08*strength)))
                 o.thermal_opt=max(0,min(1,o.thermal_opt+world.rng.gauss(0,.05*strength)))
                 o.mate_signal=max(0,min(1,o.mate_signal+world.rng.gauss(0,.06*strength)))

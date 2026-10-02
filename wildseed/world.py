@@ -14,7 +14,8 @@ from . import society
 from . import weather
 from . import watershed
 
-from .brain import BrainEngine, PARAMS, HIDDEN, learn
+from .brain import (BrainEngine, PARAMS, HIDDEN, VALUE_PARAMS, DISCOUNT,
+                    learn, predict_value, learn_value)
 
 SPECIES = ('grazer', 'predator', 'human')
 DIRECTIONS = ((0, -1), (1, 0), (0, 1), (-1, 0))
@@ -54,10 +55,13 @@ class Organism:
     memory: list = field(default_factory=lambda: [0.0] * HIDDEN)
     migration_town: int = 0
     migration_route: list = field(default_factory=list)
+    value_weights: list = field(default_factory=lambda: [0.0] * VALUE_PARAMS)
+    pending_credit: list | None = None
+    value_updates: int = 0
 
 
 class World:
-    VERSION = 16
+    VERSION = 17
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -79,6 +83,7 @@ class World:
         self.births = self.deaths = self.training_steps = self.hunts = self.hunt_move_updates = 0
         self.sexual_births = 0
         self.mate_encounters = self.mate_rejections = 0
+        self.critic_updates = 0
         self.engine = BrainEngine(workers, device)
         self.tiles = self.generate()
         self.weather_width, self.weather_height, self.clouds = weather.initialize(seed, width, height)
@@ -124,7 +129,12 @@ class World:
                        parent_a=parent.id if parent else 0, parent_b=mate.id if mate else 0,
                        thermal_opt=max(0, min(1, inherited_temp + self.rng.gauss(0, .025))),
                        mate_signal=max(0, min(1, inherited_signal + self.rng.gauss(0, .015 if parent else .06))),
-                       household=parent.household if parent else 0)
+                       household=parent.household if parent else 0,
+                       value_weights=([max(-4, min(4, (self.rng.choice((a, b)) if mate else a) +
+                                                       self.rng.gauss(0, .02)))
+                                       for a, b in zip(parent.value_weights,
+                                                       mate.value_weights if mate else parent.value_weights)]
+                                      if parent else [0.0] * VALUE_PARAMS))
         self.next_id += 1
         self.organisms.append(org)
         if parent:
@@ -277,6 +287,21 @@ class World:
                     else:
                         neighbor['e'] = min(1, neighbor['e'] + outflow * .012)
 
+    def finish_credit(self, organism, next_value):
+        """Resolve a previous neural choice using its successor state's value."""
+        if not self.learning or organism.pending_credit is None:
+            return
+        obs, hidden, probabilities, action, estimate, reward = organism.pending_credit
+        future = DISCOUNT * next_value - estimate
+        learn_value(organism.value_weights, hidden, reward + future)
+        organism.value_updates += 1
+        self.critic_updates += 1
+        if abs(future) >= .05:
+            learn(organism.weights, obs, hidden, probabilities, action, future, rate=.006)
+            organism.updates += 1
+            self.training_steps += 1
+        organism.pending_credit = None
+
     def step(self):
         self.tick += 1
         self.climate()
@@ -290,6 +315,8 @@ class World:
         for o, obs, (hidden, probs) in zip(cohort, observations, predictions):
             if o.energy <= 0:
                 continue
+            current_value = predict_value(o.value_weights, hidden)
+            self.finish_credit(o, current_value)
             o.memory = hidden.copy()
             before = o.energy
             o.age += 1
@@ -389,8 +416,10 @@ class World:
                 o.updates += 1
                 self.training_steps += 1
                 o.last_move = [obs, hidden, probs, action] if moved and o.kind == 'predator' else None
+                o.pending_credit = [obs, hidden, probs, action, current_value, reward]
         dead = [o for o in self.organisms if o.energy <= 0]
         for o in dead:
+            self.finish_credit(o, 0.0)
             t = self.tiles[self.idx(o.x, o.y)]
             t['f'] = min(1, t['f'] + .04)
             if t['e'] > .37:
@@ -424,7 +453,7 @@ class World:
                             'clouds': [round(value, 3) for value in self.clouds],
                             'wind': weather.wind(self.tick)},
                 'tiles': client_tiles(self.tiles),
-                'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move', 'memory', 'migration_route')} for o in self.organisms],
+                'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move', 'memory', 'migration_route', 'value_weights', 'pending_credit')} for o in self.organisms],
                 'settlements': self.settlements, 'households': self.households,
                 'caravans': caravans,
                 'events': list(self.events),
@@ -436,6 +465,7 @@ class World:
                           'mate_rejections': self.mate_rejections,
                           'caravans': len(self.shipments),
                           'migrants': sum(bool(o.migration_route) for o in self.organisms),
+                          'critic_updates': self.critic_updates,
                           'generation': max((o.generation for o in self.organisms), default=0),
                           'cultures': len(set(o.culture for o in self.organisms if o.kind == 'human'))}}
 
@@ -450,6 +480,7 @@ class World:
                    'hunts': self.hunts, 'hunt_move_updates': self.hunt_move_updates,
                    'learning': self.learning, 'sexual_births': self.sexual_births,
                    'mate_encounters': self.mate_encounters, 'mate_rejections': self.mate_rejections,
+                   'critic_updates': self.critic_updates,
                    'ancestry': list(self.ancestry), 'households': self.households,
                    'shipments': self.shipments,
                    'next_town_id': self.next_town_id, 'next_household_id': self.next_household_id}
@@ -466,7 +497,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -507,6 +538,7 @@ class World:
         data.setdefault('sexual_births', 0)
         data.setdefault('mate_encounters', 0)
         data.setdefault('mate_rejections', 0)
+        data.setdefault('critic_updates', 0)
         data.setdefault('ancestry', [])
         data.setdefault('households', [])
         data.setdefault('shipments', [])
@@ -520,6 +552,11 @@ class World:
         rng = data.pop('rng')
         world.rng.setstate((rng[0], tuple(rng[1]), rng[2]))
         for organism in data['organisms']:
+            organism.setdefault('value_weights', [0.0] * VALUE_PARAMS)
+            organism.setdefault('pending_credit', None)
+            organism.setdefault('value_updates', 0)
+            if len(organism['value_weights']) != VALUE_PARAMS:
+                raise ValueError('Invalid value head length')
             organism.setdefault('thermal_opt', data['tiles'][organism['y'] * data['width'] + organism['x']]['temp'])
             organism.setdefault('mate_signal', .5)
             organism.setdefault('memory', [0.0] * HIDDEN)

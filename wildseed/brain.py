@@ -1,4 +1,4 @@
-"""Small inherited neural policy, trained online with a reward baseline.
+"""Small inherited neural policy and value head, trained online.
 
 Workers perform independent inference; the authoritative process owns training
 and RNG. Optional accelerator inference uses batches of individual policies.
@@ -10,6 +10,8 @@ from concurrent.futures import ProcessPoolExecutor
 
 INPUTS, HIDDEN, ACTIONS = 28, 8, 7
 PARAMS = INPUTS * HIDDEN + HIDDEN * ACTIONS
+VALUE_PARAMS = HIDDEN + 1
+DISCOUNT = .96
 
 
 def forward(item):
@@ -59,6 +61,25 @@ def learn(weights, obs, hidden, probabilities, action, advantage, rate=0.018):
             ix = j * INPUTS + i
             candidate = weights[ix] + rate * back[j] * value
             weights[ix] = -4 if candidate < -4 else 4 if candidate > 4 else candidate
+
+
+def predict_value(weights, hidden):
+    """Bounded expected near-future reward from recurrent policy features."""
+    total = weights[0]
+    for j in range(HIDDEN):
+        total += weights[j + 1] * hidden[j]
+    return 2 * math.tanh(total)
+
+
+def learn_value(weights, hidden, error, rate=.02):
+    """One-step TD regression through the bounded value head."""
+    error = max(-2.0, min(2.0, error))
+    estimate = predict_value(weights, hidden)
+    slope = 2 * (1 - (estimate / 2) ** 2)
+    features = (1, *hidden)
+    for i, feature in enumerate(features):
+        candidate = weights[i] + rate * error * slope * feature
+        weights[i] = -4 if candidate < -4 else 4 if candidate > 4 else candidate
 
 
 def available_cpus():

@@ -34,7 +34,7 @@ Select a power category and click the map. Thirty-three powers include terrain s
 - Species-specific, three-tile directional perception of food/prey, threats/fire and human building resources, with terrain occlusion.
 - Grass and tree cohorts with inherited climate preferences, local seed dispersal and competition; bounded soil nutrient/litter recycling, traveling cloud fronts, catchment-fed river channels, sediment transport and cooling lava.
 - Grazers, predators and humans with energy, age, optional two-parent reproduction, ancestry, inherited traits, mate-recognition signals and independently learned neural weights.
-- A recurrent 28→8→7 neural policy per organism; online one-step policy-gradient training with eight hidden-state memory values. No pretrained model or external AI API is needed.
+- A recurrent 28→8→7 neural policy per organism, plus an inherited nine-parameter value head that learns from subsequent outcomes. Online policy gradients use immediate reward and bounded temporal credit; eight hidden-state values carry memory. No pretrained model or external AI API is needed.
 - Households, scarcity-driven jobs, houses, traffic-made roads, barter caravans and food-driven migration between reachable towns. These remain early society mechanics.
 - Server persistence, CPU process inference, optional CUDA batch inference, administrator/spectator access, bounded HTTP connections and thin canvas clients.
 - Reproducible save branches with optional interventions and experiment manifests; see [experiments](docs/EXPERIMENTS.md).

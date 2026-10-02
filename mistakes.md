@@ -1,5 +1,12 @@
 # Development mistakes
 
+## 2026-10-02 — Neural-mutation test assumed a fixed tile was land
+- Mistake: the new value-head mutation test dereferenced a failed organism spawn.
+- Cause: its chosen seed placed the test coordinate underwater, and the fixture did not establish passable land first.
+- Resolution: set the target tile to land before spawning and reran the focused tests.
+- Prevention: make habitat preconditions explicit in organism tests rather than assuming a generated tile is land.
+- Verification: value-learning and god-power tests pass, including mutation of both neural components.
+
 ## 2026-10-02 — Save schema bump exposed hardcoded migration-test versions
 - Mistake: the first full-suite run after adding migration failed seven legacy-save tests, and an initial patch placed a food-capacity assertion inside the route-cancellation test.
 - Cause: legacy tests asserted the previous current-version literal instead of `World.VERSION`; the test edit was inserted before the earlier test's final assertions.

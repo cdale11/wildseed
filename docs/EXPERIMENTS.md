@@ -21,6 +21,18 @@ The exposure-adjusted hunt rate improved in seven of ten paired seeds. The mean 
 
 In the first uncorrected learning rule, the same ten seeds averaged 14.41 hunts per 1,000 predator-ticks, but the directional probe averaged -0.112 pp. Adding one-step hunt credit changed the trajectories and improved the probe mean toward zero, yet did not establish directional behavior. This is a short 500-tick experiment; neither treatment proves ecological stability at 100,000 ticks.
 
+## Short value-head check, version 0.17.0
+
+Each organism now trains a bounded value head from one-step temporal-difference error. The experiment JSON also reports `critic_updates`. Three paired seed-42/43/44 runs used 200 ticks, 80 starting organisms, a 48×32 map and a 500-organism cap:
+
+| Seed | Frozen hunts / 1,000 predator-ticks | Learned hunts / 1,000 predator-ticks | Value updates |
+|---:|---:|---:|---:|
+| 42 | 8.350 | 9.289 | 24,933 |
+| 43 | 11.321 | 11.126 | 28,257 |
+| 44 | 8.615 | 7.175 | 24,648 |
+
+These results are mixed and do not show that the new value head improves tracking. The learned/frozen comparison tests the whole learning system, not the marginal value-head effect; a matched immediate-reward ablation and held-out navigation tasks remain open. Value learning provides a mechanism for future reward estimates to influence an earlier policy action without claiming validated long-horizon planning.
+
 ## Save-based causal branches
 
 Use a trusted local save as a fixed starting point. Each command creates a new world save and a neighboring `.experiment.json` manifest; existing outputs are never replaced.
