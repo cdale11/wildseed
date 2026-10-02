@@ -84,7 +84,7 @@ def assign_jobs(world, town, residents):
 
 def share_learned_behavior(world, residents):
     """Let humans weakly imitate a successful local peer of their culture."""
-    if not world.learning:
+    if not world.learning or not world.social_learning:
         return
     cultures = {}
     for organism in residents:

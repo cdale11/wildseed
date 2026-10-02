@@ -20,6 +20,7 @@ python3 -m wildseed.benchmark --ticks 200 --workers 1
 python3 -m wildseed.branch data/world.json data/control.json --ticks 100
 python3 -m wildseed.backup data/world.json /mnt/wildseed-backups
 python3 -m wildseed.experiment --seeds 40,41,42 --value-ablation --navigation-credit
+python3 -m wildseed.experiment --seeds 40,41,42 --social-ablation
 ```
 
 ## Play

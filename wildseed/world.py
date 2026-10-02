@@ -68,9 +68,9 @@ class Organism:
 
 
 class World:
-    VERSION = 24
+    VERSION = 25
 
-    def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False):
+    def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False, social_learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
             raise ValueError('Dimensions must be between 16 and 256')
         self.seed, self.width, self.height = seed, width, height
@@ -78,6 +78,7 @@ class World:
         self.learning = learning
         self.value_learning = value_learning
         self.navigation_learning = navigation_learning
+        self.social_learning = social_learning
         self.rng = random.Random(seed)
         self.tick = 0
         self.next_id = 1
@@ -596,6 +597,7 @@ class World:
                    'hunts': self.hunts, 'hunt_move_updates': self.hunt_move_updates,
                    'learning': self.learning, 'value_learning': self.value_learning,
                    'navigation_learning': self.navigation_learning,
+                   'social_learning': self.social_learning,
                    'sexual_births': self.sexual_births,
                    'mate_encounters': self.mate_encounters, 'mate_rejections': self.mate_rejections,
                    'critic_updates': self.critic_updates,
@@ -619,7 +621,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -660,6 +662,7 @@ class World:
         data.setdefault('learning', True)
         data.setdefault('value_learning', True)
         data.setdefault('navigation_learning', False)
+        data.setdefault('social_learning', True)
         data.setdefault('water_budget', {'initial': sum(t['m'] + t['water'] + t['lake'] for t in data['tiles']),
                                          'precipitation': 0.0, 'climate_exchange': 0.0,
                                          'evaporation': 0.0, 'ocean_drain': 0.0,
@@ -692,7 +695,8 @@ class World:
         world = cls(data['seed'], data['width'], data['height'], workers, device, population=0,
                     geography=data['geography'], biome=data['biome'], learning=data['learning'],
                     value_learning=data['value_learning'],
-                    navigation_learning=data['navigation_learning'])
+                    navigation_learning=data['navigation_learning'],
+                    social_learning=data['social_learning'])
         rng = data.pop('rng')
         world.rng.setstate((rng[0], tuple(rng[1]), rng[2]))
         for organism in data['organisms']:

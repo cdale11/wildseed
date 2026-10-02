@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.25.0 — 2026-10-03
+
+- Added a saved peer-learning switch and `--social-ablation` experiment mode. The switch isolates local human imitation from each organism's own online policy training; older saves retain the prior enabled behavior.
+- Ten matched 500-tick worlds recorded 62 peer lessons when imitation was enabled. Compared with no imitation, mean differences were +0.1 living humans, −0.9 settlements, −1.542 human energy and −7.617 town food. These mixed outcomes do not establish a settlement benefit; the roadmap item remains open.
+
 ## 0.24.0 — 2026-10-03
 
 - Settlements with residents, spare wood and a food surplus can build a communal granary. It transfers actual town food into a bounded reserve and releases it during shortages before households receive rations; empty towns lose stored food to spoilage. Migration now considers reserves when judging a food shortage.

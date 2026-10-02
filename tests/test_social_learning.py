@@ -94,6 +94,32 @@ class SocialLearningTests(unittest.TestCase):
             self.assertTrue(all(o.reward_ema == 0 and o.social_updates == 0
                                 for o in migrated.organisms))
 
+    def test_peer_ablation_keeps_individual_learning_and_replays(self):
+        world, mentor, learner = self.make_world()
+        world.social_learning = False
+        society.share_learned_behavior(world, [mentor, learner])
+        self.assertEqual(world.social_updates, 0)
+        self.assertEqual(learner.weights, [0.0] * len(learner.weights))
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'ablation.json'
+            world.save(path)
+            restored = World.load(path)
+            self.addCleanup(restored.engine.close)
+            self.assertFalse(restored.social_learning)
+            for _ in range(24):
+                world.step()
+                restored.step()
+            self.assertEqual(world.snapshot(), restored.snapshot())
+            self.assertGreater(world.training_steps, 0)
+
+            payload = json.loads(path.read_text())
+            payload['version'] = 24
+            del payload['social_learning']
+            path.write_text(json.dumps(payload))
+            migrated = World.load(path)
+            self.addCleanup(migrated.engine.close)
+            self.assertTrue(migrated.social_learning)
+
 
 if __name__ == '__main__':
     unittest.main()
