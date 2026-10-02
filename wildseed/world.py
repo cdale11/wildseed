@@ -68,7 +68,7 @@ class Organism:
 
 
 class World:
-    VERSION = 25
+    VERSION = 26
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False, social_learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -567,6 +567,10 @@ class World:
                           'ecotypes': len(ecotypes), 'households': len(self.households),
                           'granaries': sum(bool(town.get('granary')) for town in self.settlements),
                           'food_reserves': round(sum(town.get('reserve', 0.0) for town in self.settlements), 2),
+                          'tool_designs': sum(bool(town.get('tool_recipe')) for town in self.settlements),
+                          'tool_experiments': sum(town.get('experiments', 0) for town in self.settlements),
+                          'best_tool_quality': round(max((town.get('tool_quality', 0.0)
+                                                          for town in self.settlements), default=0.0), 3),
                           'mate_types': len(mate_types), 'mate_encounters': self.mate_encounters,
                           'mate_rejections': self.mate_rejections,
                           'seed_transferred': round(self.seed_transferred, 3),
@@ -621,7 +625,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -692,6 +696,10 @@ class World:
             town.setdefault('empty_ticks', 0)
             town.setdefault('reserve', 0.0)
             town.setdefault('granary', 0)
+            if version < 26:
+                town.setdefault('tool_recipe', [])
+                town.setdefault('tool_quality', 0.0)
+                town.setdefault('experiments', 0)
         world = cls(data['seed'], data['width'], data['height'], workers, device, population=0,
                     geography=data['geography'], biome=data['biome'], learning=data['learning'],
                     value_learning=data['value_learning'],

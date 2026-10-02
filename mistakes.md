@@ -120,3 +120,15 @@
 - Resolution: removed the trace after a ten-seed matched ablation showed lower exposure-adjusted hunting; retained the previous one-move credit.
 - Prevention: evaluate delayed-credit schemes against the existing policy before adding permanent save state or declaring progress.
 - Verification: ten 200-tick seeds averaged −1.579 hunts per 1,000 predator-ticks (paired SE 0.541); only one seed improved. The experimental code is not shipped.
+# 2026-10-03 — Inventor test ignored scarcity-based job priorities
+- Mistake: the first controlled tool test expected an inventor while the town still lacked wood, so the occupation model correctly assigned a woodcutter.
+- Cause: the fixture met the bare experimentation threshold but not the larger resource-surplus threshold implied by job demand scores.
+- Resolution: tested invention with an actual food, wood and ore surplus; retained scarcity-first job assignment.
+- Prevention: exercise new occupations through the real assignment function with both scarce and surplus inventories.
+- Verification: the corrected test assigns an inventor, consumes materials and records a trial; ordinary 500-tick worlds also perform experiments.
+# 2026-10-03 — Current-version town normalization broke exact replay
+- Mistake: the first v26 loader added tool fields to every town, including same-version saves made from sparse controlled fixtures.
+- Cause: treating a migration default as an unconditional load normalization changed snapshot shape after reload.
+- Resolution: add empty tool fields only while migrating pre-v26 towns; new game-founded towns carry the fields from creation, while current-version sparse fixtures retain their exact state.
+- Prevention: version-gate new schema defaults and run save/continue comparisons with both ordinary and deliberately sparse settlement records.
+- Verification: granary, migration and tool save/replay tests pass after the loader change.

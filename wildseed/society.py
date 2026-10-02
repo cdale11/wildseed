@@ -1,5 +1,6 @@
 """Local human households, occupations and settlement resource use."""
 import heapq
+from . import craft
 
 
 def distance(world, x, y, a, b):
@@ -29,6 +30,7 @@ def work(world, organism, tile):
         town = {'id': world.next_town_id, 'x': organism.x, 'y': organism.y,
                 'culture': organism.culture, 'houses': 1, 'stock': 3,
                 'wood': 0, 'ore': organism.ore, 'reserve': 0.0, 'granary': 0,
+                'tool_recipe': [], 'tool_quality': 0.0, 'experiments': 0,
                 'population': 0, 'age': 0,
                 'empty_ticks': 0}
         world.next_town_id += 1
@@ -39,19 +41,21 @@ def work(world, organism, tile):
         return .8
 
     job = organism.occupation
+    if job == 'inventor':
+        return craft.propose(world, town)
     if job == 'farmer':
-        harvest = min(tile['grass'], .12)
+        harvest = min(tile['grass'], .12 * craft.productivity(town))
         tile['grass'] -= harvest
         tile['f'] = max(.05, tile['f'] - harvest * .01)
         town['stock'] = min(200, town['stock'] + harvest * 22)
         return harvest * .4
     if job == 'woodcutter':
-        harvest = min(tile['trees'], .05)
+        harvest = min(tile['trees'], .05 * craft.productivity(town))
         tile['trees'] -= harvest
         town['wood'] = min(100, town['wood'] + harvest * 10)
         return harvest * .5
     if job == 'miner':
-        harvest = min(tile['ore'], .05)
+        harvest = min(tile['ore'], .05 * craft.productivity(town))
         tile['ore'] -= harvest
         town['ore'] = min(100, town['ore'] + harvest)
         return harvest * .3
@@ -69,7 +73,7 @@ def work(world, organism, tile):
 
 def assign_jobs(world, town, residents):
     tile = world.tiles[world.idx(town['x'], town['y'])]
-    counts = {'farmer': 0, 'woodcutter': 0, 'miner': 0, 'builder': 0}
+    counts = {'farmer': 0, 'woodcutter': 0, 'miner': 0, 'builder': 0, 'inventor': 0}
     for organism in sorted(residents, key=lambda o: o.id):
         demand = {
             'farmer': max(2, 22 - town['stock']) * max(.1, tile['grass']) / (1 + counts['farmer']),
@@ -77,6 +81,8 @@ def assign_jobs(world, town, residents):
             'miner': max(.2, 3 - town['ore']) * max(.1, tile['ore']) / (1 + counts['miner']),
             'builder': (4 if town['wood'] >= 2.5 and town['houses'] < max(2, len(residents) / 3) else .05)
                        / (1 + counts['builder']),
+            'inventor': (2.0 if town['stock'] > 12 and town['wood'] >= 2 and town['ore'] >= .3
+                         else 0.0) / (1 + counts['inventor']),
         }
         organism.occupation = max(demand, key=demand.get)
         counts[organism.occupation] += 1
@@ -304,7 +310,9 @@ def dispatch_trade(world):
         travel = max(20, int(len(path) * 2 * (1 - average_road * .5)))
         world.shipments.append({'from': source['id'], 'to': target['id'], 'food': food,
                                 'ore': ore, 'wood': wood, 'start': world.tick,
-                                'arrival': world.tick + travel, 'path': path})
+                                'arrival': world.tick + travel, 'path': path,
+                                'tool_recipe': list(source.get('tool_recipe', [])),
+                                'tool_quality': source.get('tool_quality', 0.0)})
         world.event(f"Settlements {source['id']} and {target['id']} sent a barter caravan.")
         return
 
@@ -322,6 +330,10 @@ def deliver_shipments(world):
             target['stock'] = min(200, target['stock'] + shipment['food'])
             source['ore'] = min(100, source['ore'] + shipment['ore'])
             source['wood'] = min(100, source['wood'] + shipment['wood'])
+            if shipment.get('tool_quality', 0.0) > target.get('tool_quality', 0.0) + .015:
+                target['tool_quality'] = shipment['tool_quality']
+                target['tool_recipe'] = list(shipment['tool_recipe'])
+                world.event(f"Settlement {target['id']} learned a tool design from traders.")
             world.event(f"Caravan reached settlement {target['id']} with food and returned materials.")
         else:
             world.event('A caravan was lost when its settlement disappeared.')

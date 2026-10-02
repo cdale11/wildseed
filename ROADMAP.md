@@ -66,6 +66,8 @@ Acceptance: measurable behavioral adaptation and ecological diversity without sc
 - [x] Add a saved no-imitation ablation and run ten matched 500-tick worlds; measured settlement benefit was not established.
 - [ ] Test whether peer learning improves held-out settlement outcomes versus a no-imitation ablation without collapsing policy diversity.
 - [ ] Technology from composable operations and experimentation rather than fixed era transitions.
+- [x] First compositional technology: resource-costed, order-sensitive tool trials with locally retained and caravan-transmitted designs.
+- [ ] Broaden operation/material repertoires and validate sustained productivity gains across matched settlements.
 - [ ] Diplomacy/conflict grounded in resources and individual/social objectives.
 Acceptance: settlements survive and fail for inspectable reasons; reproducible histories show several distinct development paths across seeds.
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.26.0 — 2026-10-03
+
+- Surplus settlements can assign an inventor to try short sequences of handle, blade, temper and hone operations. Trials consume real wood and ore; operation order changes tool quality. Towns keep only improved designs, which modestly increase farming, logging and mining output. Existing food-for-material caravans also carry the source town's best design to a destination.
+- Save schema v26 preserves design recipes, quality and trial counts; old towns start with no design. The browser reports design activity and shows each town's recipe, resources and reserves in the inspector. Three 500-tick seeds produced 17, 14 and 53 trials respectively, so the mechanic occurs without forced setup. This is one bounded compositional technology system, not open-ended invention.
+
 ## 0.25.0 — 2026-10-03
 
 - Added a saved peer-learning switch and `--social-ablation` experiment mode. The switch isolates local human imitation from each organism's own online policy training; older saves retain the prior enabled behavior.
