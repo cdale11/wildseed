@@ -23,18 +23,25 @@ BIOMES = {
     'tundra': ('Tundra', (.08, .35, .32, .03)),
     'swamp': ('Wetlands', (.67, .98, .85, .42)),
     'volcanic': ('Volcanic', (.75, .12, .36, .03)),
+    'grassland': ('Grassland', (.55, .5, .7, .03)),
+    'woodland': ('Woodland', (.58, .68, .75, .85)),
+    'burnscar': ('Burn scar', (.55, .3, .3, 0.0)),
 }
 BIOME_NAMES = list(BIOMES)
 SIZES = {'small': (64, 48), 'standard': (96, 64), 'large': (144, 96)}
 
 
 def classify(t):
+    if t.get('lava', 0) > .1: return 'volcanic'
+    if t.get('scar', 0) > .25 and t['grass'] + t['trees'] < .35: return 'burnscar'
     if t['temp'] < .17: return 'tundra'
-    if t['temp'] < .37: return 'taiga'
+    if t['temp'] < .37: return 'taiga' if t['trees'] > .15 else 'tundra'
     if t['m'] < .18: return 'desert' if t['temp'] > .78 else 'volcanic'
     if t['m'] > .84 and t['e'] < .52: return 'swamp'
-    if t['m'] > .7 and t['temp'] > .73: return 'rainforest'
-    if t['m'] < .43 and t['temp'] > .64: return 'savanna'
+    if t['m'] > .7 and t['temp'] > .73 and t['trees'] > .3: return 'rainforest'
+    if t['m'] < .43 and t['temp'] > .64 and t['grass'] > .15: return 'savanna'
+    if t['trees'] > .42: return 'woodland'
+    if t['grass'] > .28 and t['trees'] < .25: return 'grassland'
     return 'temperate'
 
 
@@ -98,6 +105,7 @@ def generate(seed, width, height, geography='continents', biome='mixed'):
             t['traffic'] = 0.0
             t['road'] = 0.0
             t['river'] = 0.0
+            t['scar'] = 1.0 if biome == 'burnscar' and land else 0.0
             t['nutrient'] = fertility * (.35 + .3 * fine[i]) if land else 0.0
             t['litter'] = (.08 * t['grass'] + .12 * t['trees']) if land else 0.0
             plants.initialize(t, (fine[i] - .5) * .12)
@@ -116,4 +124,5 @@ def client_tiles(tiles):
     return [[round(t[k], 3) for k in ('e', 'm', 'grass', 'trees', 'ore', 'fire', 'f', 'temp')] +
             [BIOME_NAMES.index(classify(t)), round(t['water'], 3), round(t['lava'], 3),
              t['grass_pop'], t['tree_pop'], round(t['road'], 3),
-             round(t['nutrient'], 3), round(t['litter'], 3), round(t['river'], 3)] for t in tiles]
+             round(t['nutrient'], 3), round(t['litter'], 3), round(t['river'], 3),
+             round(t['scar'], 3)] for t in tiles]

@@ -34,6 +34,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 - plants.py and society.py: bounded cohort and human-society rules called by the authoritative world.
 - Mineral nutrient and litter pools are authoritative tile state. Keep plant uptake, recycling, water transport and god-power effects bounded; use geography.client_tiles for both previews and active snapshots.
 - geography.py: deterministic terrain/climate generation and map options.
+- Biome succession derives map labels from authoritative climate, vegetation and bounded scar state. Initialize scar in previews, migrate it in old saves, and keep god-power restoration and submerged tiles consistent.
 - weather.py: deterministic coarse cloud-grid evolution; use a separate seeded RNG from organisms, simultaneous advection, and persisted state. Preview weather must equal the newly created world's weather.
 - watershed.py: periodic deterministic lowest-spill routing to ocean outlets; keep catchment accumulation bounded and use the shared client tile format for river rendering. This is not a calibrated mass-conserving hydrology model.
 - powers.py: shared power catalog and measured authoritative effects. Every new power needs a state-effect test.

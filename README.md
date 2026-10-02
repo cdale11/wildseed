@@ -23,19 +23,19 @@ python3 -m wildseed.backup data/world.json /mnt/wildseed-backups
 
 ## Play
 
-Start by choosing one of eight geography styles and nine biome/climate choices, then reroll until you like the random landscape. Choose small, standard or large size and an empty or populated world. Create starts the exact previewed seed. Browser refresh/reconnection joins the running shared world rather than resetting everyone.
+Start by choosing one of eight geography styles and twelve biome/climate choices, then reroll until you like the random landscape. Choose small, standard or large size and an empty or populated world. Create starts the exact previewed seed. Browser refresh/reconnection joins the running shared world rather than resetting everyone.
 
-Select a power category and click the map. Thirty powers include terrain sculpting, oceans, mountains, rain/drought, vegetation, fertility, minerals, freeze/heat, life spawning, healing, neural mutation, extinction, wildfire, lightning, meteors, volcanoes and eight biome brushes. Brush radius (1–10) and strength (1–3) are adjustable. Every cast reports actual effect counts or explicitly reports no effect. Drag to pan; scroll to zoom; Fit world resets the camera. Inspect displays organisms' traits and learning counts. Map layers show moisture, food, minerals, and fertility. Pause/speed affect the shared server world. Save world persists state, policies, and RNG state. The browser polls at 2 Hz; the server targets 8 ticks/second at 1× speed.
+Select a power category and click the map. Thirty-three powers include terrain sculpting, oceans, mountains, rain/drought, vegetation, fertility, minerals, freeze/heat, life spawning, healing, neural mutation, extinction, wildfire, lightning, meteors, volcanoes and eleven biome brushes. Brush radius (1–10) and strength (1–3) are adjustable. Every cast reports actual effect counts or explicitly reports no effect. Drag to pan; scroll to zoom; Fit world resets the camera. Inspect displays organisms' traits and learning counts. Map layers show moisture, food, minerals, and fertility. Pause/speed affect the shared server world. Save world persists state, policies, and RNG state. The browser polls at 2 Hz; the server targets 8 ticks/second at 1× speed.
 
 ## What exists
 
 - Procedural map selection, biome palettes, shaded relief, coast foam, species sprites and forest textures.
-- Seeded terrain, coastlines, erosion/deposition, seasonal moisture, vegetation growth, soil depletion, fire spread and ash fertility.
+- Seeded terrain, coastlines, erosion/deposition, seasonal moisture, vegetation growth, soil depletion, fire spread, ash fertility and recovering burn scars.
 - Species-specific, three-tile directional perception of food/prey, threats/fire and human building resources, with terrain occlusion.
 - Grass and tree cohorts with inherited climate preferences, local seed dispersal and competition; bounded soil nutrient/litter recycling, traveling cloud fronts, catchment-fed river channels, sediment transport and cooling lava.
 - Grazers, predators and humans with energy, age, optional two-parent reproduction, ancestry, inherited traits, mate-recognition signals and independently learned neural weights.
 - A recurrent 28→8→7 neural policy per organism; online one-step policy-gradient training with eight hidden-state memory values. No pretrained model or external AI API is needed.
-- Households, scarcity-driven jobs, houses, traffic-made roads and route-based barter caravans. These remain early society mechanics.
+- Households, scarcity-driven jobs, houses, traffic-made roads, barter caravans and food-driven migration between reachable towns. These remain early society mechanics.
 - Server persistence, CPU process inference, optional CUDA batch inference, administrator/spectator access, bounded HTTP connections and thin canvas clients.
 - Reproducible save branches with optional interventions and experiment manifests; see [experiments](docs/EXPERIMENTS.md).
 

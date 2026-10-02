@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.16.0 — 2026-10-02
+
+- Added grassland, woodland and burn-scar map presets and god brushes. Biome labels now reflect plant cover and recent burning as well as climate.
+- Fire and volcanic impacts leave bounded scars that fade faster in moist ground. Recovery temporarily favors pioneer grass over tree growth; forest and meadow powers speed restoration. Save schema v16 persists the scar field and migrates older saves to an unscarred baseline.
+- The browser palette and tile inspector display the new landscapes and scar intensity. No calibrated fire ecology or long-run succession claim is made.
+
 ## 0.15.0 — 2026-10-02
 
 - Hungry settlements with depleted local forage now send one able resident per society update toward a reachable settlement with food and housing. Migrants follow passable land routes, stop when a route floods or the destination disappears, and join a destination household after arrival.

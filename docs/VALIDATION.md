@@ -1,5 +1,9 @@
 # Validation — 2026-10-02
 
+## Version 0.16.0 disturbance-driven biome succession — 2026-10-02
+
+All 81 automated tests pass, including scar effects on grass/tree growth, fire-to-recovery biome transitions, active lava retaining its volcanic label, exact previews for three new presets, all 33 god powers changing authoritative state, v15→v16 save migration and deterministic continuation. Browser modules pass Node syntax checks. In a temporary local browser session, Burn scar appeared in world setup with a rendered brown/ash preview; creating that exact world exposed Grassland, Woodland and Burn scar brushes, and a Woodland cast reported 29 changed tiles. The test server was shut down afterward. A seed-42, 96×64, 250-initial-organism, 200-tick one-worker CPU run measured 34.97 ticks/s (670 final organisms); changed ecology alters the trajectory, so this is a sanity check rather than a controlled throughput comparison. The scar is a bounded, phenomenological disturbance memory: it temporarily shifts plant growth and fades with local moisture. It is not a calibrated fire ecology model.
+
 ## Version 0.15.0 directed human migration — 2026-10-02
 
 All 77 automated tests pass, including deterministic save continuation during travel, arrival and household reassignment, blocked water routes, lack of destination food, flooding or destination loss during travel, and v14 save migration. Browser JavaScript passes syntax check. The feature sends at most one migrant per hungry town every 20 ticks, along a land route of at most 24 steps; a destination needs available housing and a food reserve. The choice is an explicit social rule, separate from the organism's adaptive neural policy. Tests establish these local mechanics, not that civilizations remain viable over long periods.

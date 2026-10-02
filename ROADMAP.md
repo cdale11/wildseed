@@ -15,13 +15,14 @@
 - [x] Publish tested source on the public main branch.
 
 ## World creation and powers (0.3.0)
-- [x] Fresh random world setup, eight geographies, nine climate choices and exact previews.
-- [x] Thirty validated god powers with brush controls and measured feedback.
+- [x] Fresh random world setup, eight geographies, twelve climate choices and exact previews.
+- [x] Thirty-three validated god powers with brush controls and measured feedback.
 - [x] Procedural biome colors, shaded relief, coasts, trees and creature sprites.
 - [x] Save v3 migration and archive-before-replacement.
 - [x] Bounded local runoff, sediment transport and cooling lava with visible map effects.
 - [x] World-scale catchment routing and cumulative river channels that erode over time.
-- [ ] Explicit lakes, calibrated watershed hydrology, biome succession and deeper temperature adaptation experiments.
+- [x] Disturbance-driven grassland, woodland and burn-scar succession with an ecological growth effect.
+- [ ] Explicit lakes, calibrated watershed hydrology, long-horizon biome succession validation and deeper temperature adaptation experiments.
 
 ## Phase 1: ecological depth
 - [x] Species-aware directional perception of prey, threats, food and materials.

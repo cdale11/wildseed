@@ -57,7 +57,7 @@ class Organism:
 
 
 class World:
-    VERSION = 15
+    VERSION = 16
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -187,6 +187,7 @@ class World:
             x, y = i % self.width, i // self.width
             t['m'] = max(0, min(1, t['m'] + .006 * season - .001 + t['trees'] * .0015))
             if t['e'] > .37:
+                t['scar'] = max(0, t['scar'] - .015 - .02 * t['m'])
                 t['traffic'] *= .999
                 t['road'] = max(0, t['road'] - .00002)
                 plants.advance(t, season)
@@ -201,6 +202,7 @@ class World:
                     t['tree_seed'] *= .75
                     plants.burn(t)
                     t['f'] = min(1, t['f'] + .008)
+                    t['scar'] = min(1, t['scar'] + .18 + burned * .25)
                     t['fire'] = max(0, t['fire'] - .12 - t['m'] * .1)
                     if self.rng.random() < .28:
                         dx, dy = self.rng.choice(DIRECTIONS)
@@ -216,6 +218,7 @@ class World:
             else:
                 plants.clear(t)
                 t['river'] = 0
+                t['scar'] = 0
                 t['nutrient'] = t['litter'] = 0
                 t['fire'] = t['water'] = t['lava'] = t['traffic'] = t['road'] = 0
                 deposit = min(t['sediment'], max(0, 1 - t['e']))
@@ -463,7 +466,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -492,6 +495,7 @@ class World:
             tile.setdefault('traffic', 0.0)
             tile.setdefault('road', 0.0)
             tile.setdefault('river', 0.0)
+            tile.setdefault('scar', 0.0)
             tile.setdefault('nutrient', tile['f'] * .5 if tile['e'] > .37 else 0.0)
             tile.setdefault('litter', (.08 * tile['grass'] + .12 * tile['trees']) if tile['e'] > .37 else 0.0)
             plants.migrate(tile)
