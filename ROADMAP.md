@@ -70,6 +70,8 @@ Acceptance: measurable behavioral adaptation and ecological diversity without sc
 - [x] First compositional technology: resource-costed, order-sensitive tool trials with locally retained and caravan-transmitted designs.
 - [ ] Broaden operation/material repertoires and validate sustained productivity gains across matched settlements.
 - [ ] Diplomacy/conflict grounded in resources and individual/social objectives.
+- [x] Scarcity-driven route-bound food raids and trade/raid-dependent settlement relations, with real food and raider energy costs.
+- [ ] Broader negotiations, alliances, combat and individual political objectives.
 Acceptance: settlements survive and fail for inspectable reasons; reproducible histories show several distinct development paths across seeds.
 
 ## Phase 3: scale and experimentation

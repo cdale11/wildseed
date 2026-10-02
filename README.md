@@ -45,6 +45,7 @@ Select a power category and click the map. Thirty-five powers include terrain sc
 - Households, scarcity-driven jobs, houses, traffic-made roads, barter caravans and food-driven migration between reachable towns. These remain early society mechanics.
 - Surplus-funded communal granaries that store real food and release it to households during shortages.
 - Surplus settlements can experiment with order-sensitive material-processing sequences to improve tools; caravan trade can spread a successful design.
+- Barter changes settlement relations, while sustained food shortages can send costly route-bound raids against a wealthier different-culture town.
 - Server persistence, CPU process inference, optional CUDA batch inference, administrator/spectator access, bounded HTTP connections and thin canvas clients.
 - Reproducible save branches with optional interventions and experiment manifests; see [experiments](docs/EXPERIMENTS.md).
 

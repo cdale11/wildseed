@@ -115,6 +115,8 @@ def apply(world, tool, x, y, radius=3, strength=1):
             if buildings:
                 remaining={s['id'] for s in world.settlements}
                 world.households=[home for home in world.households if home['town'] in remaining]
+                world.relations={key:value for key,value in world.relations.items()
+                                 if all(int(part) in remaining for part in key.split(':'))}
     total=changed+spawned+altered+removed+buildings
     result={'tiles_changed':changed,'spawned':spawned,'organisms_changed':altered,
             'killed':removed,'settlements_removed':buildings,'affected':total}

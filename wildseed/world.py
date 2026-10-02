@@ -71,7 +71,7 @@ class Organism:
 
 
 class World:
-    VERSION = 27
+    VERSION = 28
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False, social_learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -91,6 +91,8 @@ class World:
         self.settlements = []
         self.households = []
         self.shipments = []
+        self.relations = {}
+        self.raids_launched = self.raids_succeeded = 0
         self.next_town_id = self.next_household_id = 1
         self.ancestry = deque(maxlen=50000)
         self.births = self.deaths = self.training_steps = self.hunts = self.hunt_move_updates = 0
@@ -557,7 +559,8 @@ class World:
             index = shipment['path'][int(progress * (len(shipment['path']) - 1))]
             caravans.append({'x': index % self.width, 'y': index // self.width,
                              'from': shipment['from'], 'to': shipment['to'],
-                             'food': round(shipment['food'], 2)})
+                             'food': round(shipment['food'], 2),
+                             'kind': shipment.get('kind', 'trade')})
         return {'seed': self.seed, 'tick': self.tick, 'width': self.width, 'height': self.height,
                 'geography': self.geography, 'biome': self.biome,
                 'weather': {'width': self.weather_width, 'height': self.weather_height,
@@ -567,6 +570,7 @@ class World:
                 'organisms': [{k: v for k, v in asdict(o).items() if k not in ('weights', 'last_move', 'memory', 'migration_route', 'value_weights', 'pending_credit')} for o in self.organisms],
                 'settlements': self.settlements, 'households': self.households,
                 'caravans': caravans,
+                'relations': self.relations,
                 'events': list(self.events),
                 'novelty_archive': list(self.novelty_archive),
                 'diversity': lineage,
@@ -589,6 +593,9 @@ class World:
                           'water_budget_residual': round(self.water_balance()['residual'], 8),
                           'nutrient_budget_residual': round(self.nutrient_balance()['residual'], 8),
                           'caravans': len(self.shipments),
+                          'raids_launched': self.raids_launched,
+                          'raids_succeeded': self.raids_succeeded,
+                          'relations_tracked': len(self.relations),
                           'migrants': sum(bool(o.migration_route) for o in self.organisms),
                           'critic_updates': self.critic_updates,
                           'social_updates': self.social_updates,
@@ -623,6 +630,9 @@ class World:
                    'novelty_archive': self.novelty_archive,
                    'ancestry': list(self.ancestry), 'households': self.households,
                    'shipments': self.shipments,
+                   'relations': self.relations,
+                   'raids_launched': self.raids_launched,
+                   'raids_succeeded': self.raids_succeeded,
                    'next_town_id': self.next_town_id, 'next_household_id': self.next_household_id}
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -637,7 +647,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -702,6 +712,9 @@ class World:
         data.setdefault('ancestry', [])
         data.setdefault('households', [])
         data.setdefault('shipments', [])
+        data.setdefault('relations', {})
+        data.setdefault('raids_launched', 0)
+        data.setdefault('raids_succeeded', 0)
         data.setdefault('next_town_id', max((town['id'] for town in data['settlements']), default=0) + 1)
         data.setdefault('next_household_id', 1)
         for town in data['settlements']:
@@ -709,6 +722,8 @@ class World:
             town.setdefault('empty_ticks', 0)
             town.setdefault('reserve', 0.0)
             town.setdefault('granary', 0)
+            if version < 28:
+                town.setdefault('grievance', 0)
             if version < 26:
                 town.setdefault('tool_recipe', [])
                 town.setdefault('tool_quality', 0.0)

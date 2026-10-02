@@ -138,3 +138,9 @@
 - Resolution: count a new case only when the organism was previously uninfected; a recast can still restore infection intensity.
 - Prevention: distinguish incidence from current prevalence in epidemiological counters and test repeated interventions.
 - Verification: the focused plague test recasts on an ill organism without raising the case total.
+# 2026-10-03 — First raid threshold never fired in ordinary worlds
+- Mistake: the initial conflict rule required a town with more than twelve food units, but sampled 500-tick worlds rarely held that much after household rationing.
+- Cause: thresholds were chosen from an imagined resource scale rather than observed settlement inventories.
+- Resolution: set scarcity/abundance thresholds relative to population and lowered the minimum raiding party to two; theft is capped to half the target's current stock.
+- Prevention: run a few natural seeded worlds before declaring a new settlement rule reachable, while retaining controlled tests for exact resource transfer.
+- Verification: three 500-tick seeds produced two, one and two unforced raid launches; route, food conservation, relations and save replay have focused tests.

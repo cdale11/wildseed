@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.28.0 — 2026-10-03
+
+- Added persistent pairwise settlement relations. Successful barter improves relations; repeated food scarcity can trigger a route-bound raid by a different-culture town with at least two eligible residents. Raiders pay an immediate energy cost, and a successful arrival transfers food from the target instead of creating it. Hostility rises when a raid launches and can eventually prevent trade.
+- The browser distinguishes raid parties from caravans, counts launched/successful raids, and shows each town's grievances and relations. Save schema v28 preserves relations, raid state and in-transit parties; older saves migrate with neutral relations. Three 500-tick seeds produced 2, 1 and 2 unforced raids. This is limited food conflict, not a full war or diplomacy system.
+
 ## 0.27.0 — 2026-10-03
 
 - Added a plague power and local contact transmission after movement. Infection increases energy use, clears with time, and raises acquired immunity on recovery; children inherit bounded resistance with mutation. Healing cures infection, mutation can alter resistance, and the browser shows cases and individual health.

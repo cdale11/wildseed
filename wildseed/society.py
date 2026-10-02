@@ -31,6 +31,7 @@ def work(world, organism, tile):
                 'culture': organism.culture, 'houses': 1, 'stock': 3,
                 'wood': 0, 'ore': organism.ore, 'reserve': 0.0, 'granary': 0,
                 'tool_recipe': [], 'tool_quality': 0.0, 'experiments': 0,
+                'grievance': 0,
                 'population': 0, 'age': 0,
                 'empty_ticks': 0}
         world.next_town_id += 1
@@ -178,9 +179,66 @@ def update(world):
     # Abandoned homes retain a short food reserve, then decay with their town.
     if abandoned:
         world.settlements = [town for town in world.settlements if town['id'] not in abandoned]
+        world.relations = {key: value for key, value in world.relations.items()
+                           if not ({int(part) for part in key.split(':')} & abandoned)}
     world.households = [home for home in world.households if home['id'] in homes_used and home['town'] not in abandoned]
     plan_migration(world, residents_by_town)
     dispatch_trade(world)
+    dispatch_raid(world, residents_by_town)
+
+
+def adjust_relation(world, first, second, amount):
+    key = f'{min(first, second)}:{max(first, second)}'
+    world.relations[key] = max(-1.0, min(1.0, world.relations.get(key, 0.0) + amount))
+
+
+def relation(world, first, second):
+    return world.relations.get(f'{min(first, second)}:{max(first, second)}', 0.0)
+
+
+def dispatch_raid(world, residents_by_town):
+    """Sustained shortage can send one costly, route-bound food raid."""
+    if len(world.shipments) >= 16:
+        return
+    for source in sorted(world.settlements, key=lambda town: town['id']):
+        residents = [o for o in residents_by_town.get(source['id'], [])
+                     if o.energy > 30 and not o.migration_route]
+        if len(residents) < 2 or source['stock'] + source.get('reserve', 0) >= max(2, .8 * len(residents)):
+            source['grievance'] = max(0, source.get('grievance', 0) - 1)
+            continue
+        choices = []
+        for target in world.settlements:
+            if (target is source or target.get('culture') == source.get('culture') or
+                    target['stock'] <= max(4, 1.5 * target.get('population', 0)) or
+                    distance(world, source['x'], source['y'], target['x'], target['y']) > 16):
+                continue
+            choices.append((-target['stock'],
+                            distance(world, source['x'], source['y'], target['x'], target['y']),
+                            target['id'], target))
+        if not choices:
+            source['grievance'] = max(0, source.get('grievance', 0) - 1)
+            continue
+        source['grievance'] = min(5, source.get('grievance', 0) + 1)
+        if source['grievance'] < 3:
+            continue
+        route = next(((target, path) for _, _, _, target in sorted(choices)
+                      if (path := land_route(world, source, target)) and len(path) <= 17), None)
+        if route is None:
+            source['grievance'] = 2
+            continue
+        target, path = route
+        raiders = sorted(residents, key=lambda o: (-o.energy, o.id))[:3]
+        for raider in raiders:
+            raider.energy -= 8
+        source['grievance'] = 0
+        world.shipments.append({'kind': 'raid', 'from': source['id'], 'to': target['id'],
+                                'food': 0.0, 'ore': 0.0, 'wood': 0.0,
+                                'start': world.tick, 'arrival': world.tick + max(20, len(path) * 2),
+                                'path': path, 'raiders': [o.id for o in raiders]})
+        world.raids_launched += 1
+        adjust_relation(world, source['id'], target['id'], -.1)
+        world.event(f"Settlement {source['id']} sent a food raid toward settlement {target['id']}.")
+        return
 
 
 def manage_granary(world, town, residents):
@@ -288,6 +346,8 @@ def dispatch_trade(world):
         for target in world.settlements:
             if source is target or target['stock'] >= 10:
                 continue
+            if relation(world, source['id'], target['id']) <= -.5:
+                continue
             if target['ore'] < .5 and target['wood'] < 2:
                 continue
             candidates.append((distance(world, source['x'], source['y'], target['x'], target['y']),
@@ -308,7 +368,7 @@ def dispatch_trade(world):
             tile['road'] = max(tile['road'], max(0, tile['traffic'] - .3) * .7)
         average_road = sum(world.tiles[index]['road'] for index in path) / len(path)
         travel = max(20, int(len(path) * 2 * (1 - average_road * .5)))
-        world.shipments.append({'from': source['id'], 'to': target['id'], 'food': food,
+        world.shipments.append({'kind': 'trade', 'from': source['id'], 'to': target['id'], 'food': food,
                                 'ore': ore, 'wood': wood, 'start': world.tick,
                                 'arrival': world.tick + travel, 'path': path,
                                 'tool_recipe': list(source.get('tool_recipe', [])),
@@ -326,6 +386,22 @@ def deliver_shipments(world):
             continue
         source = towns.get(shipment['from'])
         target = towns.get(shipment['to'])
+        if shipment.get('kind') == 'raid':
+            if source and target:
+                alive = sum(any(o.id == identifier and o.energy > 0 for o in world.organisms)
+                            for identifier in shipment['raiders'])
+                if alive and world.rng.random() < max(.2, min(.85, .5 + .08 * (alive - target.get('population', 0)))):
+                    stolen = min(6.0, target['stock'] * .5, max(0.0, 200 - source['stock']))
+                    target['stock'] -= stolen
+                    source['stock'] += stolen
+                    world.raids_succeeded += 1
+                    adjust_relation(world, source['id'], target['id'], -.2)
+                    world.event(f"Raiders from settlement {source['id']} took {stolen:.1f} food from settlement {target['id']}.")
+                else:
+                    world.event(f"The raid from settlement {source['id']} against settlement {target['id']} failed.")
+            else:
+                world.event('A raid was lost when its settlement disappeared.')
+            continue
         if source and target:
             target['stock'] = min(200, target['stock'] + shipment['food'])
             source['ore'] = min(100, source['ore'] + shipment['ore'])
@@ -334,6 +410,7 @@ def deliver_shipments(world):
                 target['tool_quality'] = shipment['tool_quality']
                 target['tool_recipe'] = list(shipment['tool_recipe'])
                 world.event(f"Settlement {target['id']} learned a tool design from traders.")
+            adjust_relation(world, source['id'], target['id'], .08)
             world.event(f"Caravan reached settlement {target['id']} with food and returned materials.")
         else:
             world.event('A caravan was lost when its settlement disappeared.')
