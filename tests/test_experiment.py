@@ -62,6 +62,30 @@ class ExperimentTests(unittest.TestCase):
                 resumed.step()
             self.assertEqual(world.snapshot(), resumed.snapshot())
 
+    def test_navigation_credit_rewards_actual_preytoward_movement_and_replays(self):
+        worlds = [World(84, 16, 16, population=0, value_learning=False,
+                        navigation_learning=enabled) for enabled in (False, True)]
+        for world in worlds:
+            self.addCleanup(world.engine.close)
+            for tile in world.tiles:
+                tile.update(e=.55, lake=0, fire=0)
+            predator = world.spawn('predator', 8, 8)
+            world.spawn('grazer', 8, 6)
+            predator.thermal_opt = world.tiles[world.idx(8, 8)]['temp']
+            world.engine.infer = lambda items: [([0.0] * 8, [1, 0, 0, 0, 0, 0, 0]),
+                                                 ([0.0] * 8, [0, 0, 0, 0, 1, 0, 0])]
+            world.step()
+        self.assertEqual((worlds[0].organisms[0].x, worlds[0].organisms[0].y), (8, 7))
+        self.assertGreater(worlds[1].organisms[0].reward_ema,
+                           worlds[0].organisms[0].reward_ema + .01)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'navigation.json'
+            worlds[1].save(path)
+            restored = World.load(path)
+            self.addCleanup(restored.engine.close)
+            self.assertTrue(restored.navigation_learning)
+            self.assertEqual(worlds[1].snapshot(), restored.snapshot())
+
     def test_threat_probe_detects_avoidance_and_approach(self):
         world = World(8, 16, 16, population=0)
         self.addCleanup(world.engine.close)

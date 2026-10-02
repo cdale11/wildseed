@@ -23,6 +23,7 @@
 - [x] World-scale catchment routing and cumulative river channels that erode over time.
 - [x] Disturbance-driven grassland, woodland and burn-scar succession with an ecological growth effect.
 - [x] Explicit basin-stored lakes, Lake Country preset and persistent lake brush with movement/plant effects.
+- [x] Persisted ledgers close the represented tile-water and mineral-plus-litter pools across weather, ecology, local routing and powers; external exchange categories are explicit.
 - [x] Controlled 5,000-tick burn-scar → grassland → woodland recovery and temperature-trait climate-reversal tests.
 - [ ] Calibrated, mass-conserving watershed and nutrient budgets across weather, terrain, plants and settlements; current local transport has only a conservation check.
 
@@ -34,6 +35,7 @@
 - [x] Per-organism online value heads and one-step temporal-difference credit for earlier neural actions, with frozen controls and save migration.
 - [ ] Demonstrate a reliable behavioral gain from value learning against an immediate-reward ablation across replicated seeds and held-out tasks.
 - [x] Run a ten-seed matched immediate-reward ablation and retain the negative result; provide a repeatable `--value-ablation` experiment mode.
+- [x] Test opt-in predator proximity credit against a matched no-credit ablation; retain the mixed/negative result and keep ordinary worlds on the established policy.
 - [x] Tile seed banks, local dispersal and grass/tree competition.
 - [x] Explicit local plant cohorts, population counts and inherited climate trait means.
 - [x] Local water flow, suspended soil transport and lava cooling.

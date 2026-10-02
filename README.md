@@ -19,6 +19,7 @@ python3 -m unittest discover -s tests -v
 python3 -m wildseed.benchmark --ticks 200 --workers 1
 python3 -m wildseed.branch data/world.json data/control.json --ticks 100
 python3 -m wildseed.backup data/world.json /mnt/wildseed-backups
+python3 -m wildseed.experiment --seeds 40,41,42 --value-ablation --navigation-credit
 ```
 
 ## Play
@@ -33,6 +34,7 @@ Select a power category and click the map. Thirty-four powers include terrain sc
 - Seeded terrain, coastlines, erosion/deposition, seasonal moisture, vegetation growth, soil depletion, fire spread, ash fertility and recovering burn scars.
 - Species-specific, three-tile directional perception of food/prey, threats/fire and human building resources, with terrain occlusion.
 - Grass and tree cohorts with inherited climate preferences, local seed dispersal and competition; bounded soil nutrient/litter recycling, traveling cloud fronts, catchment-fed river channels, sediment transport and cooling lava.
+- Saved accounting ledgers for represented tile water and mineral-plus-litter stores. They expose external exchanges and conservation residuals; they do not constitute physically calibrated hydrology or a full nutrient cycle through bodies and settlements.
 - Grazers, predators and humans with energy, age, optional two-parent reproduction, ancestry, inherited traits, mate-recognition signals and independently learned neural weights.
 - A recurrent 28→8→7 neural policy per organism, plus an inherited nine-parameter value head that learns from subsequent outcomes. Online policy gradients use immediate reward and bounded temporal credit; eight hidden-state values carry memory. No pretrained model or external AI API is needed.
 - Households, scarcity-driven jobs, houses, traffic-made roads, barter caravans and food-driven migration between reachable towns. These remain early society mechanics.
@@ -41,7 +43,7 @@ Select a power category and click the map. Thirty-four powers include terrain sc
 
 ## What does not exist yet
 
-Dynamic neural topology, aquatic species, diseases, language, technology invention, diplomacy, war, watershed hydrology, large-scale distributed simulation and measured sustained emergence are not implemented. Current action/observation spaces are fixed. Plants are represented as local cohorts, not individual organisms. Training is CPU-side even with CUDA inference. See [ROADMAP.md](ROADMAP.md) and [specification](docs/SPECIFICATION.md).
+Dynamic neural topology, aquatic species, diseases, language, technology invention, diplomacy, war, calibrated watershed hydrology, large-scale distributed simulation and measured sustained emergence are not implemented. Current action/observation spaces are fixed. Plants are represented as local cohorts, not individual organisms. Training is CPU-side even with CUDA inference. Opt-in predator movement credit is experimental because matched trials did not show a reliable improvement. See [ROADMAP.md](ROADMAP.md) and [specification](docs/SPECIFICATION.md).
 
 ## Linux deployment
 

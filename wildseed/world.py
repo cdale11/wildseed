@@ -65,15 +65,16 @@ class Organism:
 
 
 class World:
-    VERSION = 20
+    VERSION = 21
 
-    def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True):
+    def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
             raise ValueError('Dimensions must be between 16 and 256')
         self.seed, self.width, self.height = seed, width, height
         self.geography, self.biome = geography, biome
         self.learning = learning
         self.value_learning = value_learning
+        self.navigation_learning = navigation_learning
         self.rng = random.Random(seed)
         self.tick = 0
         self.next_id = 1
@@ -93,6 +94,15 @@ class World:
         self.novelty_archive = []
         self.engine = BrainEngine(workers, device)
         self.tiles = self.generate()
+        self.water_budget = {'initial': self.water_total(), 'precipitation': 0.0,
+                             'climate_exchange': 0.0, 'evaporation': 0.0,
+                             'ocean_drain': 0.0, 'terrain_reset': 0.0,
+                             'interventions': 0.0}
+        self.nutrient_budget = {'initial': self.nutrient_total(),
+                                'plant_exchange': 0.0, 'fire_exchange': 0.0,
+                                'grazing_exchange': 0.0, 'death_exchange': 0.0,
+                                'ocean_export': 0.0, 'terrain_reset': 0.0,
+                                'interventions': 0.0}
         self.weather_width, self.weather_height, self.clouds = weather.initialize(seed, width, height)
         for i in range(population):
             self.spawn('human' if i % 8 == 0 else 'predator' if i % 10 == 0 else 'grazer')
@@ -103,6 +113,26 @@ class World:
 
     def idx(self, x, y):
         return (y % self.height) * self.width + x % self.width
+
+    def water_total(self):
+        return sum(t['m'] + t['water'] + t['lake'] for t in self.tiles)
+
+    def water_balance(self):
+        """Represented tile water versus recorded exchanges with external reservoirs."""
+        expected = sum(self.water_budget.values())
+        actual = self.water_total()
+        return {'actual': actual, 'expected': expected, 'residual': actual - expected,
+                'fluxes': self.water_budget.copy()}
+
+    def nutrient_total(self):
+        return sum(t['nutrient'] + t['litter'] for t in self.tiles)
+
+    def nutrient_balance(self):
+        """Audit represented soil pools; biomass/animals remain external exchanges."""
+        expected = sum(self.nutrient_budget.values())
+        actual = self.nutrient_total()
+        return {'actual': actual, 'expected': expected, 'residual': actual - expected,
+                'fluxes': self.nutrient_budget.copy()}
 
     def event(self, text):
         self.events.appendleft({'tick': self.tick, 'text': text})
@@ -192,6 +222,13 @@ class World:
                 t['m'], t['fire'], math.sin(self.tick / 180), *food, *danger, *materials,
                 *o.memory]
 
+    @staticmethod
+    def navigation_potential(kind, observation):
+        """Bounded local cue used to credit a movement, not to choose it."""
+        if kind == 'predator':
+            return max(observation[3], *observation[8:12])
+        return 0.0
+
     def climate(self):
         season = math.sin(self.tick / 180)
         if self.tick % 8 == 0:
@@ -202,7 +239,9 @@ class World:
         for i in range(self.tick % 4, len(self.tiles), 4):
             t = self.tiles[i]
             x, y = i % self.width, i // self.width
+            previous_moisture = t['m']
             t['m'] = max(0, min(1, t['m'] + .006 * season - .001 + t['trees'] * .0015))
+            self.water_budget['climate_exchange'] += t['m'] - previous_moisture
             if t['e'] > .37:
                 t['scar'] = max(0, t['scar'] - .015 - .02 * t['m'])
                 t['traffic'] *= .999
@@ -211,9 +250,12 @@ class World:
                     plants.clear(t)
                     t['fire'] = 0
                 else:
+                    before_nutrients = t['nutrient'] + t['litter']
                     plants.advance(t, season)
+                    self.nutrient_budget['plant_exchange'] += t['nutrient'] + t['litter'] - before_nutrients
                 t['f'] = min(1, t['f'] + .0003)
                 if t['fire'] > 0:
+                    before_nutrients = t['nutrient'] + t['litter']
                     burned = t['grass'] * .4 + t['trees'] * .12 + t['litter'] * .25
                     t['nutrient'] = min(1, t['nutrient'] + burned * .08)
                     t['litter'] *= .75
@@ -222,6 +264,7 @@ class World:
                     t['grass_seed'] *= .9
                     t['tree_seed'] *= .75
                     plants.burn(t)
+                    self.nutrient_budget['fire_exchange'] += t['nutrient'] + t['litter'] - before_nutrients
                     t['f'] = min(1, t['f'] + .008)
                     t['scar'] = min(1, t['scar'] + .18 + burned * .25)
                     t['fire'] = max(0, t['fire'] - .12 - t['m'] * .1)
@@ -237,6 +280,8 @@ class World:
                     plants.disperse(t, neighbor, self.rng)
                 self.flow(i, x, y)
             else:
+                self.water_budget['terrain_reset'] -= t['water'] + t['lake']
+                self.nutrient_budget['terrain_reset'] -= t['nutrient'] + t['litter']
                 plants.clear(t)
                 t['river'] = 0
                 t['scar'] = 0
@@ -254,8 +299,10 @@ class World:
         runoff = min(max(0.0, t['m']), rain, max(0.0, 1.0 - t['water']))
         t['m'] -= runoff
         t['water'] += runoff
+        surface_before, lake_before = t['water'], t['lake']
         t['water'] = max(0, t['water'] - evaporation)
         t['lake'] = max(0.0, t['lake'] - (.00006 + .00014 * t['temp']))
+        self.water_budget['evaporation'] += t['water'] - surface_before + t['lake'] - lake_before
         impounded = min(t['water'], max(0.0, t['lake_cap'] - t['lake']))
         t['lake'] += impounded
         t['water'] -= impounded
@@ -281,6 +328,8 @@ class World:
                     neighbor['sediment'] += carried
                     neighbor['nutrient'] = min(1, neighbor['nutrient'] + dissolved)
                 else:
+                    self.water_budget['ocean_drain'] -= outflow
+                    self.nutrient_budget['ocean_export'] -= dissolved
                     neighbor['e'] = min(1, neighbor['e'] + carried)
         if t['water'] < .005 and t['sediment'] > 0:
             deposit = min(t['sediment'], .0008, max(0, 1 - t['e']))
@@ -390,7 +439,9 @@ class World:
                 else:
                     eaten = min(t['grass'], .15 * o.size)
                     t['grass'] -= eaten
+                    before_litter = t['litter']
                     t['litter'] = min(1, t['litter'] + eaten * .12)
+                    self.nutrient_budget['grazing_exchange'] += t['litter'] - before_litter
                     o.energy += eaten * 65
                     t['f'] = max(.05, t['f'] - eaten * .015)
             elif action == 5 and o.energy > 105 and o.age > 45:
@@ -422,6 +473,10 @@ class World:
                 o.migration_town = 0
                 self.event(f"Human {o.id} reached settlement {arrived_town} after migrating.")
             reward = (o.energy - before) / 20 + bonus
+            if self.learning and self.navigation_learning and moved and o.kind == 'predator':
+                successor = self.observe(o, perception)
+                reward += .6 * (self.navigation_potential(o.kind, successor) -
+                                 self.navigation_potential(o.kind, obs))
             if not guided:
                 o.action_counts[action] += 1
             o.reward_ema = .95 * o.reward_ema + .05 * max(-2, min(2, reward))
@@ -446,7 +501,9 @@ class World:
             t = self.tiles[self.idx(o.x, o.y)]
             t['f'] = min(1, t['f'] + .04)
             if t['e'] > .37:
+                before_litter = t['litter']
                 t['litter'] = min(1, t['litter'] + .035 * o.size)
+                self.nutrient_budget['death_exchange'] += t['litter'] - before_litter
         self.deaths += len(dead)
         self.organisms = [o for o in self.organisms if o.energy > 0]
         if self.tick % 20 == 0:
@@ -458,7 +515,12 @@ class World:
             novelty.collect(self)
 
     def intervene(self, tool, x, y, radius=3, strength=1):
-        return apply_power(self, tool, x, y, radius, strength)
+        before = self.water_total()
+        nutrients_before = self.nutrient_total()
+        result = apply_power(self, tool, x, y, radius, strength)
+        self.water_budget['interventions'] += self.water_total() - before
+        self.nutrient_budget['interventions'] += self.nutrient_total() - nutrients_before
+        return result
 
     def snapshot(self):
         counts = dict(Counter(o.kind for o in self.organisms))
@@ -490,6 +552,8 @@ class World:
                           'ecotypes': len(ecotypes), 'households': len(self.households),
                           'mate_types': len(mate_types), 'mate_encounters': self.mate_encounters,
                           'mate_rejections': self.mate_rejections,
+                          'water_budget_residual': round(self.water_balance()['residual'], 8),
+                          'nutrient_budget_residual': round(self.nutrient_balance()['residual'], 8),
                           'caravans': len(self.shipments),
                           'migrants': sum(bool(o.migration_route) for o in self.organisms),
                           'critic_updates': self.critic_updates,
@@ -506,11 +570,14 @@ class World:
                    'tick': self.tick, 'next_id': self.next_id, 'rng': self.rng.getstate(),
                    'geography': self.geography, 'biome': self.biome,
                    'clouds': self.clouds,
+                   'water_budget': self.water_budget,
+                   'nutrient_budget': self.nutrient_budget,
                    'tiles': self.tiles, 'organisms': [asdict(o) for o in self.organisms],
                    'settlements': self.settlements, 'events': list(self.events),
                    'births': self.births, 'deaths': self.deaths, 'training_steps': self.training_steps,
                    'hunts': self.hunts, 'hunt_move_updates': self.hunt_move_updates,
                    'learning': self.learning, 'value_learning': self.value_learning,
+                   'navigation_learning': self.navigation_learning,
                    'sexual_births': self.sexual_births,
                    'mate_encounters': self.mate_encounters, 'mate_rejections': self.mate_rejections,
                    'critic_updates': self.critic_updates,
@@ -532,7 +599,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -571,6 +638,16 @@ class World:
         data.setdefault('biome', 'mixed')
         data.setdefault('learning', True)
         data.setdefault('value_learning', True)
+        data.setdefault('navigation_learning', False)
+        data.setdefault('water_budget', {'initial': sum(t['m'] + t['water'] + t['lake'] for t in data['tiles']),
+                                         'precipitation': 0.0, 'climate_exchange': 0.0,
+                                         'evaporation': 0.0, 'ocean_drain': 0.0,
+                                         'terrain_reset': 0.0, 'interventions': 0.0})
+        data.setdefault('nutrient_budget', {'initial': sum(t['nutrient'] + t['litter'] for t in data['tiles']),
+                                            'plant_exchange': 0.0, 'fire_exchange': 0.0,
+                                            'grazing_exchange': 0.0, 'death_exchange': 0.0,
+                                            'ocean_export': 0.0, 'terrain_reset': 0.0,
+                                            'interventions': 0.0})
         data.setdefault('hunts', 0)
         data.setdefault('hunt_move_updates', 0)
         data.setdefault('sexual_births', 0)
@@ -589,7 +666,8 @@ class World:
             town.setdefault('empty_ticks', 0)
         world = cls(data['seed'], data['width'], data['height'], workers, device, population=0,
                     geography=data['geography'], biome=data['biome'], learning=data['learning'],
-                    value_learning=data['value_learning'])
+                    value_learning=data['value_learning'],
+                    navigation_learning=data['navigation_learning'])
         rng = data.pop('rng')
         world.rng.setstate((rng[0], tuple(rng[1]), rng[2]))
         for organism in data['organisms']:

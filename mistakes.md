@@ -108,3 +108,9 @@
 - Resolution: channel strength now remains diagnostic, local runoff transfers from soil moisture, and basin overflow is retained when surface storage is full.
 - Prevention: test the sum of represented water stores around each transfer, while keeping atmospheric fluxes explicit in future budget work.
 - Verification: focused watershed and lake tests pass. A closed full-cycle water and nutrient budget is still open.
+# 2026-10-03 — Strong navigation shaping failed its ablation
+- Mistake: a larger predator/grazer movement reward was initially treated as a plausible default improvement before paired evaluation.
+- Cause: a locally sensible cue can change encounter dynamics and reward behavior in ways the designer did not anticipate.
+- Resolution: compared ten matched seeds at two strengths, removed the grazer term and kept the predator term opt-in after no reliable gain emerged.
+- Prevention: keep experimental neural rewards behind a saved ablation flag and require exposure-adjusted outcomes plus held-out directional probes before enabling them by default.
+- Verification: the weaker predator-only trial improved five of ten seeds, mean +0.483 hunts per 1,000 predator-ticks with paired SE 1.163; the directional probe shifted only +0.109 percentage points.

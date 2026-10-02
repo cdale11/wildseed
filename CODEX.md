@@ -33,6 +33,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 - world.py: rules, state, RNG, persistence. No HTTP or DOM.
 - plants.py and society.py: bounded cohort and human-society rules called by the authoritative world.
 - Mineral nutrient and litter pools are authoritative tile state. Keep plant uptake, recycling, water transport and god-power effects bounded; use geography.client_tiles for both previews and active snapshots.
+- Water and soil-pool ledgers record all changes to their represented tile stores. New rules changing moisture, surface/lake water, mineral nutrients or litter must record their flux and keep residuals near zero in deterministic tests. A closed ledger is not evidence of physical calibration or conservation across unrepresented biomass, bodies and town inventories.
 - geography.py: deterministic terrain/climate generation and map options.
 - Biome succession derives map labels from authoritative climate, vegetation and bounded scar state. Initialize scar in previews, migrate it in old saves, and keep god-power restoration and submerged tiles consistent.
 - weather.py: deterministic coarse cloud-grid evolution; use a separate seeded RNG from organisms, simultaneous advection, and persisted state. Preview weather must equal the newly created world's weather.
@@ -45,6 +46,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 - Recurrent observations include each organism's previous hidden state; save/migrate that state and preserve old policy connections when input dimensions change.
 - Value heads train only on authoritative CPU state. Persist pending credit and learned value weights, flush terminal transitions, keep frozen mode truly frozen, and clear stale traces when god powers mutate networks. Treat TD bootstrapping as a mechanism until held-out behavior improves against an ablation.
 - Keep immediate-reward/value-head ablation behavior separately configurable and saved. Report negative paired results; the current smaller TD policy correction is a cautious response, not a validated gain.
+- Predator prey-proximity movement credit is opt-in research; matched seeds did not show a reliable gain and it must remain off by default until held-out tracking improves. Keep its save flag and experiment comparison deterministic.
 - Human social learning stays local to a settlement and culture, uses a bounded mentor advantage and blend, and never runs in frozen mode. Persist recent-reward estimates and lesson counts; clear off-policy credit when sharing weights. Do not claim social benefit without an ablation.
 - Behavioral novelty records count only executed neural choices, exclude guided movement, require enough observations, and remain bounded by species and archive size. Persist action histories and archive entries. Treat action-distribution distance and mode entropy as descriptors, not proof of intelligence or emergence.
 - Society-directed migration routes are authoritative saved state. Check passability and destination existence each step; do not train the neural policy on a socially directed move as though it chose that action.

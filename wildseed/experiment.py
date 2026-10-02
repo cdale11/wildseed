@@ -33,8 +33,10 @@ def measure(world, predator_ticks=0):
         'lake_storage': round(sum(t['lake'] for t in land), 4),
         'surface_water': round(sum(t['water'] for t in land), 4),
         'soil_moisture': round(sum(t['m'] for t in land), 4),
+        'water_budget_residual': round(world.water_balance()['residual'], 8),
         'mineral_nutrients': round(sum(t['nutrient'] for t in land), 4),
         'organic_litter': round(sum(t['litter'] for t in land), 4),
+        'nutrient_budget_residual': round(world.nutrient_balance()['residual'], 8),
     }
 
 
@@ -73,9 +75,11 @@ def threat_avoidance_probe(world):
     return round(sum(scores) / len(scores) * 100, 3)
 
 
-def run(seed, ticks, population, width, height, cap, learning, interval=100, value_learning=True):
+def run(seed, ticks, population, width, height, cap, learning, interval=100,
+        value_learning=True, navigation_learning=False):
     world = World(seed, width, height, workers=1, population=population,
-                  learning=learning, value_learning=value_learning)
+                  learning=learning, value_learning=value_learning,
+                  navigation_learning=navigation_learning)
     world.max_population = cap
     predator_ticks = 0
     samples = [measure(world)]
@@ -90,6 +94,7 @@ def run(seed, ticks, population, width, height, cap, learning, interval=100, val
     finally:
         world.engine.close()
     return {'seed': seed, 'learning': learning, 'value_learning': value_learning,
+            'navigation_learning': navigation_learning,
             'samples': samples,
             'predator_directional_probe_pp': probe,
             'grazer_threat_avoidance_probe_pp': threat_probe}
@@ -106,6 +111,8 @@ def main():
     parser.add_argument('--interval', type=int, default=100)
     parser.add_argument('--value-ablation', action='store_true',
                         help='Also run online policy learning without the value head')
+    parser.add_argument('--navigation-credit', action='store_true',
+                        help='Also run experimental predator prey-proximity movement credit')
     args = parser.parse_args()
     try:
         seeds = [int(value) for value in args.seeds.split(',')]
@@ -117,12 +124,14 @@ def main():
         parser.error('population must be positive and no greater than cap (maximum 2500)')
     if not 16 <= args.width <= 256 or not 16 <= args.height <= 256:
         parser.error('dimensions must be between 16 and 256')
-    modes = [(False, True), (True, True)]
+    modes = [(False, True, False), (True, True, False)]
     if args.value_ablation:
-        modes.insert(1, (True, False))
+        modes.insert(1, (True, False, False))
+    if args.navigation_credit:
+        modes.append((True, True, True))
     results = [run(seed, args.ticks, args.population, args.width, args.height,
-                   args.cap, learning, args.interval, value_learning)
-               for seed in seeds for learning, value_learning in modes]
+                   args.cap, learning, args.interval, value_learning, navigation_learning)
+               for seed in seeds for learning, value_learning, navigation_learning in modes]
     print(json.dumps({'config': vars(args), 'runs': results}, indent=2))
 
 

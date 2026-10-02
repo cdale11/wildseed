@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.21.0 — 2026-10-03
+
+- Added saved water and soil-pool ledgers that separate precipitation, evaporation, ocean loss, seasonal exchange, plant/fire/grazing/death exchange and god interventions. In deterministic world runs with weather, ecology and destructive powers, the represented water and mineral-plus-litter pools close to floating-point precision. These are accounting ledgers for abstract stores, not calibrated physical mass budgets; biomass, organism and settlement nutrient stores remain outside the soil-pool ledger.
+- Added opt-in predator prey-proximity movement credit and a matching experiment flag, with deterministic save migration and a direct movement-credit test. Ten matched 200-tick seeds showed no reliable gain over immediate-reward learning (mean +0.483 hunts per 1,000 predator-ticks, paired SE 1.163; five positive seeds), so ordinary worlds leave it disabled. The stronger trial reduced hunting, and neither trial established learned directional tracking or grazer threat avoidance.
+
 ## 0.20.1 — 2026-10-03
 
 - Removed an artificial surface-water addition during river-channel refresh. Basin overflow now stays in lake storage when the surface pool is full, and local runoff transfers water from soil moisture rather than creating it.

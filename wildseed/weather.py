@@ -44,7 +44,9 @@ def advance(world):
             if rain > 0:
                 for tile in cells:
                     if tile['e'] > .37:
+                        before = tile['m'] + tile['water']
                         tile['m'] = min(1.0, tile['m'] + rain * .10)
                         tile['water'] = min(1.0, tile['water'] + rain * .035)
+                        world.water_budget['precipitation'] += tile['m'] + tile['water'] - before
                         tile['fire'] = max(0.0, tile['fire'] - rain * .7)
     world.clouds = updated
