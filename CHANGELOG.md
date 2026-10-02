@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.24.0 — 2026-10-03
+
+- Settlements with residents, spare wood and a food surplus can build a communal granary. It transfers actual town food into a bounded reserve and releases it during shortages before households receive rations; empty towns lose stored food to spoilage. Migration now considers reserves when judging a food shortage.
+- Save schema v24 preserves granaries and reserves; older towns migrate with neither. Browser statistics expose their count and stored food. A controlled shortage test verifies that a stocked granary feeds a resident after ordinary town stock is exhausted.
+
 ## 0.23.0 — 2026-10-03
 
 - New worlds have finite subsurface ore reserves. Weathering and water erosion slowly transfer ore from a hidden vein into mineable surface stock; mining depletes the exposed stock. The tile inspector shows both pools, and the browser reports cumulative natural exposure. Save schema v23 migrates older worlds with no hidden reserve and preserves exact continuation.

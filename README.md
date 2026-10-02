@@ -41,6 +41,7 @@ Select a power category and click the map. Thirty-four powers include terrain sc
 - Living trait and effective primary-parent lineage diversity in state snapshots and the offline speciation report; these are descriptive, not species classifications.
 - A recurrent 28→8→7 neural policy per organism, plus an inherited nine-parameter value head that learns from subsequent outcomes. Online policy gradients use immediate reward and bounded temporal credit; eight hidden-state values carry memory. No pretrained model or external AI API is needed.
 - Households, scarcity-driven jobs, houses, traffic-made roads, barter caravans and food-driven migration between reachable towns. These remain early society mechanics.
+- Surplus-funded communal granaries that store real food and release it to households during shortages.
 - Server persistence, CPU process inference, optional CUDA batch inference, administrator/spectator access, bounded HTTP connections and thin canvas clients.
 - Reproducible save branches with optional interventions and experiment manifests; see [experiments](docs/EXPERIMENTS.md).
 

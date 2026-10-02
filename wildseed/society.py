@@ -28,7 +28,8 @@ def work(world, organism, tile):
             return 0
         town = {'id': world.next_town_id, 'x': organism.x, 'y': organism.y,
                 'culture': organism.culture, 'houses': 1, 'stock': 3,
-                'wood': 0, 'ore': organism.ore, 'population': 0, 'age': 0,
+                'wood': 0, 'ore': organism.ore, 'reserve': 0.0, 'granary': 0,
+                'population': 0, 'age': 0,
                 'empty_ticks': 0}
         world.next_town_id += 1
         world.settlements.append(town)
@@ -122,6 +123,7 @@ def update(world):
         town['population'] = len(residents)
         town['age'] += 20
         town['empty_ticks'] = 0 if residents else town.get('empty_ticks', 0) + 20
+        manage_granary(world, town, residents)
         if not residents:
             town['stock'] *= .9
             if town['empty_ticks'] >= 100 and town['empty_ticks'] % 100 == 0:
@@ -175,13 +177,39 @@ def update(world):
     dispatch_trade(world)
 
 
+def manage_granary(world, town, residents):
+    """Build a communal food store from local surplus and release it in shortages."""
+    town.setdefault('reserve', 0.0)
+    town.setdefault('granary', 0)
+    if not residents:
+        town['reserve'] *= .9
+        return
+    population = len(residents)
+    if not town['granary'] and town['wood'] >= 2 and town['stock'] >= max(12, 4 * population):
+        town['wood'] -= 2
+        town['granary'] = 1
+        world.event(f"Settlement {town['id']} built a communal granary from its surplus.")
+    if not town['granary']:
+        return
+    town['reserve'] *= .998
+    if town['stock'] > 2 * population + 8:
+        stored = min(2.0, max(0.0, 40.0 - town['reserve']),
+                     town['stock'] - (2 * population + 8))
+        town['stock'] -= stored
+        town['reserve'] += stored
+    elif town['stock'] < .8 * population:
+        released = min(town['reserve'], .8 * population - town['stock'])
+        town['reserve'] -= released
+        town['stock'] += released
+
+
 def plan_migration(world, residents_by_town):
     """Send at most one resident per hungry town toward reachable spare capacity."""
     incoming = {town['id']: sum(o.migration_town == town['id']
                                 for o in world.organisms) for town in world.settlements}
     for source in world.settlements:
         residents = residents_by_town.get(source['id'], [])
-        if not residents or source['stock'] >= max(2.0, .8 * len(residents)):
+        if not residents or source['stock'] + source.get('reserve', 0.0) >= max(2.0, .8 * len(residents)):
             continue
         if world.tiles[world.idx(source['x'], source['y'])]['grass'] >= .18:
             continue

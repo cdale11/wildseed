@@ -60,6 +60,7 @@ Acceptance: measurable behavioral adaptation and ecological diversity without sc
 - [x] House/road decay and route-based inter-settlement caravans.
 - [x] Resource-scarcity-driven occupations and barter between settlements.
 - [x] Food-shortage-driven, route-based migration between reachable settlements with spare food and housing.
+- [x] Surplus-funded communal granaries buffer household rations and delay famine migration using an actual food reserve.
 - [ ] Sustained society validation, institutions, broader migration paths and deeper cultural transmission.
 - [x] Bounded reward-gated imitation of local, same-culture human policy and value weights, with frozen controls and save replay.
 - [ ] Test whether peer learning improves held-out settlement outcomes versus a no-imitation ablation without collapsing policy diversity.

@@ -68,7 +68,7 @@ class Organism:
 
 
 class World:
-    VERSION = 23
+    VERSION = 24
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -564,6 +564,8 @@ class World:
                           'deaths': self.deaths, 'training': self.training_steps, 'hunts': self.hunts,
                           'hunt_move_updates': self.hunt_move_updates, 'sexual_births': self.sexual_births,
                           'ecotypes': len(ecotypes), 'households': len(self.households),
+                          'granaries': sum(bool(town.get('granary')) for town in self.settlements),
+                          'food_reserves': round(sum(town.get('reserve', 0.0) for town in self.settlements), 2),
                           'mate_types': len(mate_types), 'mate_encounters': self.mate_encounters,
                           'mate_rejections': self.mate_rejections,
                           'seed_transferred': round(self.seed_transferred, 3),
@@ -617,7 +619,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -685,6 +687,8 @@ class World:
         for town in data['settlements']:
             town.setdefault('wood', 0.0)
             town.setdefault('empty_ticks', 0)
+            town.setdefault('reserve', 0.0)
+            town.setdefault('granary', 0)
         world = cls(data['seed'], data['width'], data['height'], workers, device, population=0,
                     geography=data['geography'], biome=data['biome'], learning=data['learning'],
                     value_learning=data['value_learning'],
