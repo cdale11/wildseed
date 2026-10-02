@@ -1,5 +1,11 @@
 # Learning experiments
 
+## Ecological network and novelty audit
+
+Run `python3 -m wildseed.emergence --seeds 42,43,44 --ticks 200 --interval 100 --population 40 --width 32 --height 24 --cap 200` for matched online-learning and frozen-learning worlds. Its JSON separates cumulative interaction counts into disjoint time windows, then reports the total-variation change in each window's link shares. It also measures each learned-world action-frequency archive record against same-kind records in the frozen control. A missing control record gives a null distance. Every candidate remains `unverified_observation`: a high distance can reflect noise, a population shift, or ineffective repeated actions. Inspect survival, reproduction, outcomes and independent seeds before calling any behavior adaptive or unexpected. The tool does not diagnose reward exploitation automatically.
+
+In that three-seed, 200-tick check, the learned worlds ended with 83, 104 and 94 organisms versus 78, 99 and 82 controls. Their second-window interaction-share shifts were 0.0369, 0.0278 and 0.0311. Learned novelty archives held 6, 6 and 6 records versus 5, 6 and 6 controls. These small differences do not establish new ecological roles, reliable network reorganization, or a general learning benefit.
+
 Run paired ecology worlds from the repository root:
 
 ```sh

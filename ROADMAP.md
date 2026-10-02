@@ -91,5 +91,6 @@ Acceptance: documented latency/memory curves and backend parity tolerances on sp
 - [x] Add per-kind trait spread and effective primary-parent lineage diversity, with bounded-ancestry caveats.
 - [x] Persist and display observed interaction links across feeding, predation, seed transport, extraction and transmission.
 - [ ] Test whether the interaction network reorganizes across generations and environments beyond fixed available actions.
+- [x] Add matched learned/frozen, time-window interaction-share and novelty-distance audit; evidence is descriptive and bounded to existing actions.
 - [ ] Evaluate unexpected behaviors against baselines; distinguish novelty from bugs/reward exploitation.
 No promise of unlimited novelty or general intelligence. All behavior remains constrained by the simulated physical substrate.

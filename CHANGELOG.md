@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.30.0 — 2026-10-03
+
+- Added an offline matched learned/frozen emergence audit. It computes ecological interaction shares in disjoint windows, their total-variation shifts, and distances between learned-world novelty records and same-kind frozen-control records. All candidate patterns remain explicitly unverified; this is a comparison instrument, not proof of adaptive emergence or automatic bug detection.
+
 ## 0.29.0 — 2026-10-03
 
 - Added a persisted observed-interaction graph. The simulation counts actual feeding, hunting, seed deposition, resource harvesting and disease transmission as named links. The browser shows the most frequent links and the server snapshot exposes the complete bounded graph. Save schema v29 migrates older worlds with an empty history.
