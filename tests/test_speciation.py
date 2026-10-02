@@ -42,6 +42,25 @@ class SpeciationMetricsTests(unittest.TestCase):
         self.assertTrue(all(groups[o.parent_a] == groups[o.parent_b] for o in children))
         self.assertGreater(world.mate_rejections, 0)
 
+    def test_forced_contact_barrier_persists_across_six_mutating_generations(self):
+        world = World(609, 16, 16, population=0)
+        self.addCleanup(world.engine.close)
+        world.tiles[world.idx(8, 8)].update(e=.55, lake=0)
+        pools = [[world.spawn('grazer', 8, 8) for _ in range(2)] for _ in range(2)]
+        for pool, signal in zip(pools, (.15, .85)):
+            for organism in pool:
+                organism.mate_signal = signal
+                organism.thermal_opt = .5
+        for generation in range(1, 7):
+            self.assertFalse(any(compatible_mates(a, b) for a in pools[0] for b in pools[1]))
+            next_pools = []
+            for pool in pools:
+                children = [world.spawn('grazer', 8, 8, pool[0], pool[1]) for _ in range(2)]
+                self.assertTrue(all(child.generation == generation and child.parent_b for child in children))
+                next_pools.append(children)
+            pools = next_pools
+        self.assertFalse(any(compatible_mates(a, b) for a in pools[0] for b in pools[1]))
+
 
 if __name__ == '__main__':
     unittest.main()

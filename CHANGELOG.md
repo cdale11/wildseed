@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21.1 — 2026-10-03
+
+- Added living trait dispersion and effective primary-parent lineage counts by organism kind to snapshots and the offline speciation report. Metrics use the bounded ancestry window and report untracked roots, so they describe variation without calling temporary mating components new species. A controlled six-generation contact test verifies that widely separated mate-recognition lineages remain incompatible under ordinary trait mutation; it does not establish spontaneous speciation in an open world.
+
 ## 0.21.0 — 2026-10-03
 
 - Added saved water and soil-pool ledgers that separate precipitation, evaporation, ocean loss, seasonal exchange, plant/fire/grazing/death exchange and god interventions. In deterministic world runs with weather, ecology and destructive powers, the represented water and mineral-plus-litter pools close to floating-point precision. These are accounting ledgers for abstract stores, not calibrated physical mass budgets; biomass, organism and settlement nutrient stores remain outside the soil-pool ledger.

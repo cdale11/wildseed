@@ -51,6 +51,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 - Behavioral novelty records count only executed neural choices, exclude guided movement, require enough observations, and remain bounded by species and archive size. Persist action histories and archive entries. Treat action-distribution distance and mode entropy as descriptors, not proof of intelligence or emergence.
 - Society-directed migration routes are authoritative saved state. Check passability and destination existence each step; do not train the neural policy on a socially directed move as though it chose that action.
 - Treat mate-signal bins and encounter rejection rates as proxies for reproductive divergence, not validated species. Preserve direct-mate compatibility and save migration when changing reproduction.
+- Trait spread and primary-parent lineage counts are descriptive metrics. A bounded ancestry window can split historical roots; neither metric alone establishes persistent reproductive isolation or taxonomic species.
 - server.py: transport, validation, tick ownership, persistence orchestration.
 - Preserve admin/spectator roles, per-peer API limits and bounded connections when changing transport; no viewer command may mutate world state.
 - web/: rendering and commands only; no duplicate simulation.

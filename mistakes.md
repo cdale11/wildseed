@@ -114,3 +114,9 @@
 - Resolution: compared ten matched seeds at two strengths, removed the grazer term and kept the predator term opt-in after no reliable gain emerged.
 - Prevention: keep experimental neural rewards behind a saved ablation flag and require exposure-adjusted outcomes plus held-out directional probes before enabling them by default.
 - Verification: the weaker predator-only trial improved five of ten seeds, mean +0.483 hunts per 1,000 predator-ticks with paired SE 1.163; the directional probe shifted only +0.109 percentage points.
+# 2026-10-03 — Longer hunt credit reinforced ineffective paths
+- Mistake: a four-move discounted predator trace seemed likely to improve delayed hunt credit.
+- Cause: successful hunts can follow incidental wandering, so reinforcing every recent movement can amplify irrelevant actions.
+- Resolution: removed the trace after a ten-seed matched ablation showed lower exposure-adjusted hunting; retained the previous one-move credit.
+- Prevention: evaluate delayed-credit schemes against the existing policy before adding permanent save state or declaring progress.
+- Verification: ten 200-tick seeds averaged −1.579 hunts per 1,000 predator-ticks (paired SE 0.541); only one seed improved. The experimental code is not shipped.

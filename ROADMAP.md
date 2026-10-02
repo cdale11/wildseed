@@ -36,6 +36,7 @@
 - [ ] Demonstrate a reliable behavioral gain from value learning against an immediate-reward ablation across replicated seeds and held-out tasks.
 - [x] Run a ten-seed matched immediate-reward ablation and retain the negative result; provide a repeatable `--value-ablation` experiment mode.
 - [x] Test opt-in predator proximity credit against a matched no-credit ablation; retain the mixed/negative result and keep ordinary worlds on the established policy.
+- [x] Reject a four-move hunt-credit trace after a ten-seed ablation reduced hunting; retain the existing one-move credit.
 - [x] Tile seed banks, local dispersal and grass/tree competition.
 - [x] Explicit local plant cohorts, population counts and inherited climate trait means.
 - [x] Local water flow, suspended soil transport and lava cooling.
@@ -46,7 +47,8 @@
 - [x] Inherited mate-recognition signal, compatibility barrier and measured candidate rejection fraction.
 - [ ] Speciation with reproductive isolation and validated species metrics.
 - [x] Offline exact adult mating-compatibility component report for trusted saves; candidate groups are not validated species.
-- [x] Forced-contact test: two incompatible adult mating pools reproduce within their pools with no cross-group children. Persistence over generations remains untested.
+- [x] Forced-contact test: two incompatible adult mating pools reproduce within their pools with no cross-group children.
+- [x] Controlled six-generation mutation test retains the mating barrier under forced contact; spontaneous, persistent divergence in normal worlds remains open.
 - [ ] Deferred by owner: multi-seed 100k-tick stability runs. Ten paired 500-tick learned/frozen runs are documented; random-policy comparison remains open.
 Acceptance: measurable behavioral adaptation and ecological diversity without scripted population replenishment, with published failure cases.
 
@@ -76,6 +78,7 @@ Acceptance: documented latency/memory curves and backend parity tolerances on sp
 - [ ] Adaptable network topology, developmental body plans and evolving sensory/action capabilities.
 - [x] Save-based causal intervention branches with source/output hashes and summary metrics.
 - [x] Bounded observed-action novelty archive and dominant-action diversity metric, with deterministic saves.
-- [ ] Add ecological network, trait and lineage diversity metrics beyond dominant action modes.
+- [x] Add per-kind trait spread and effective primary-parent lineage diversity, with bounded-ancestry caveats.
+- [ ] Add dynamic ecological interaction-network metrics beyond the current fixed trophic roles.
 - [ ] Evaluate unexpected behaviors against baselines; distinguish novelty from bugs/reward exploitation.
 No promise of unlimited novelty or general intelligence. All behavior remains constrained by the simulated physical substrate.

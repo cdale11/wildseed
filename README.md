@@ -36,6 +36,7 @@ Select a power category and click the map. Thirty-four powers include terrain sc
 - Grass and tree cohorts with inherited climate preferences, local seed dispersal and competition; bounded soil nutrient/litter recycling, traveling cloud fronts, catchment-fed river channels, sediment transport and cooling lava.
 - Saved accounting ledgers for represented tile water and mineral-plus-litter stores. They expose external exchanges and conservation residuals; they do not constitute physically calibrated hydrology or a full nutrient cycle through bodies and settlements.
 - Grazers, predators and humans with energy, age, optional two-parent reproduction, ancestry, inherited traits, mate-recognition signals and independently learned neural weights.
+- Living trait and effective primary-parent lineage diversity in state snapshots and the offline speciation report; these are descriptive, not species classifications.
 - A recurrent 28→8→7 neural policy per organism, plus an inherited nine-parameter value head that learns from subsequent outcomes. Online policy gradients use immediate reward and bounded temporal credit; eight hidden-state values carry memory. No pretrained model or external AI API is needed.
 - Households, scarcity-driven jobs, houses, traffic-made roads, barter caravans and food-driven migration between reachable towns. These remain early society mechanics.
 - Server persistence, CPU process inference, optional CUDA batch inference, administrator/spectator access, bounded HTTP connections and thin canvas clients.

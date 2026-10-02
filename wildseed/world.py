@@ -11,6 +11,7 @@ from .geography import generate, client_tiles
 from .powers import apply as apply_power
 from . import plants
 from . import novelty
+from . import diversity
 from . import society
 from . import weather
 from . import watershed
@@ -525,6 +526,7 @@ class World:
     def snapshot(self):
         counts = dict(Counter(o.kind for o in self.organisms))
         behaviors = novelty.diversity(self.organisms)
+        lineage = diversity.summarize(self.organisms, self.ancestry)
         ecotypes = {(o.kind, int(o.thermal_opt * 4), int(o.size * 2)) for o in self.organisms}
         mate_types = {(o.kind, min(9, int(o.mate_signal * 10))) for o in self.organisms}
         caravans = []
@@ -546,6 +548,7 @@ class World:
                 'caravans': caravans,
                 'events': list(self.events),
                 'novelty_archive': list(self.novelty_archive),
+                'diversity': lineage,
                 'stats': {'population': len(self.organisms), 'counts': counts, 'births': self.births,
                           'deaths': self.deaths, 'training': self.training_steps, 'hunts': self.hunts,
                           'hunt_move_updates': self.hunt_move_updates, 'sexual_births': self.sexual_births,

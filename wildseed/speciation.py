@@ -3,6 +3,7 @@ import argparse
 import json
 
 from .world import World
+from .diversity import summarize
 
 
 def candidate_components(organisms):
@@ -45,7 +46,8 @@ def main():
     world = World.load(args.save)
     try:
         print(json.dumps({'seed': world.seed, 'tick': world.tick,
-                          'candidate_components': candidate_components(world.organisms)}, indent=2))
+                          'candidate_components': candidate_components(world.organisms),
+                          'trait_lineage_diversity': summarize(world.organisms, world.ancestry)}, indent=2))
     finally:
         world.engine.close()
 
