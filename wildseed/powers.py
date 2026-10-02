@@ -11,6 +11,7 @@ POWER_INFO = [
  ('freeze','❄','Freeze','Nature'),('heat','♨','Heat','Nature'),
  ('human','♙','Humans','Life'),('grazer','♧','Grazers','Life'),('predator','♜','Predators','Life'),
  ('heal','♡','Heal','Life'),('mutate','✧','Mutate','Life'),('extinction','×','Erase life','Destruction'),
+ ('plague','☣','Plague','Destruction'),
  ('fire','♨','Wildfire','Destruction'),('lightning','ϟ','Lightning','Destruction'),
  ('meteor','☄','Meteor','Destruction'),('volcano','♨','Volcano','Destruction'),
 ] + [('biome_'+k,'◈',v[0],'Biomes') for k,v in BIOMES.items()]
@@ -86,7 +87,13 @@ def apply(world, tool, x, y, radius=3, strength=1):
         for o in world.organisms:
             if world.idx(o.x,o.y) not in affected: continue
             if tool=='heal':
-                previous=o.energy;o.energy=min(160,o.energy+45*strength);altered+=int(o.energy!=previous)
+                previous=(o.energy,o.infection)
+                o.energy=min(160,o.energy+45*strength);o.infection=0
+                altered+=int((o.energy,o.infection)!=previous)
+            elif tool=='plague':
+                if o.infection < 1:
+                    world.infections+=int(o.infection==0)
+                    o.infection=1;altered+=1
             elif tool=='mutate':
                 o.weights=[max(-4,min(4,w+world.rng.gauss(0,.12*strength))) for w in o.weights]
                 o.value_weights=[max(-4,min(4,w+world.rng.gauss(0,.06*strength))) for w in o.value_weights]
@@ -95,6 +102,7 @@ def apply(world, tool, x, y, radius=3, strength=1):
                 o.size=max(.5,min(1.6,o.size+world.rng.gauss(0,.08*strength)))
                 o.thermal_opt=max(0,min(1,o.thermal_opt+world.rng.gauss(0,.05*strength)))
                 o.mate_signal=max(0,min(1,o.mate_signal+world.rng.gauss(0,.06*strength)))
+                o.immunity=max(0,min(1,o.immunity+world.rng.gauss(0,.08*strength)))
                 altered+=1
             elif tool in ('extinction','meteor','lightning','volcano'):
                 o.energy=0;removed+=1

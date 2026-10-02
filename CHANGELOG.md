@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.27.0 — 2026-10-03
+
+- Added a plague power and local contact transmission after movement. Infection increases energy use, clears with time, and raises acquired immunity on recovery; children inherit bounded resistance with mutation. Healing cures infection, mutation can alter resistance, and the browser shows cases and individual health.
+- Save schema v27 persists infection, resistance and case counts, with neutral defaults for older organisms. A forced-contact test verifies spread, complete resistance, recovery and deterministic continuation. Outbreaks currently need a plague intervention; the model does not claim calibrated epidemiology.
+
 ## 0.26.0 — 2026-10-03
 
 - Surplus settlements can assign an inventor to try short sequences of handle, blade, temper and hone operations. Trials consume real wood and ore; operation order changes tool quality. Towns keep only improved designs, which modestly increase farming, logging and mining output. Existing food-for-material caravans also carry the source town's best design to a destination.

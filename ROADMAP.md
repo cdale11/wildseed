@@ -16,7 +16,7 @@
 
 ## World creation and powers (0.3.0)
 - [x] Fresh random world setup, nine geographies, twelve climate choices and exact previews.
-- [x] Thirty-four validated god powers with brush controls and measured feedback.
+- [x] Thirty-five validated god powers with brush controls and measured feedback, including plague.
 - [x] Procedural biome colors, shaded relief, coasts, trees and creature sprites.
 - [x] Save v3 migration and archive-before-replacement.
 - [x] Bounded local runoff, sediment transport and cooling lava with visible map effects.
@@ -41,6 +41,7 @@
 - [x] Reject a four-move hunt-credit trace after a ten-seed ablation reduced hunting; retain the existing one-move credit.
 - [x] Tile seed banks, local dispersal and grass/tree competition.
 - [x] Grazer/human seed carriage couples foraging, movement and plant colonization with bounded trait-preserving transfers.
+- [x] Contact-spread disease, inherited/acquired resistance and a plague/healing power loop.
 - [x] Explicit local plant cohorts, population counts and inherited climate trait means.
 - [x] Local water flow, suspended soil transport and lava cooling.
 - [x] Bounded soil nutrient/litter recycling with plant uptake, grazing/death returns, fire ash and runoff transport.

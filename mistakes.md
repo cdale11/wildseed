@@ -132,3 +132,9 @@
 - Resolution: add empty tool fields only while migrating pre-v26 towns; new game-founded towns carry the fields from creation, while current-version sparse fixtures retain their exact state.
 - Prevention: version-gate new schema defaults and run save/continue comparisons with both ordinary and deliberately sparse settlement records.
 - Verification: granary, migration and tool save/replay tests pass after the loader change.
+# 2026-10-03 — Recasting plague could inflate incident cases
+- Mistake: the first plague implementation incremented the cumulative case counter whenever an existing infection was strengthened.
+- Cause: it treated every state change as a new transmission event.
+- Resolution: count a new case only when the organism was previously uninfected; a recast can still restore infection intensity.
+- Prevention: distinguish incidence from current prevalence in epidemiological counters and test repeated interventions.
+- Verification: the focused plague test recasts on an ill organism without raising the case total.

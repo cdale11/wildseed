@@ -13,6 +13,7 @@ from . import plants
 from . import novelty
 from . import diversity
 from . import geology
+from . import disease
 from . import society
 from . import weather
 from . import watershed
@@ -65,10 +66,12 @@ class Organism:
     social_updates: int = 0
     action_counts: list = field(default_factory=lambda: [0] * 7)
     seed_cargo: list = field(default_factory=lambda: [0.0] * 6)
+    immunity: float = .2
+    infection: float = 0.0
 
 
 class World:
-    VERSION = 26
+    VERSION = 27
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False, social_learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -96,6 +99,7 @@ class World:
         self.critic_updates = 0
         self.seed_transferred = 0.0
         self.ore_exposed = 0.0
+        self.infections = 0
         self.social_updates = 0
         self.novelty_archive = []
         self.engine = BrainEngine(workers, device)
@@ -173,6 +177,9 @@ class World:
                        thermal_opt=max(0, min(1, inherited_temp + self.rng.gauss(0, .025))),
                        mate_signal=max(0, min(1, inherited_signal + self.rng.gauss(0, .015 if parent else .06))),
                        household=parent.household if parent else 0,
+                       immunity=max(0.0, min(1.0, ((parent.immunity + mate.immunity) / 2
+                                                  if mate else parent.immunity) +
+                                                  self.rng.gauss(0, .025))) if parent else .2,
                        value_weights=([max(-4, min(4, (self.rng.choice((a, b)) if mate else a) +
                                                        self.rng.gauss(0, .02)))
                                        for a, b in zip(parent.value_weights,
@@ -397,6 +404,7 @@ class World:
             before = o.energy
             o.age += 1
             o.energy -= .22 * o.size + (.08 if o.kind == 'predator' else 0)
+            o.energy -= .6 * o.infection
             action = self.rng.choices(range(7), weights=probs)[0]
             guided = False
             if o.kind == 'human' and o.migration_route:
@@ -507,6 +515,7 @@ class World:
                 o.last_move = [obs, hidden, probs, action] if moved and o.kind == 'predator' else None
                 if self.value_learning:
                     o.pending_credit = [obs, hidden, probs, action, current_value, reward]
+        disease.advance(self, occupancy)
         dead = [o for o in self.organisms if o.energy <= 0]
         for o in dead:
             self.finish_credit(o, 0.0)
@@ -575,6 +584,8 @@ class World:
                           'mate_rejections': self.mate_rejections,
                           'seed_transferred': round(self.seed_transferred, 3),
                           'ore_exposed': round(self.ore_exposed, 3),
+                          'infected': sum(o.infection > 0 for o in self.organisms),
+                          'infections': self.infections,
                           'water_budget_residual': round(self.water_balance()['residual'], 8),
                           'nutrient_budget_residual': round(self.nutrient_balance()['residual'], 8),
                           'caravans': len(self.shipments),
@@ -607,6 +618,7 @@ class World:
                    'critic_updates': self.critic_updates,
                    'seed_transferred': self.seed_transferred,
                    'ore_exposed': self.ore_exposed,
+                   'infections': self.infections,
                    'social_updates': self.social_updates,
                    'novelty_archive': self.novelty_archive,
                    'ancestry': list(self.ancestry), 'households': self.households,
@@ -625,7 +637,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -684,6 +696,7 @@ class World:
         data.setdefault('critic_updates', 0)
         data.setdefault('seed_transferred', 0.0)
         data.setdefault('ore_exposed', 0.0)
+        data.setdefault('infections', 0)
         data.setdefault('social_updates', 0)
         data.setdefault('novelty_archive', [])
         data.setdefault('ancestry', [])
@@ -715,6 +728,8 @@ class World:
             organism.setdefault('social_updates', 0)
             organism.setdefault('action_counts', [0] * 7)
             organism.setdefault('seed_cargo', [0.0] * 6)
+            organism.setdefault('immunity', .2)
+            organism.setdefault('infection', 0.0)
             if len(organism['seed_cargo']) != 6:
                 raise ValueError('Invalid seed cargo length')
             if len(organism['action_counts']) != 7:
