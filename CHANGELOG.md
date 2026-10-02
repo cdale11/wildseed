@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.2 — 2026-10-02
+
+- Reduced Python generator overhead in the neural policy's hidden, action and gradient sums while preserving the same arithmetic order and save format.
+- On a short seed-42, 1,000-organism CPU run, one-worker throughput rose from 18.95 to 20.92 ticks/s; 2,000-organism throughput reached 11.05 ticks/s. These are local measurements, not general scaling claims.
+
 ## 0.14.1 — 2026-10-02
 
 - Sparse neural observations now skip zero-valued input connections during CPU inference and online updates. Direct bounds checks replace nested `min`/`max` calls in the hot weight-update loop.

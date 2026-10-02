@@ -15,11 +15,21 @@ PARAMS = INPUTS * HIDDEN + HIDDEN * ACTIONS
 def forward(item):
     weights, obs = item
     active = [(i, value) for i, value in enumerate(obs) if value]
-    hidden = [math.tanh(sum(weights[j * INPUTS + i] * value
-                            for i, value in active)) for j in range(HIDDEN)]
+    hidden = []
+    for j in range(HIDDEN):
+        offset = j * INPUTS
+        total = 0.0
+        for i, value in active:
+            total += weights[offset + i] * value
+        hidden.append(math.tanh(total))
     base = INPUTS * HIDDEN
-    logits = [sum(weights[base + k * HIDDEN + j] * hidden[j]
-                  for j in range(HIDDEN)) for k in range(ACTIONS)]
+    logits = []
+    for k in range(ACTIONS):
+        offset = base + k * HIDDEN
+        total = 0.0
+        for j in range(HIDDEN):
+            total += weights[offset + j] * hidden[j]
+        logits.append(total)
     peak = max(logits)
     exps = [math.exp(v - peak) for v in logits]
     total = sum(exps)
@@ -32,9 +42,12 @@ def learn(weights, obs, hidden, probabilities, action, advantage, rate=0.018):
     delta = [((1 if k == action else 0) - probabilities[k]) * advantage
              for k in range(ACTIONS)]
     base = INPUTS * HIDDEN
-    back = [sum(weights[base + k * HIDDEN + j] * delta[k]
-                for k in range(ACTIONS)) * (1 - hidden[j] ** 2)
-            for j in range(HIDDEN)]
+    back = []
+    for j in range(HIDDEN):
+        total = 0.0
+        for k in range(ACTIONS):
+            total += weights[base + k * HIDDEN + j] * delta[k]
+        back.append(total * (1 - hidden[j] ** 2))
     active = [(i, value) for i, value in enumerate(obs) if value]
     for k in range(ACTIONS):
         for j in range(HIDDEN):

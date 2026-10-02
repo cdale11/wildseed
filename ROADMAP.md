@@ -11,6 +11,7 @@
 - [ ] Deferred by owner: validate CUDA on a real or compute-enabled virtual GPU when hardware is available.
 - [ ] Benchmark and optimize full tick scaling across available CPUs.
 - [x] Profile and reduce serial neural update work; compare one and all-affinity workers at 250, 1,000 and 2,000 starting organisms.
+- [x] Remove generator overhead in policy inference and gradients; verify reference-equivalent math and full-tick behavior.
 - [x] Publish tested source on the public main branch.
 
 ## World creation and powers (0.3.0)

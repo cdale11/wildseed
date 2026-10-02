@@ -1,5 +1,20 @@
 # Validation — 2026-10-02
 
+## Version 0.14.2 neural loop profiling — 2026-10-02
+
+All 73 tests pass, including sparse/dense neural reference equivalence, deterministic replay and loopback HTTP. The policy dimensions and save schema remain unchanged. A 30-tick `cProfile` run with 1,000 starting organisms attributed about 1.24 s to inference, 0.97 s to training, 0.71 s to climate and 0.63 s to observation within 3.83 s total, indicating neural work is still the largest cost. Explicit accumulation loops remove generator setup in hidden, action and backward sums while retaining arithmetic order.
+
+On this shared Linux host (Python 3.13.11, 16 affinity CPUs), seed-42 96×64 full-tick measurements were:
+
+| Initial organisms | Ticks | Workers | Before | After | Final organisms |
+|---:|---:|---:|---:|---:|---:|
+| 250 | 200 | 1 | 34.19–35.07 ticks/s (prior runs) | 34.84 ticks/s | 666 |
+| 1,000 | 50 | 1 | 18.95 ticks/s (same-turn run) | 20.92 ticks/s | 1,023 |
+| 1,000 | 50 | 16 | 18.05 ticks/s (prior run) | 17.03 ticks/s | 1,023 |
+| 2,000 | 30 | 1 | 9.99 ticks/s (prior run) | 11.05 ticks/s | 1,841 |
+
+These short sequential runs have no confidence intervals. The all-affinity result shows that inference parallelism can cost more than it saves at this size; worker selection stays configurable. Broader scaling, GPU validation and long stability studies remain open or deferred.
+
 ## Version 0.14.1 sparse CPU neural updates — 2026-10-02
 
 All 73 automated tests pass, including dense/sparse forward and update comparisons against the previous calculation to 12 decimal places, saturated weight bounds, scalar/process inference agreement, deterministic replay and loopback HTTP checks. Save schema remains v14. On this Linux host with Python 3.13.11 and 16 affinity CPUs, seed-42 full-tick runs ended with identical populations within each compared workload:
