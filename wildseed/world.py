@@ -72,7 +72,7 @@ class Organism:
 
 
 class World:
-    VERSION = 30
+    VERSION = 31
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False, social_learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -105,6 +105,7 @@ class World:
         self.seed_transferred = 0.0
         self.ore_exposed = 0.0
         self.infections = 0
+        self.spillovers = 0
         self.social_updates = 0
         self.novelty_archive = []
         self.engine = BrainEngine(workers, device)
@@ -615,6 +616,9 @@ class World:
                           'ore_exposed': round(self.ore_exposed, 3),
                           'infected': sum(o.infection > 0 for o in self.organisms),
                           'infections': self.infections,
+                          'spillovers': self.spillovers,
+                          'quarantined_towns': sum(town.get('quarantine_until', 0) > self.tick
+                                                   for town in self.settlements),
                           'water_budget_residual': round(self.water_balance()['residual'], 8),
                           'nutrient_budget_residual': round(self.nutrient_balance()['residual'], 8),
                           'caravans': len(self.shipments),
@@ -654,6 +658,7 @@ class World:
                    'seed_transferred': self.seed_transferred,
                    'ore_exposed': self.ore_exposed,
                    'infections': self.infections,
+                   'spillovers': self.spillovers,
                    'social_updates': self.social_updates,
                    'novelty_archive': self.novelty_archive,
                    'ancestry': list(self.ancestry), 'households': self.households,
@@ -678,7 +683,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -738,6 +743,7 @@ class World:
         data.setdefault('seed_transferred', 0.0)
         data.setdefault('ore_exposed', 0.0)
         data.setdefault('infections', 0)
+        data.setdefault('spillovers', 0)
         data.setdefault('social_updates', 0)
         data.setdefault('novelty_archive', [])
         data.setdefault('ancestry', [])

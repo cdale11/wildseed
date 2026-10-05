@@ -42,6 +42,7 @@
 - [x] Tile seed banks, local dispersal and grass/tree competition.
 - [x] Grazer/human seed carriage couples foraging, movement and plant colonization with bounded trait-preserving transfers.
 - [x] Contact-spread disease, inherited/acquired resistance and a plague/healing power loop.
+- [x] Seeded environmental infection introductions from damp litter and temporary town travel restrictions, with unforced-world checks.
 - [x] Explicit local plant cohorts, population counts and inherited climate trait means.
 - [x] Local water flow, suspended soil transport and lava cooling.
 - [x] Bounded soil nutrient/litter recycling with plant uptake, grazing/death returns, fire ash and runoff transport.

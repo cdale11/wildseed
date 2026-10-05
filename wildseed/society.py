@@ -36,6 +36,7 @@ def work(world, organism, tile):
                 'wood': 0, 'ore': organism.ore, 'reserve': 0.0, 'granary': 0,
                 'tool_recipe': [], 'tool_quality': 0.0, 'experiments': 0,
                 'grievance': 0,
+                'quarantine_until': 0,
                 'population': 0, 'age': 0,
                 'empty_ticks': 0}
         world.next_town_id += 1
@@ -142,6 +143,10 @@ def update(world):
         town['population'] = len(residents)
         town['age'] += 20
         town['empty_ticks'] = 0 if residents else town.get('empty_ticks', 0) + 20
+        if any(o.infection > 0 for o in residents):
+            if town.get('quarantine_until', 0) <= world.tick:
+                world.event(f"Settlement {town['id']} restricted travel during an outbreak.")
+            town['quarantine_until'] = max(town.get('quarantine_until', 0), world.tick + 60)
         manage_granary(world, town, residents)
         if not residents:
             town['stock'] *= .9
@@ -227,6 +232,7 @@ def dispatch_aid(world):
                      relation(world, source['id'], target['id']) < .24)):
                 continue
             if (source.get('population', 0) <= 0 or
+                    source.get('quarantine_until', 0) > world.tick or
                     source['stock'] <= max(6.0, 2.5 * source.get('population', 0)) or
                     (source['id'], target['id']) in active or
                     distance(world, source['x'], source['y'], target['x'], target['y']) > 24):
@@ -255,6 +261,8 @@ def dispatch_raid(world, residents_by_town):
     if len(world.shipments) >= 16:
         return
     for source in sorted(world.settlements, key=lambda town: town['id']):
+        if source.get('quarantine_until', 0) > world.tick:
+            continue
         residents = [o for o in residents_by_town.get(source['id'], [])
                      if o.energy > 30 and not o.migration_route]
         if len(residents) < 2 or source['stock'] + source.get('reserve', 0) >= max(2, .8 * len(residents)):
@@ -263,6 +271,7 @@ def dispatch_raid(world, residents_by_town):
         choices = []
         for target in world.settlements:
             if (target is source or target.get('culture') == source.get('culture') or
+                    target.get('quarantine_until', 0) > world.tick or
                     target['stock'] <= max(4, 1.5 * target.get('population', 0)) or
                     distance(world, source['x'], source['y'], target['x'], target['y']) > 16):
                 continue
@@ -326,6 +335,8 @@ def plan_migration(world, residents_by_town):
     incoming = {town['id']: sum(o.migration_town == town['id']
                                 for o in world.organisms) for town in world.settlements}
     for source in world.settlements:
+        if source.get('quarantine_until', 0) > world.tick:
+            continue
         residents = residents_by_town.get(source['id'], [])
         if not residents or source['stock'] + source.get('reserve', 0.0) >= max(2.0, .8 * len(residents)):
             continue
@@ -338,6 +349,8 @@ def plan_migration(world, residents_by_town):
         choices = []
         for target in world.settlements:
             if target is source:
+                continue
+            if target.get('quarantine_until', 0) > world.tick:
                 continue
             expected = target['population'] + incoming[target['id']]
             if (target['houses'] * 4 <= expected or
@@ -395,10 +408,14 @@ def dispatch_trade(world):
         return
     candidates = []
     for source in world.settlements:
+        if source.get('quarantine_until', 0) > world.tick:
+            continue
         if source['stock'] <= 30:
             continue
         for target in world.settlements:
             if source is target or target['stock'] >= 10:
+                continue
+            if target.get('quarantine_until', 0) > world.tick:
                 continue
             if relation(world, source['id'], target['id']) <= -.5:
                 continue

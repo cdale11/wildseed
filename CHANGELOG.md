@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.32.0 — 2026-10-05
+
+- Damp organic litter now creates a small, seeded environmental infection risk every 20 ticks. Contact spread remains local, and introductions are counted separately from all cases. In three unforced 800-tick worlds, environmental introductions numbered 4, 6 and 3. This is an abstract game exposure rule, not an epidemiological model.
+- A town with an infected resident temporarily prevents new outgoing trade, raids and planned migration and refuses new incoming trade, raids and migration. In-flight parties continue, and incoming emergency food aid remains possible. Within three tiles of the town, quarantine reduces contact-transmission risk. One of the three unforced worlds triggered a town restriction. Save schema v31 persists introductions and town restriction end ticks; the browser reports both.
+
 ## 0.31.0 — 2026-10-05
 
 - Neural action histories now count immediate concrete outcomes separately from choices: traversed moves, feeding/hunts, births and productive work. The novelty archive records each candidate's outcome rate, and the offline learned/frozen audit flags near-zero-output candidates for inspection. This is a diagnostic, not a reward-exploitation proof or a demonstrated learning gain.

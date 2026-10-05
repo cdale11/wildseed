@@ -20,6 +20,10 @@ def measure(world, predator_ticks=0):
         'population': len(world.organisms),
         'species': {kind: counts[kind] for kind in ('grazer', 'predator', 'human')},
         'settlements': len(world.settlements),
+        'environmental_spillovers': world.spillovers,
+        'quarantined_towns': sum(town.get('quarantine_until', 0) > world.tick
+                                 for town in world.settlements),
+        'food_aid_delivered': world.aid_delivered,
         'settlement_food': round(sum(town['stock'] + town.get('reserve', 0.0)
                                      for town in world.settlements), 3),
         'human_mean_energy': round(sum(o.energy for o in humans) / max(1, len(humans)), 3),

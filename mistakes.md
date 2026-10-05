@@ -1,5 +1,19 @@
 # Development mistakes
 
+## 2026-10-05 — Legacy towns changed on no-op save/load
+- Mistake: adding a zero-valued quarantine key to every loaded town made four exact-replay tests fail even when no outbreak occurred.
+- Cause: older and manually constructed towns omitted the optional field, so the loader changed snapshot shape.
+- Resolution: read a missing quarantine end tick as zero and write it only when an outbreak actually restricts the town.
+- Prevention: keep optional state absent until needed when exact legacy snapshot identity is part of the save contract.
+- Verification: all 148 tests pass, including the previously failing craft, diplomacy, granary and migration replay cases.
+
+## 2026-10-05 — Initial environmental exposure rate produced no outbreaks
+- Mistake: the first damp-litter exposure coefficient produced zero infections in three 800-tick unforced worlds despite passing a forced-RNG unit test.
+- Cause: ordinary occupied tiles had low litter times moisture; the fixture used both fields at their maximum.
+- Resolution: raised the bounded coefficient after measuring occupied-tile exposure and reran the same seed protocol.
+- Prevention: test an ecology mechanism against ordinary generated worlds and inspect its input distribution, not only a maximal controlled fixture.
+- Verification: seeds 42, 43 and 44 produced 4, 6 and 3 environmental introductions over 800 ticks on 32×24 worlds with 40 starting organisms.
+
 ## 2026-10-05 — Schema bump initially omitted the prior save version
 - Mistake: the first focused v29-to-v30 migration test failed because the accepted-version list included v28 and the new current version but skipped v29.
 - Cause: the loader uses an explicit version tuple, and the schema bump changed `VERSION` before updating that tuple.

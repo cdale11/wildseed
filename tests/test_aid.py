@@ -21,6 +21,7 @@ class AidTests(unittest.TestCase):
         ]
         for town in self.world.settlements:
             town.update(empty_ticks=0, reserve=0.0, granary=0, grievance=0,
+                        quarantine_until=0,
                         tool_recipe=[], tool_quality=0.0, experiments=0)
 
     def test_trusted_town_sends_real_food_and_delivery_replays(self):

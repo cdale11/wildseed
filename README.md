@@ -39,7 +39,7 @@ Select a power category and click the map. Thirty-five powers include terrain sc
 - Grazers and foraging humans carry seeds from meals to later locations, linking movement to climate-trait-aware plant colonization.
 - Saved accounting ledgers for represented tile water and mineral-plus-litter stores. They expose external exchanges and conservation residuals; they do not constitute physically calibrated hydrology or a full nutrient cycle through bodies and settlements.
 - Grazers, predators and humans with energy, age, optional two-parent reproduction, ancestry, inherited traits, mate-recognition signals and independently learned neural weights.
-- Contact-spread infections with heritable resistance, recovery and acquired immunity; outbreaks currently start through the plague power.
+- Contact-spread infections with heritable resistance, recovery and acquired immunity; outbreaks can arise from damp litter exposure or the plague power. Affected towns can temporarily restrict travel.
 - A persisted observed-interaction graph for feeding, predation, seed transport, harvesting and disease contacts, visible in the browser.
 - Living trait and effective primary-parent lineage diversity in state snapshots and the offline speciation report; these are descriptive, not species classifications.
 - A recurrent 28→8→7 neural policy per organism, plus an inherited nine-parameter value head that learns from subsequent outcomes. Online policy gradients use immediate reward and bounded temporal credit; eight hidden-state values carry memory. No pretrained model or external AI API is needed.
@@ -53,7 +53,7 @@ Select a power category and click the map. Thirty-five powers include terrain sc
 
 ## What does not exist yet
 
-Dynamic neural topology, aquatic species, diseases, language, technology invention, diplomacy, war, calibrated watershed hydrology, large-scale distributed simulation and measured sustained emergence are not implemented. Current action/observation spaces are fixed. Plants are represented as local cohorts, not individual organisms. Training is CPU-side even with CUDA inference. Opt-in predator movement credit is experimental because matched trials did not show a reliable improvement. See [ROADMAP.md](ROADMAP.md) and [specification](docs/SPECIFICATION.md).
+Dynamic neural topology, aquatic species, language, broad technology and diplomacy, war, calibrated watershed hydrology, large-scale distributed simulation and measured sustained emergence are not implemented. Current action/observation spaces are fixed. Plants are represented as local cohorts, not individual organisms. Training is CPU-side even with CUDA inference. Opt-in predator movement credit is experimental because matched trials did not show a reliable improvement. See [ROADMAP.md](ROADMAP.md) and [specification](docs/SPECIFICATION.md).
 
 ## Linux deployment
 
