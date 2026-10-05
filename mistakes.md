@@ -1,5 +1,18 @@
 # Development mistakes
 
+## 2026-10-05 — Schema bump initially omitted the prior save version
+- Mistake: the first focused v29-to-v30 migration test failed because the accepted-version list included v28 and the new current version but skipped v29.
+- Cause: the loader uses an explicit version tuple, and the schema bump changed `VERSION` before updating that tuple.
+- Resolution: include v29 and verify v29 aid counters default to zero.
+- Prevention: whenever bumping save schema, add the old current version to the loader's accepted-version list and run a prior-version fixture.
+
+## 2026-10-05 — Emergency aid initially could not emerge in ordinary worlds
+- Mistake: the first aid rule required 25 donor food and a positive trade relation; three 800-tick worlds had hungry towns but no relations or such surplus, so no aid was sent.
+- Cause: thresholds were chosen from a controlled fixture instead of observed settlement food distributions.
+- Resolution: permit same-culture aid, lower the donor threshold while retaining a food floor, and keep cross-culture aid dependent on trade trust.
+- Prevention: run unforced seed-level simulations for a new emergence mechanic in addition to controlled unit tests.
+- Verification: three unforced 800-tick worlds sent 6, 2 and 1 aid caravans, respectively.
+
 ## 2026-10-03 — Lake brush drained after the next watershed refresh
 - Mistake: the first lake brush reported 29 changed tiles, but an inspected center tile had zero stored lake water 50 ticks later.
 - Cause: the brush painted equal-elevation flooded tiles without a retaining rim, so lowest-spill routing reduced their basin capacity to zero.

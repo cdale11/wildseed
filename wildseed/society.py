@@ -196,6 +196,7 @@ def update(world):
     world.households = [home for home in world.households if home['id'] in homes_used and home['town'] not in abandoned]
     plan_migration(world, residents_by_town)
     dispatch_trade(world)
+    dispatch_aid(world)
     dispatch_raid(world, residents_by_town)
 
 
@@ -206,6 +207,47 @@ def adjust_relation(world, first, second, amount):
 
 def relation(world, first, second):
     return world.relations.get(f'{min(first, second)}:{max(first, second)}', 0.0)
+
+
+def dispatch_aid(world):
+    """Trusted or same-culture surplus towns aid a reachable hungry peer."""
+    if len(world.shipments) >= 16:
+        return
+    active = {(s['from'], s['to']) for s in world.shipments if s.get('kind') == 'aid'}
+    for target in sorted(world.settlements, key=lambda town: town['id']):
+        if target.get('population', 0) <= 0:
+            continue
+        need = max(3.0, 1.5 * target.get('population', 0))
+        if target['stock'] + target.get('reserve', 0.0) >= need:
+            continue
+        choices = []
+        for source in world.settlements:
+            if (source is target or
+                    (source.get('culture') != target.get('culture') and
+                     relation(world, source['id'], target['id']) < .24)):
+                continue
+            if (source.get('population', 0) <= 0 or
+                    source['stock'] <= max(6.0, 2.5 * source.get('population', 0)) or
+                    (source['id'], target['id']) in active or
+                    distance(world, source['x'], source['y'], target['x'], target['y']) > 24):
+                continue
+            path = land_route(world, source, target)
+            if path and len(path) <= 25:
+                choices.append((len(path), source['id'], source, path))
+        if not choices:
+            continue
+        _, _, source, path = min(choices)
+        food = min(5.0, source['stock'] - max(4.0, 2.0 * source.get('population', 0)))
+        if food <= 0:
+            continue
+        source['stock'] -= food
+        world.shipments.append({'kind': 'aid', 'from': source['id'], 'to': target['id'],
+                                'food': food, 'ore': 0.0, 'wood': 0.0,
+                                'start': world.tick, 'arrival': world.tick + max(20, len(path) * 2),
+                                'path': path})
+        world.aid_sent += 1
+        world.event(f"Settlement {source['id']} sent {food:.1f} food to hungry settlement {target['id']}.")
+        return
 
 
 def dispatch_raid(world, residents_by_town):
@@ -413,6 +455,16 @@ def deliver_shipments(world):
                     world.event(f"The raid from settlement {source['id']} against settlement {target['id']} failed.")
             else:
                 world.event('A raid was lost when its settlement disappeared.')
+            continue
+        if shipment.get('kind') == 'aid':
+            if source and target:
+                delivered = min(shipment['food'], max(0.0, 200 - target['stock']))
+                target['stock'] += delivered
+                world.aid_delivered += 1
+                adjust_relation(world, source['id'], target['id'], .03)
+                world.event(f"Food aid from settlement {source['id']} reached settlement {target['id']}.")
+            else:
+                world.event('Food aid was lost when its settlement disappeared.')
             continue
         if source and target:
             target['stock'] = min(200, target['stock'] + shipment['food'])

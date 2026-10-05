@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.31.0 — 2026-10-05
+
+- Neural action histories now count immediate concrete outcomes separately from choices: traversed moves, feeding/hunts, births and productive work. The novelty archive records each candidate's outcome rate, and the offline learned/frozen audit flags near-zero-output candidates for inspection. This is a diagnostic, not a reward-exploitation proof or a demonstrated learning gain.
+- Towns with trade trust or a shared culture can send route-bound emergency food aid to hungry peers while retaining a donor food floor. Aid deducts actual donor food at dispatch, arrives after travel, and improves relations on delivery. The browser distinguishes aid caravans and shows sent/delivered counts. Three unforced 800-tick worlds sent 6, 2 and 1 aid caravans. Save schema v30 preserves aid and organism outcome counters and migrates older saves.
+
 ## 0.30.0 — 2026-10-03
 
 - Added an offline matched learned/frozen emergence audit. It computes ecological interaction shares in disjoint windows, their total-variation shifts, and distances between learned-world novelty records and same-kind frozen-control records. All candidate patterns remain explicitly unverified; this is a comparison instrument, not proof of adaptive emergence or automatic bug detection.

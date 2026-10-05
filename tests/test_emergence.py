@@ -18,6 +18,9 @@ class EmergenceTests(unittest.TestCase):
         result = compare(control, learned)
         self.assertEqual(result['candidate_behaviors'][0]['control_distance'], 1)
         self.assertEqual(result['candidate_behaviors'][0]['status'], 'unverified_observation')
+        learned['novelty_records'][0]['outcome_rate'] = .01
+        self.assertEqual(compare(control, learned)['candidate_behaviors'][0]['status'],
+                         'low_output_observation')
         with self.assertRaises(ValueError):
             compare(control, dict(learned, seed=2))
 

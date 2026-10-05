@@ -65,13 +65,14 @@ class Organism:
     reward_ema: float = 0.0
     social_updates: int = 0
     action_counts: list = field(default_factory=lambda: [0] * 7)
+    action_outcomes: list = field(default_factory=lambda: [0] * 7)
     seed_cargo: list = field(default_factory=lambda: [0.0] * 6)
     immunity: float = .2
     infection: float = 0.0
 
 
 class World:
-    VERSION = 29
+    VERSION = 30
 
     def __init__(self, seed=42, width=96, height=64, workers=1, device='cpu', population=250, geography='continents', biome='mixed', learning=True, value_learning=True, navigation_learning=False, social_learning=True):
         if not 16 <= width <= 256 or not 16 <= height <= 256:
@@ -93,6 +94,7 @@ class World:
         self.shipments = []
         self.relations = {}
         self.raids_launched = self.raids_succeeded = 0
+        self.aid_sent = self.aid_delivered = 0
         self.ecology_events = {}
         self.next_town_id = self.next_household_id = 1
         self.ancestry = deque(maxlen=50000)
@@ -431,7 +433,7 @@ class World:
                         guided = True
             t = self.tiles[self.idx(o.x, o.y)]
             bonus = 0
-            moved = hunted = False
+            moved = hunted = productive = False
             arrived_town = 0
             if action < 4:
                 dx, dy = DIRECTIONS[action]
@@ -447,6 +449,7 @@ class World:
                         dest['road'] = max(dest['road'], max(0, dest['traffic'] - .3) * .7)
                     t = dest
                     moved = True
+                    productive = True
                     if o.kind in ('grazer', 'human'):
                         deposited = plants.deposit_seed_cargo(t, o.seed_cargo)
                         self.seed_transferred += deposited
@@ -466,6 +469,7 @@ class World:
                         self.hunts += 1
                         self.record_interaction('grazer', 'predator')
                         hunted = True
+                        productive = True
                 else:
                     eaten = min(t['grass'], .15 * o.size)
                     t['grass'] -= eaten
@@ -473,6 +477,7 @@ class World:
                     t['litter'] = min(1, t['litter'] + eaten * .12)
                     self.nutrient_budget['grazing_exchange'] += t['litter'] - before_litter
                     o.energy += eaten * 65
+                    productive = eaten > 0
                     if eaten > 0 and o.kind in ('grazer', 'human'):
                         plants.collect_seed_cargo(t, o.seed_cargo)
                         self.record_interaction('grass', o.kind)
@@ -493,8 +498,10 @@ class World:
                         if mate:
                             mate.energy -= 20
                         bonus = 1.8
+                        productive = True
             elif action == 6 and o.kind == 'human':
                 bonus += society.work(self, o, t)
+                productive = bonus > 0
             if t['e'] <= .37 or t['lake'] >= .05:
                 o.energy -= 3
             o.energy -= t['fire'] * 8 + max(0, abs(t['temp'] - o.thermal_opt) - .08) * .6
@@ -512,6 +519,7 @@ class World:
                                  self.navigation_potential(o.kind, obs))
             if not guided:
                 o.action_counts[action] += 1
+                o.action_outcomes[action] += int(productive)
             o.reward_ema = .95 * o.reward_ema + .05 * max(-2, min(2, reward))
             if self.learning and not guided:
                 # A hunt pays the move that put the predator on its prey's tile.
@@ -612,6 +620,8 @@ class World:
                           'caravans': len(self.shipments),
                           'raids_launched': self.raids_launched,
                           'raids_succeeded': self.raids_succeeded,
+                          'aid_sent': self.aid_sent,
+                          'aid_delivered': self.aid_delivered,
                           'relations_tracked': len(self.relations),
                           'ecology_links': len(self.ecology_events),
                           'migrants': sum(bool(o.migration_route) for o in self.organisms),
@@ -651,6 +661,8 @@ class World:
                    'relations': self.relations,
                    'raids_launched': self.raids_launched,
                    'raids_succeeded': self.raids_succeeded,
+                   'aid_sent': self.aid_sent,
+                   'aid_delivered': self.aid_delivered,
                    'ecology_events': self.ecology_events,
                    'next_town_id': self.next_town_id, 'next_household_id': self.next_household_id}
         target = Path(path)
@@ -666,7 +678,7 @@ class World:
     def load(cls, path, workers=1, device='cpu'):
         data = json.loads(Path(path).read_text())
         version = data.pop('version')
-        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, cls.VERSION):
+        if version not in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, cls.VERSION):
             raise ValueError('Unsupported save version')
         if version == 1:
             # Retain old connections, introduce new sensory connections at zero.
@@ -734,6 +746,8 @@ class World:
         data.setdefault('relations', {})
         data.setdefault('raids_launched', 0)
         data.setdefault('raids_succeeded', 0)
+        data.setdefault('aid_sent', 0)
+        data.setdefault('aid_delivered', 0)
         data.setdefault('ecology_events', {})
         data.setdefault('next_town_id', max((town['id'] for town in data['settlements']), default=0) + 1)
         data.setdefault('next_household_id', 1)
@@ -762,6 +776,7 @@ class World:
             organism.setdefault('reward_ema', 0.0)
             organism.setdefault('social_updates', 0)
             organism.setdefault('action_counts', [0] * 7)
+            organism.setdefault('action_outcomes', [0] * 7)
             organism.setdefault('seed_cargo', [0.0] * 6)
             organism.setdefault('immunity', .2)
             organism.setdefault('infection', 0.0)
@@ -769,6 +784,8 @@ class World:
                 raise ValueError('Invalid seed cargo length')
             if len(organism['action_counts']) != 7:
                 raise ValueError('Invalid action history length')
+            if len(organism['action_outcomes']) != 7:
+                raise ValueError('Invalid action outcome length')
             if len(organism['value_weights']) != VALUE_PARAMS:
                 raise ValueError('Invalid value head length')
             organism.setdefault('thermal_opt', data['tiles'][organism['y'] * data['width'] + organism['x']]['temp'])

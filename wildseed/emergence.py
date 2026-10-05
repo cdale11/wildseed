@@ -66,7 +66,10 @@ def compare(control, learned):
                        for reference in references), default=None)
         candidates.append({'tick': record['tick'], 'kind': record['kind'],
                            'control_distance': round(nearest, 3) if nearest is not None else None,
-                           'status': 'unverified_observation'})
+                           'outcome_rate': record.get('outcome_rate'),
+                           'status': ('low_output_observation'
+                                      if record.get('outcome_rate', 1) < .05
+                                      else 'unverified_observation')})
     return {'seed': control['seed'],
             'population_difference': learned['final_population'] - control['final_population'],
             'novelty_difference': learned['novelty_count'] - control['novelty_count'],

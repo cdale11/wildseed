@@ -37,6 +37,9 @@ def collect(world):
         world.novelty_archive.append({'tick': world.tick, 'kind': kind,
                                       'organism_id': organism.id,
                                       'signature': observed,
+                                      'outcomes': list(organism.action_outcomes),
+                                      'outcome_rate': round(sum(organism.action_outcomes) /
+                                                            sum(organism.action_counts), 3),
                                       'distance': round(-negative_novelty, 3)})
 
 

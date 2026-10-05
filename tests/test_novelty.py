@@ -26,6 +26,7 @@ class NoveltyTests(unittest.TestCase):
         novelty.collect(world)
         self.assertEqual(len(world.novelty_archive), 1)
         self.assertEqual(world.novelty_archive[0]['organism_id'], first.id)
+        self.assertEqual(world.novelty_archive[0]['outcome_rate'], 0)
         world.tick = 200
         novelty.collect(world)
         self.assertEqual(len(world.novelty_archive), 2)
@@ -36,11 +37,14 @@ class NoveltyTests(unittest.TestCase):
 
     def test_step_counts_chosen_actions_and_snapshot_reports_diversity(self):
         world = self.make_world()
+        world.tiles[world.idx(8, 8)]['grass'] = .8
         organism = world.spawn('grazer', 8, 8)
         world.engine.infer = lambda items: [([0.0] * 8, [0, 0, 0, 0, 1, 0, 0]) for _ in items]
         for _ in range(41):
             world.step()
         self.assertEqual(organism.action_counts[4], 41)
+        self.assertGreater(organism.action_outcomes[4], 0)
+        self.assertLess(organism.action_outcomes[4], 41)
         stats = world.snapshot()['stats']
         self.assertEqual(stats['behavior_eligible'], 1)
         self.assertEqual(stats['behavior_modes'], 1)
@@ -81,11 +85,13 @@ class NoveltyTests(unittest.TestCase):
             del data['novelty_archive']
             for old in data['organisms']:
                 del old['action_counts']
+                del old['action_outcomes']
             path.write_text(json.dumps(data))
             migrated = World.load(path)
             self.addCleanup(migrated.engine.close)
             self.assertEqual(migrated.novelty_archive, [])
             self.assertEqual(migrated.organisms[0].action_counts, [0] * 7)
+            self.assertEqual(migrated.organisms[0].action_outcomes, [0] * 7)
 
 
 if __name__ == '__main__':

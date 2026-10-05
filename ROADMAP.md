@@ -71,6 +71,7 @@ Acceptance: measurable behavioral adaptation and ecological diversity without sc
 - [ ] Broaden operation/material repertoires and validate sustained productivity gains across matched settlements.
 - [ ] Diplomacy/conflict grounded in resources and individual/social objectives.
 - [x] Scarcity-driven route-bound food raids and trade/raid-dependent settlement relations, with real food and raider energy costs.
+- [x] Trusted or same-culture settlements can send route-bound emergency food aid from a donor's real surplus.
 - [ ] Broader negotiations, alliances, combat and individual political objectives.
 Acceptance: settlements survive and fail for inspectable reasons; reproducible histories show several distinct development paths across seeds.
 
@@ -88,6 +89,7 @@ Acceptance: documented latency/memory curves and backend parity tolerances on sp
 - [ ] Adaptable network topology, developmental body plans and evolving sensory/action capabilities.
 - [x] Save-based causal intervention branches with source/output hashes and summary metrics.
 - [x] Bounded observed-action novelty archive and dominant-action diversity metric, with deterministic saves.
+- [x] Persist concrete immediate outcomes alongside neural action counts and flag low-output novelty candidates in matched audits.
 - [x] Add per-kind trait spread and effective primary-parent lineage diversity, with bounded-ancestry caveats.
 - [x] Persist and display observed interaction links across feeding, predation, seed transport, extraction and transmission.
 - [ ] Test whether the interaction network reorganizes across generations and environments beyond fixed available actions.

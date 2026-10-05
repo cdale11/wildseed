@@ -20,6 +20,7 @@ Build a maintainable, performant, original god simulation with procedural graphi
 
 1. Identify acceptance criteria and the smallest complete change.
 2. Preserve deterministic iteration, seeded random sources and save compatibility. Bump save version and provide migrations for incompatible schema changes.
+   When bumping `World.VERSION`, add the prior version to the loader's accepted-version list and test a save fixture from that version.
 3. Use spatial indexes for agent interactions, batched inference and bounded workloads. Profile before increasing process counts; tiny batches can run locally.
 4. Validate external commands before mutation. Keep remote authentication, origin checks and payload limits intact.
 5. Add tests for meaningful invariants, regressions, state continuation and cross-backend agreement. Do not add tests that merely restate trivial implementation.
